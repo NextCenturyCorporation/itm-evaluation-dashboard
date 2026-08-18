@@ -152,92 +152,36 @@ export async function loginBasicApprovedUser(page) {
     await page.waitForSelector('text/Welcome to the ITM Program!');
 }
 
-export async function selectCurrentEvaluation(page) {
-    const pageText = await page.evaluate(() => document.body?.innerText || '');
-
-    // These tests target the current evaluation. If a stale Phase 1 selection
-    // is active, switch to the first available non-Phase-1 evaluation.
-    if (!pageText.includes('Phase 1 Evaluation')) {
-        return;
-    }
-
-    const opened = await page.evaluate(() => {
-        const candidates = Array.from(document.querySelectorAll(
-            '[role="combobox"], .nav-menu [role="button"]'
-        ));
-
-        const control = candidates.find(element =>
-            (element.textContent || '').includes('Phase 1 Evaluation')
-        );
-
-        if (!control) {
-            return false;
-        }
-
-        control.click();
-        return true;
-    });
-
-    if (!opened) {
-        return;
-    }
-
-    try {
-        await page.waitForSelector('[role="listbox"]', { timeout: 10000 });
-
-        const selectedEvaluation = await page.$$eval('[role="listbox"] > *', options => {
-            const normalized = Array.from(options).map(option => ({
-                option,
-                text: (option.textContent || '').trim()
-            }));
-
-            const nextOption =
-                normalized.find(({ text }) =>
-                    text &&
-                    !text.includes('Phase 1') &&
-                    /evaluation/i.test(text)
-                ) ||
-                normalized.find(({ text }) =>
-                    text &&
-                    !text.includes('Phase 1') &&
-                    !text.toLowerCase().includes('select')
-                );
-
-            if (!nextOption) {
-                return null;
-            }
-
-            nextOption.option.click();
-            return nextOption.text;
-        });
-
-        if (selectedEvaluation) {
-            console.log(`[TEST DEBUG] Switched evaluation from Phase 1 Evaluation to: ${selectedEvaluation}`);
-
-            await page.waitForFunction(
-                () => !document.body?.innerText?.includes('Phase 1 Evaluation'),
-                { timeout: 15000 }
-            ).catch(() => {});
-        }
-    }
-    catch (error) {
-        console.error('[TEST DEBUG] Unable to switch away from Phase 1 Evaluation:', error);
-    }
-}
-
 export async function checkRouteContent(page, route, expectedText) {
     try {
         await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
             timeout: TEST_WAIT_TIMEOUT
         });
         await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
-        await selectCurrentEvaluation(page);
         for (const txt of expectedText) {
             await page.waitForSelector(`text/${txt}`, { timeout: TEST_WAIT_TIMEOUT });
         }
     }
     catch (error) {
         await logPageDebug(page, `Content check failed for ${route}`);
+        throw error;
+    }
+}
+
+export async function checkRouteSelector(page, route, selector, expectedText = []) {
+    try {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
+            timeout: TEST_WAIT_TIMEOUT
+        });
+        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector(selector, { timeout: TEST_WAIT_TIMEOUT });
+
+        for (const txt of expectedText) {
+            await page.waitForSelector(`text/${txt}`, { timeout: TEST_WAIT_TIMEOUT });
+        }
+    }
+    catch (error) {
+        await logPageDebug(page, `Route selector check failed for ${route} (${selector})`);
         throw error;
     }
 }
@@ -402,102 +346,267 @@ export async function completeTextScenarioAndReachSurvey(page, { isPhase1 }) {
     await pressAllKeys(page, 'In the final part of the study,');
 }
 
+export async function fillVisibleSurveyQuestions(page) {
+    return await page.evaluate(() => {
+        const isVisible = element => {
+            const style = window.getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return !element.disabled &&
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                rect.width > 0 &&
+                rect.height > 0;
+        };
+
+        let answered = 0;
+
+        // Answer one option in every visible radio group.
+        const radioGroups = new Map();
+        Array.from(document.querySelectorAll('input[type="radio"]'))
+            .filter(isVisible)
+            .forEach(radio => {
+                const key = radio.name || `radio-${radio.id}`;
+                if (!radioGroups.has(key)) {
+                    radioGroups.set(key, []);
+                }
+                radioGroups.get(key).push(radio);
+            });
+
+        radioGroups.forEach(radios => {
+            if (!radios.some(radio => radio.checked) && radios.length > 0) {
+                radios[0].click();
+                answered += 1;
+            }
+        });
+
+        // Answer one option in every visible checkbox group when none is selected.
+        const checkboxGroups = new Map();
+        Array.from(document.querySelectorAll('input[type="checkbox"]'))
+            .filter(isVisible)
+            .forEach(checkbox => {
+                const key = checkbox.name || `checkbox-${checkbox.id}`;
+                if (!checkboxGroups.has(key)) {
+                    checkboxGroups.set(key, []);
+                }
+                checkboxGroups.get(key).push(checkbox);
+            });
+
+        checkboxGroups.forEach(checkboxes => {
+            if (!checkboxes.some(checkbox => checkbox.checked) && checkboxes.length > 0) {
+                checkboxes[0].click();
+                answered += 1;
+            }
+        });
+
+        // Fill visible text inputs and textareas.
+        Array.from(document.querySelectorAll(
+            'textarea, input[type="text"], input[type="number"], input[type="email"]'
+        ))
+            .filter(isVisible)
+            .forEach(input => {
+                if (input.value) {
+                    return;
+                }
+
+                const value = input.type === 'number' ? '1' : 'm';
+                const prototype = input.tagName === 'TEXTAREA'
+                    ? window.HTMLTextAreaElement.prototype
+                    : window.HTMLInputElement.prototype;
+                const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+
+                if (valueSetter) {
+                    valueSetter.call(input, value);
+                } else {
+                    input.value = value;
+                }
+
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                answered += 1;
+            });
+
+        // Select the first real option in any visible native select.
+        Array.from(document.querySelectorAll('select'))
+            .filter(isVisible)
+            .forEach(select => {
+                if (!select.value && select.options.length > 1) {
+                    select.selectedIndex = 1;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    answered += 1;
+                }
+            });
+
+        return answered;
+    });
+}
+
+export async function clickVisibleSurveyButton(page, buttonValue) {
+    return await page.evaluate(value => {
+        const isVisible = element => {
+            const style = window.getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return !element.disabled &&
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                rect.width > 0 &&
+                rect.height > 0;
+        };
+
+        const controls = Array.from(document.querySelectorAll('input, button'))
+            .filter(isVisible);
+
+        const button = controls.find(control =>
+            (control.value || control.textContent || '').trim() === value
+        );
+
+        if (!button) {
+            return false;
+        }
+
+        button.click();
+        return true;
+    }, buttonValue);
+}
+
+export async function completeCurrentPhase2Survey(page) {
+    // The current survey is multi-page. Fill what is actually visible rather
+    // than relying on a fixed number of Tab presses, which becomes stale when
+    // survey questions change.
+    for (let pageIndex = 0; pageIndex < 10; pageIndex++) {
+        await page.waitForFunction(
+            () => document.body?.innerText?.trim().length > 0,
+            { timeout: TEST_WAIT_TIMEOUT }
+        );
+
+        const answered = await fillVisibleSurveyQuestions(page);
+        console.log(`[TEST DEBUG] Phase 2 survey page ${pageIndex + 1}: answered ${answered} visible question groups/fields`);
+
+        const completed = await clickVisibleSurveyButton(page, 'Complete');
+        if (completed) {
+            return;
+        }
+
+        const currentText = await page.evaluate(() => document.body?.innerText || '');
+        const advanced = await clickVisibleSurveyButton(page, 'Next');
+
+        if (!advanced) {
+            await logPageDebug(page, 'Phase 2 survey has neither a visible Next nor Complete button');
+            throw new Error('Unable to advance Phase 2 survey: no visible Next or Complete button.');
+        }
+
+        await page.waitForFunction(
+            previousText => (document.body?.innerText || '') !== previousText,
+            { timeout: TEST_WAIT_TIMEOUT },
+            currentText
+        ).catch(() => {});
+    }
+
+    await logPageDebug(page, 'Phase 2 survey exceeded expected page count');
+    throw new Error('Unable to complete Phase 2 survey within 10 pages.');
+}
+
 export async function surveyFlowNavigateAndComplete(page, { isPhase1 }) {
-    // we start on the survey intro page
+    // We start on the survey intro page.
     await clickNext(page);
 
-    // phase 1 only
-    if (isPhase1) {
-        await page.waitForSelector('text/Note that in some scenarios', { timeout: 50000 });
-        await clickNext(page);
-        await page.waitForSelector('text/Situation', { timeout: 500 });
-        let pageNum = 3;
-        let medics = 0;
-        while (medics < 3) {
-            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
-            await page.focus('input[type="radio"]');
-            for (let i = 0; i < 4; i++) {
-                await page.keyboard.press(' ');
-                await page.keyboard.press('Tab');
-            }
-            await clickNext(page);
-            medics += 1;
-            pageNum += 1;
+    if (!isPhase1) {
+        await page.waitForSelector(
+            'text/What was the biggest influence on your delegation decision between different medics?',
+            { timeout: TEST_WAIT_TIMEOUT }
+        );
+
+        await completeCurrentPhase2Survey(page);
+
+        try {
+            await page.waitForSelector(
+                'text/Thank you for completing the survey',
+                { timeout: TEST_WAIT_TIMEOUT }
+            );
         }
-        // reached comparison page!
-        await page.waitForSelector('text/Medic-B21 vs Medic-V17', { timeout: 500 });
-        await page.waitForSelector('text/Medic-B16 vs Medic-B21', { timeout: 500 });
-        await page.focus('input[type="radio"]');
-        // two MC followed by short answer, twice
-        for (let i = 0; i < 2; i++) {
-            await page.keyboard.press(' ');
-            await page.keyboard.press('Tab');
-            await page.keyboard.press(' ');
-            await page.keyboard.press('Tab');
-            await page.keyboard.press('m');
-            await page.keyboard.press('Tab');
-            await page.keyboard.press('Tab');
+        catch (error) {
+            await logPageDebug(page, 'CACI Prolific Phase 2 survey did not reach completion screen');
+            throw error;
         }
-        await clickNext(page);
+
+        return;
     }
-    // reached post-scenario measures
-    await page.waitForSelector('text/What was the biggest influence on your delegation decision between different medics?', { timeout: 500 });
-    // answer short-text question
+
+    // Legacy Phase 1 flow.
+    await page.waitForSelector('text/Note that in some scenarios', { timeout: 50000 });
+    await clickNext(page);
+    await page.waitForSelector('text/Situation', { timeout: 500 });
+
+    let pageNum = 3;
+    let medics = 0;
+    while (medics < 3) {
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        await page.focus('input[type="radio"]');
+
+        for (let i = 0; i < 4; i++) {
+            await page.keyboard.press(' ');
+            await page.keyboard.press('Tab');
+        }
+
+        await clickNext(page);
+        medics += 1;
+        pageNum += 1;
+    }
+
+    await page.waitForSelector('text/Medic-B21 vs Medic-V17', { timeout: 500 });
+    await page.waitForSelector('text/Medic-B16 vs Medic-B21', { timeout: 500 });
+    await page.focus('input[type="radio"]');
+
+    for (let i = 0; i < 2; i++) {
+        await page.keyboard.press(' ');
+        await page.keyboard.press('Tab');
+        await page.keyboard.press(' ');
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('m');
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Tab');
+    }
+
+    await clickNext(page);
+
+    await page.waitForSelector(
+        'text/What was the biggest influence on your delegation decision between different medics?',
+        { timeout: TEST_WAIT_TIMEOUT }
+    );
+
     await page.keyboard.press('Tab');
     await page.keyboard.press('m');
-    // answer initial radio questions
+
     for (let i = 0; i < 9; i++) {
         await page.keyboard.press('Tab');
         await page.keyboard.press(' ');
     }
-    // skip past roles
-    for (let i = 0; i < (isPhase1 ? 8 : 9); i++) {
+
+    for (let i = 0; i < 8; i++) {
         await page.keyboard.press('Tab');
     }
 
-    if (!isPhase1) {
-    // phase 2 
-        await page.keyboard.press('m');
-        // answer the rest
-        for (let i = 0; i < 5; i++) {
-            await page.keyboard.press('Tab');
-            await page.keyboard.press(' ');
-        }
-        // skip past roles
-        for (let i = 0; i < 7; i++) {
-            await page.keyboard.press('Tab');
-        }
-        for (let i = 0; i < 2; i++) {
-            await page.keyboard.press('Tab');
-            await page.keyboard.press(' ');
-        }
-        await page.keyboard.press('m');
-        for (let i = 0; i < 2; i++) {
-            await page.keyboard.press('Tab');
-            await page.keyboard.press(' ');
-        }
-        // skip past environments
-        for (let i = 0; i < 7; i++) {
-            await page.keyboard.press('Tab');
-        }
-    }
     for (let i = 0; i < 3; i++) {
         await page.keyboard.press('Tab');
         await page.keyboard.press(' ');
     }
-    // don't leave to the adept qualtrix form, stay here!
+
     page.on('dialog', async dialog => {
         expect(dialog.message()).toContain('');
         await dialog.dismiss();
     });
+
     await page.$$eval('input', buttons => {
-        Array.from(buttons).find(btn => btn.value == 'Complete').click();
+        Array.from(buttons).find(btn => btn.value == 'Complete')?.click();
     });
+
     try {
-        await page.waitForSelector('text/Thank you for completing the survey', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector(
+            'text/Thank you for completing the survey',
+            { timeout: TEST_WAIT_TIMEOUT }
+        );
     }
     catch (error) {
-        await logPageDebug(page, 'CACI Prolific survey did not reach completion screen');
+        await logPageDebug(page, 'CACI Prolific Phase 1 survey did not reach completion screen');
         throw error;
     }
 }

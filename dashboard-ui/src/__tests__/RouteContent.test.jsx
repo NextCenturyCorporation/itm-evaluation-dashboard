@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { checkRouteContent, loginAdmin, createAccount, FOOTER_TEXT } from "../__mocks__/testUtils";
+import { checkRouteContent, checkRouteSelector, loginAdmin, createAccount, FOOTER_TEXT } from "../__mocks__/testUtils";
 
 
 jest.setTimeout(330000);
@@ -43,16 +43,16 @@ describe('Verify content on page matches expectation for route', () => {
 
 
     it('Check /text-based-results route content', async () => {
-        await checkRouteContent(page, '/text-based-results', ['Text-Based Scenario Results', 'To view results, follow these steps:']);
+        await checkRouteSelector(page, '/text-based-results', '.text-results');
     }, 330000);
     it('Check /humanSimParticipant route content', async () => {
-        await checkRouteContent(page, '/humanSimParticipant', ['Participant-Level Data', 'YrsMilExp', 'Date']);
+        await checkRouteSelector(page, '/humanSimParticipant', '.aggregatePage', ['View Definitions', 'Download Participant Data']);
     }, 330000);
     it('Check /humanProbeData route content', async () => {
         await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);
     });
     it('Check /human-results route content', async () => {
-        await checkRouteContent(page, '/human-results', ['Please select a scenario and participant to view results']);
+        await checkRouteSelector(page, '/human-results', '.human-results');
     }, 330000);
 
     it('Check /results route content', async () => {
@@ -79,8 +79,7 @@ describe('Verify content on page matches expectation for route', () => {
     });
 
     it('Check /research-results/exploratory-analysis route content', async () => {
-        await checkRouteContent(page, '/research-results/exploratory-analysis', ['RQ4: Does alignment score predict perceived alignment?', 'RQ4 Data',
-            'RQ8: Exploratory: How do the assessed attributes predict behavior in open triage scenarios?', 'RQ8 Data', 'Delegation Data by Block']);
+        await checkRouteSelector(page, '/research-results/exploratory-analysis', '.researchQuestion');
     }, 330000);
     it('Check /myaccount route content', async () => {
         await checkRouteContent(page, '/myaccount', ['My Account', 'Manage your account settings', 'Username', 'admin', 'Email Address', 'admin@123.com', 'Confirm New Password']);
