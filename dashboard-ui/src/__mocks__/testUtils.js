@@ -360,9 +360,21 @@ export async function fillVisibleSurveyQuestions(page) {
                 rect.height > 0;
         };
 
+        const getQuestionText = element => {
+            const container =
+                element.closest('.sd-question') ||
+                element.closest('.sv_qstn') ||
+                element.closest('[data-name]') ||
+                element.parentElement?.parentElement ||
+                element.parentElement;
+
+            return (container?.innerText || '').trim();
+        };
+
         let answered = 0;
 
-        // Answer one option in every visible radio group.
+        // Answer one option in every visible radio group. For branching questions,
+        // prefer answers that avoid unnecessary follow-up questions.
         const radioGroups = new Map();
         Array.from(document.querySelectorAll('input[type="radio"]'))
             .filter(isVisible)
@@ -375,10 +387,36 @@ export async function fillVisibleSurveyQuestions(page) {
             });
 
         radioGroups.forEach(radios => {
-            if (!radios.some(radio => radio.checked) && radios.length > 0) {
-                radios[0].click();
-                answered += 1;
+            if (radios.some(radio => radio.checked) || radios.length === 0) {
+                return;
             }
+
+            const questionText = getQuestionText(radios[0]);
+            let preferred = null;
+
+            if (questionText.includes('Are you currently or have you previously served in the military?')) {
+                preferred = radios.find(radio =>
+                    (radio.parentElement?.innerText || '').includes('Never Served')
+                );
+            }
+            else if (questionText.includes('Have you participated in mass casualty events?')) {
+                preferred = radios.find(radio =>
+                    (radio.parentElement?.innerText || '').trim() === 'No'
+                );
+            }
+            else if (questionText.includes('Did you serve in a military medical role?')) {
+                preferred = radios.find(radio =>
+                    (radio.parentElement?.innerText || '').trim() === 'No'
+                );
+            }
+            else if (questionText.includes('When did you last complete TCCC training or recertification?')) {
+                preferred = radios.find(radio =>
+                    (radio.parentElement?.innerText || '').includes('Never completed')
+                );
+            }
+
+            (preferred || radios[0]).click();
+            answered += 1;
         });
 
         // Answer one option in every visible checkbox group when none is selected.
@@ -395,7 +433,16 @@ export async function fillVisibleSurveyQuestions(page) {
 
         checkboxGroups.forEach(checkboxes => {
             if (!checkboxes.some(checkbox => checkbox.checked) && checkboxes.length > 0) {
-                checkboxes[0].click();
+                const questionText = getQuestionText(checkboxes[0]);
+                let preferred = null;
+
+                if (questionText.includes('In which environments have you provided medical care during military service?')) {
+                    preferred = checkboxes.find(checkbox =>
+                        (checkbox.parentElement?.innerText || '').trim() === 'None'
+                    );
+                }
+
+                (preferred || checkboxes[0]).click();
                 answered += 1;
             }
         });
@@ -594,35 +641,62 @@ export async function completeCurrentPhase2Survey(page) {
         });
 
         if (hasComplete) {
-            await clickVisibleSurveyButton(page, 'Complete');
+            // Keep retrying validation until SurveyJS accepts the page or we can
+            // no longer make progress.
+            let previousValidationCount = null;
 
-            // Give SurveyJS a moment to either navigate away or surface
-            // required-question validation messages.
-            await new Promise(resolve => setTimeout(resolve, 750));
+            for (let validationAttempt = 1; validationAttempt <= 10; validationAttempt++) {
+                await clickVisibleSurveyButton(page, 'Complete');
 
-            const validationCount = await page.evaluate(() =>
-                Array.from(document.querySelectorAll('*'))
-                    .filter(element => (element.textContent || '').trim() === 'Response required.')
-                    .length
-            );
+                // Give SurveyJS time to either complete or render validation errors.
+                await new Promise(resolve => setTimeout(resolve, 750));
 
-            if (validationCount === 0) {
-                return;
+                const completionVisible = await page.evaluate(() =>
+                    (document.body?.innerText || '').includes('Thank you for completing the survey')
+                );
+
+                if (completionVisible) {
+                    console.log(`[TEST DEBUG] Phase 2 survey completed after ${validationAttempt} validation attempt(s).`);
+                    return;
+                }
+
+                const validationCount = await page.evaluate(() =>
+                    Array.from(document.querySelectorAll('*'))
+                        .filter(element => (element.textContent || '').trim() === 'Response required.')
+                        .length
+                );
+
+                if (validationCount === 0) {
+                    // No validation errors remain; allow the caller to wait for
+                    // the completion screen/navigation.
+                    return;
+                }
+
+                console.log(`[TEST DEBUG] SurveyJS reported ${validationCount} required response error(s) on attempt ${validationAttempt}.`);
+
+                // First re-fill all currently visible questions because prior
+                // answers may have revealed conditional follow-up fields.
+                const newlyAnswered = await fillVisibleSurveyQuestions(page);
+
+                // Then target any fields SurveyJS explicitly marked invalid.
+                const repaired = await fillSurveyValidationErrors(page);
+
+                console.log(`[TEST DEBUG] Validation attempt ${validationAttempt}: answered ${newlyAnswered} newly visible field(s), repaired ${repaired} required field(s).`);
+
+                if (
+                    newlyAnswered === 0 &&
+                    repaired === 0 &&
+                    previousValidationCount === validationCount
+                ) {
+                    await logPageDebug(page, 'Phase 2 survey validation stopped making progress');
+                    throw new Error(`Unable to resolve ${validationCount} required Phase 2 survey response(s).`);
+                }
+
+                previousValidationCount = validationCount;
             }
 
-            console.log(`[TEST DEBUG] SurveyJS reported ${validationCount} required response error(s); attempting repair.`);
-
-            const repaired = await fillSurveyValidationErrors(page);
-            console.log(`[TEST DEBUG] Repaired ${repaired} required survey question(s).`);
-
-            if (repaired === 0) {
-                await logPageDebug(page, 'SurveyJS reported required responses that the helper could not fill');
-                throw new Error('Unable to fill one or more required Phase 2 survey responses.');
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 250));
-            await clickVisibleSurveyButton(page, 'Complete');
-            return;
+            await logPageDebug(page, 'Phase 2 survey exceeded validation retry limit');
+            throw new Error('Unable to complete Phase 2 survey after repeated validation attempts.');
         }
 
         const currentText = await page.evaluate(() => document.body?.innerText || '');
