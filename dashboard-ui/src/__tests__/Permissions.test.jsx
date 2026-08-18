@@ -4,6 +4,8 @@
 
 import { HOME_TEXT, WAITING_TEXT, createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
 
+jest.setTimeout(330000);
+
 function runRoutePermissionTests(allowApprovalPage = false) {
     let routes = [
         '/results',

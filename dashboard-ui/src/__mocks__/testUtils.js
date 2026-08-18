@@ -440,6 +440,109 @@ export async function fillVisibleSurveyQuestions(page) {
     });
 }
 
+export async function fillSurveyValidationErrors(page) {
+    return await page.evaluate(() => {
+        const isVisible = element => {
+            const style = window.getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return !element.disabled &&
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                rect.width > 0 &&
+                rect.height > 0;
+        };
+
+        const errorMarkers = Array.from(document.querySelectorAll('*'))
+            .filter(element =>
+                isVisible(element) &&
+                (element.textContent || '').trim() === 'Response required.'
+            );
+
+        let repaired = 0;
+
+        for (const marker of errorMarkers) {
+            const questionContainer =
+                marker.closest('.sd-question') ||
+                marker.closest('.sv_qstn') ||
+                marker.closest('[data-name]') ||
+                marker.parentElement?.parentElement ||
+                marker.parentElement;
+
+            if (!questionContainer) {
+                continue;
+            }
+
+            const radios = Array.from(
+                questionContainer.querySelectorAll('input[type="radio"]')
+            ).filter(isVisible);
+
+            if (radios.length > 0 && !radios.some(radio => radio.checked)) {
+                radios[0].click();
+                repaired += 1;
+                continue;
+            }
+
+            const checkboxes = Array.from(
+                questionContainer.querySelectorAll('input[type="checkbox"]')
+            ).filter(isVisible);
+
+            if (checkboxes.length > 0 && !checkboxes.some(checkbox => checkbox.checked)) {
+                checkboxes[0].click();
+                repaired += 1;
+                continue;
+            }
+
+            const textInput = Array.from(
+                questionContainer.querySelectorAll(
+                    'textarea, input[type="text"], input[type="number"], input[type="email"]'
+                )
+            ).find(isVisible);
+
+            if (textInput && !textInput.value) {
+                const value = textInput.type === 'number' ? '1' : 'm';
+                const prototype = textInput.tagName === 'TEXTAREA'
+                    ? window.HTMLTextAreaElement.prototype
+                    : window.HTMLInputElement.prototype;
+                const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+
+                if (setter) {
+                    setter.call(textInput, value);
+                } else {
+                    textInput.value = value;
+                }
+
+                textInput.dispatchEvent(new Event('input', { bubbles: true }));
+                textInput.dispatchEvent(new Event('change', { bubbles: true }));
+                repaired += 1;
+                continue;
+            }
+
+            const nativeSelect = Array.from(
+                questionContainer.querySelectorAll('select')
+            ).find(isVisible);
+
+            if (nativeSelect && !nativeSelect.value && nativeSelect.options.length > 1) {
+                nativeSelect.selectedIndex = 1;
+                nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                repaired += 1;
+                continue;
+            }
+
+            // SurveyJS dropdowns can be rendered as custom combobox controls.
+            const combo = Array.from(
+                questionContainer.querySelectorAll('[role="combobox"]')
+            ).find(isVisible);
+
+            if (combo) {
+                combo.click();
+                repaired += 1;
+            }
+        }
+
+        return repaired;
+    });
+}
+
 export async function clickVisibleSurveyButton(page, buttonValue) {
     return await page.evaluate(value => {
         const isVisible = element => {
@@ -481,8 +584,42 @@ export async function completeCurrentPhase2Survey(page) {
         const answered = await fillVisibleSurveyQuestions(page);
         console.log(`[TEST DEBUG] Phase 2 survey page ${pageIndex + 1}: answered ${answered} visible question groups/fields`);
 
-        const completed = await clickVisibleSurveyButton(page, 'Complete');
-        if (completed) {
+        const hasComplete = await page.evaluate(() => {
+            const controls = Array.from(document.querySelectorAll('input, button'));
+            return controls.some(control =>
+                (control.value || control.textContent || '').trim() === 'Complete'
+            );
+        });
+
+        if (hasComplete) {
+            await clickVisibleSurveyButton(page, 'Complete');
+
+            // Give SurveyJS a moment to either navigate away or surface
+            // required-question validation messages.
+            await new Promise(resolve => setTimeout(resolve, 750));
+
+            const validationCount = await page.evaluate(() =>
+                Array.from(document.querySelectorAll('*'))
+                    .filter(element => (element.textContent || '').trim() === 'Response required.')
+                    .length
+            );
+
+            if (validationCount === 0) {
+                return;
+            }
+
+            console.log(`[TEST DEBUG] SurveyJS reported ${validationCount} required response error(s); attempting repair.`);
+
+            const repaired = await fillSurveyValidationErrors(page);
+            console.log(`[TEST DEBUG] Repaired ${repaired} required survey question(s).`);
+
+            if (repaired === 0) {
+                await logPageDebug(page, 'SurveyJS reported required responses that the helper could not fill');
+                throw new Error('Unable to fill one or more required Phase 2 survey responses.');
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 250));
+            await clickVisibleSurveyButton(page, 'Complete');
             return;
         }
 
