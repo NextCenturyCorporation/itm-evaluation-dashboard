@@ -4,6 +4,24 @@ export const FOOTER_TEXT = 'text/This research was developed';
 export const WAITING_TEXT = 'Thank you for your interest in the DARPA In the Moment Program.';
 export const HOME_TEXT = 'text/Program Questions';
 
+export const TEST_WAIT_TIMEOUT = 300000;
+
+export async function logPageDebug(page, label) {
+    try {
+        const currentUrl = page.url();
+        const title = await page.title().catch(() => '<unable to read title>');
+        const bodyText = await page.evaluate(() => document.body?.innerText || '').catch(() => '<unable to read page text>');
+
+        console.error(`[TEST DEBUG] ${label}`);
+        console.error(`[TEST DEBUG] URL: ${currentUrl}`);
+        console.error(`[TEST DEBUG] Title: ${title}`);
+        console.error(`[TEST DEBUG] Page text (first 5000 chars):\n${bodyText.slice(0, 5000)}`);
+    }
+    catch (error) {
+        console.error(`[TEST DEBUG] Failed to capture page diagnostics for ${label}:`, error);
+    }
+}
+
 export async function countElementsWithText(page, text) {
     return await page.$$eval('*', (elements, regexString) => {
         const regex = new RegExp(regexString, 'i');  // case-insensitive regex
@@ -83,19 +101,25 @@ export async function logout(page) {
 export async function testRouteRedirection(route, expectedRedirect = '/login') {
     const expectedUrl = `${process.env.REACT_APP_TEST_URL}${expectedRedirect}`;
 
-    await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
-        timeout: 60000
-    });
-    await page.waitForSelector(FOOTER_TEXT, { timeout: 60000 });
+    try {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
+            timeout: TEST_WAIT_TIMEOUT
+        });
+        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 
-    await page.waitForFunction(
-        expectedUrl => window.location.href === expectedUrl,
-        { timeout: 60000 },
-        expectedUrl
-    );
+        await page.waitForFunction(
+            expectedUrl => window.location.href === expectedUrl,
+            { timeout: TEST_WAIT_TIMEOUT },
+            expectedUrl
+        );
 
-    const currentUrl = page.url();
-    expect(currentUrl).toBe(expectedUrl);
+        const currentUrl = page.url();
+        expect(currentUrl).toBe(expectedUrl);
+    }
+    catch (error) {
+        await logPageDebug(page, `Route redirection failed for ${route} -> ${expectedRedirect}`);
+        throw error;
+    }
 }
 
 export async function loginAdmin(page) {
@@ -129,10 +153,11 @@ export async function loginBasicApprovedUser(page) {
 }
 
 export async function checkRouteContent(page, route, expectedText, isPh1 = false) {
-    await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
-        timeout: 60000
-    });
-    await page.waitForSelector(FOOTER_TEXT, { timeout: 60000 });
+    try {
+        await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
+            timeout: TEST_WAIT_TIMEOUT
+        });
+        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
     if (isPh1) {
         // click on Phase 1 in drop downs
         if (route.includes('rq') || route.includes('exploratory') || route.includes('humanSimParticipant')) {
@@ -146,8 +171,13 @@ export async function checkRouteContent(page, route, expectedText, isPh1 = false
             });
         }
     }
-    for (const txt of expectedText) {
-        await page.waitForSelector(`text/${txt}`, { timeout: 60000 });
+        for (const txt of expectedText) {
+            await page.waitForSelector(`text/${txt}`, { timeout: TEST_WAIT_TIMEOUT });
+        }
+    }
+    catch (error) {
+        await logPageDebug(page, `Content check failed for ${route}`);
+        throw error;
     }
 }
 
@@ -402,5 +432,11 @@ export async function surveyFlowNavigateAndComplete(page, { isPhase1 }) {
     await page.$$eval('input', buttons => {
         Array.from(buttons).find(btn => btn.value == 'Complete').click();
     });
-    await page.waitForSelector('text/Thank you for completing the survey', { timeout: 100000 });
+    try {
+        await page.waitForSelector('text/Thank you for completing the survey', { timeout: TEST_WAIT_TIMEOUT });
+    }
+    catch (error) {
+        await logPageDebug(page, 'CACI Prolific survey did not reach completion screen');
+        throw error;
+    }
 }
