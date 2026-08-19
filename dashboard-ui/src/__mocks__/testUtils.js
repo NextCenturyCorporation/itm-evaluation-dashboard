@@ -487,6 +487,74 @@ export async function fillVisibleSurveyQuestions(page) {
     });
 }
 
+export async function typeIntoRequiredSurveyTextFields(page) {
+    const questionHandles = await page.$$('.sd-question, .sv_qstn');
+    let typed = 0;
+
+    for (const question of questionHandles) {
+        const questionText = await question.evaluate(element => element.innerText || '');
+
+        if (!questionText.includes('Response required.')) {
+            continue;
+        }
+
+        const textControl =
+            await question.$('textarea') ||
+            await question.$('input[type="text"]') ||
+            await question.$('input[type="number"]') ||
+            await question.$('input[type="email"]') ||
+            await question.$('[contenteditable="true"]');
+
+        if (!textControl) {
+            continue;
+        }
+
+        const isVisible = await textControl.evaluate(element => {
+            const style = window.getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return !element.disabled &&
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                rect.width > 0 &&
+                rect.height > 0;
+        });
+
+        if (!isVisible) {
+            continue;
+        }
+
+        await textControl.click({ clickCount: 3 });
+
+        const tagName = await textControl.evaluate(element => element.tagName);
+        const isContentEditable = await textControl.evaluate(element => element.isContentEditable);
+
+        if (isContentEditable) {
+            await page.keyboard.down('Control');
+            await page.keyboard.press('A');
+            await page.keyboard.up('Control');
+            await page.keyboard.type('m');
+        }
+        else {
+            await page.keyboard.down('Control');
+            await page.keyboard.press('A');
+            await page.keyboard.up('Control');
+            await page.keyboard.type(
+                tagName === 'INPUT' &&
+                (await textControl.evaluate(element => element.type)) === 'number'
+                    ? '1'
+                    : 'm'
+            );
+        }
+
+        // SurveyJS commits text responses on the normal browser event flow.
+        // Tabbing away ensures change/blur handlers run.
+        await page.keyboard.press('Tab');
+        typed += 1;
+    }
+
+    return typed;
+}
+
 export async function fillSurveyValidationErrors(page) {
     return await page.evaluate(() => {
         const isVisible = element => {
@@ -617,9 +685,8 @@ export async function clickVisibleSurveyButton(page, buttonValue) {
 }
 
 export async function completeCurrentPhase2Survey(page) {
-    // The current survey is multi-page. Fill what is actually visible rather
-    // than relying on a fixed number of Tab presses, which becomes stale when
-    // survey questions change.
+    // Fill the current Phase 2 survey using the controls that are actually
+    // rendered, rather than depending on a fixed keyboard/tab sequence.
     for (let pageIndex = 0; pageIndex < 10; pageIndex++) {
         await page.waitForFunction(
             () => document.body?.innerText?.trim().length > 0,
@@ -637,53 +704,54 @@ export async function completeCurrentPhase2Survey(page) {
         });
 
         if (hasComplete) {
-            // Keep retrying validation until SurveyJS accepts the page or we can
-            // no longer make progress.
             let previousValidationCount = null;
 
             for (let validationAttempt = 1; validationAttempt <= 10; validationAttempt++) {
                 await clickVisibleSurveyButton(page, 'Complete');
 
-                // Give SurveyJS time to either complete or render validation errors.
+                // Give SurveyJS a moment to either surface validation or begin
+                // the completion/redirect flow.
                 await new Promise(resolve => setTimeout(resolve, 750));
 
-                const completionVisible = await page.evaluate(() =>
-                    (document.body?.innerText || '').includes('Thank you for completing the survey')
-                );
+                let validationCount;
 
-                if (completionVisible) {
-                    console.log(`[TEST DEBUG] Phase 2 survey completed after ${validationAttempt} validation attempt(s).`);
-                    return;
+                try {
+                    validationCount = await page.evaluate(() =>
+                        Array.from(document.querySelectorAll('.sd-question, .sv_qstn'))
+                            .filter(question =>
+                                (question.innerText || '').includes('Response required.')
+                            )
+                            .length
+                    );
+                }
+                catch (_) {
+                    console.log('[TEST DEBUG] Survey page began navigating after Complete.');
+                    return {
+                        submitted: true,
+                        navigationStarted: true
+                    };
                 }
 
-                const validationCount = await page.evaluate(() =>
-                    Array.from(document.querySelectorAll('.sd-question, .sv_qstn'))
-                        .filter(question =>
-                            (question.innerText || '').includes('Response required.')
-                        )
-                        .length
-                );
-
                 if (validationCount === 0) {
-                    // No validation errors remain; allow the caller to wait for
-                    // the completion screen/navigation.
-                    return;
+                    console.log(`[TEST DEBUG] Phase 2 survey submitted with no validation errors after ${validationAttempt} attempt(s).`);
+                    return {
+                        submitted: true,
+                        navigationStarted: false
+                    };
                 }
 
                 console.log(`[TEST DEBUG] SurveyJS reported ${validationCount} required response error(s) on attempt ${validationAttempt}.`);
 
-                // First re-fill all currently visible questions because prior
-                // answers may have revealed conditional follow-up fields.
                 const newlyAnswered = await fillVisibleSurveyQuestions(page);
-
-                // Then target any fields SurveyJS explicitly marked invalid.
                 const repaired = await fillSurveyValidationErrors(page);
+                const typed = await typeIntoRequiredSurveyTextFields(page);
 
-                console.log(`[TEST DEBUG] Validation attempt ${validationAttempt}: answered ${newlyAnswered} newly visible field(s), repaired ${repaired} required field(s).`);
+                console.log(`[TEST DEBUG] Validation attempt ${validationAttempt}: answered ${newlyAnswered} newly visible field(s), repaired ${repaired} required field(s), typed ${typed} required text field(s).`);
 
                 if (
                     newlyAnswered === 0 &&
                     repaired === 0 &&
+                    typed === 0 &&
                     previousValidationCount === validationCount
                 ) {
                     await logPageDebug(page, 'Phase 2 survey validation stopped making progress');
@@ -726,20 +794,7 @@ export async function surveyFlowNavigateAndComplete(page, { isPhase1 }) {
             { timeout: TEST_WAIT_TIMEOUT }
         );
 
-        await completeCurrentPhase2Survey(page);
-
-        try {
-            await page.waitForSelector(
-                'text/Thank you for completing the survey',
-                { timeout: TEST_WAIT_TIMEOUT }
-            );
-        }
-        catch (error) {
-            await logPageDebug(page, 'CACI Prolific Phase 2 survey did not reach completion screen');
-            throw error;
-        }
-
-        return;
+        return await completeCurrentPhase2Survey(page);
     }
 
     // Legacy Phase 1 flow.

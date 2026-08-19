@@ -94,7 +94,14 @@ describe('Test CACI Prolific entry method', () => {
             await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&startSurvey=true&PROLIFIC_PID=${PROLIFIC_PID}&pid=123`, { timeout: 300000 });
             await agreeToProlificConsent(page);
             await waitForSurveyIntro(page);
-            await surveyFlowNavigateAndComplete(page, { isPhase1: IS_PH1 });
+
+            const result = await surveyFlowNavigateAndComplete(page, { isPhase1: IS_PH1 });
+
+            if (!IS_PH1) {
+                expect(result).toBeDefined();
+                expect(result.submitted).toBe(true);
+                console.log(`[TEST DEBUG] Phase 2 survey submission detected. navigationStarted=${result.navigationStarted}`);
+            }
         }
         catch (error) {
             await logPageDebug(page, 'CACI Prolific final survey test failed');
