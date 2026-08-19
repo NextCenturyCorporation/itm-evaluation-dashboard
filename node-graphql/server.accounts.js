@@ -53,6 +53,22 @@ async function createUniqueIndex() {
 
 createUniqueIndex().catch(console.error);
 
+
+async function createAdmTargetRunsIndex() {
+    try {
+        await dashboardDB.db.collection('admTargetRuns').createIndex(
+            { "evalNumber": 1 }
+        );
+        console.log("Index on evalNumber created successfully.");
+    } catch (error) {
+        if (error.code !== 85) { // Index already exists
+            console.error("Error creating index (evalNumber):", error);
+        }
+    }
+}
+
+createAdmTargetRunsIndex().catch(console.error);
+
 // Merge our schema and the accounts-js schema
 const schema = makeExecutableSchema({
     typeDefs: mergeTypeDefs([typeDefs, accountsGraphQL.typeDefs]),
