@@ -2,9 +2,9 @@
  * @jest-environment puppeteer
  */
 
-import { HOME_TEXT, WAITING_TEXT, createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
+import { LONG_TEST_TIMEOUT, HOME_TEXT, WAITING_TEXT, createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
 
-jest.setTimeout(330000);
+jest.setTimeout(LONG_TEST_TIMEOUT);
 
 function runRoutePermissionTests(allowApprovalPage = false) {
     let routes = [
@@ -108,7 +108,7 @@ describe('Login tests', () => {
         await page.waitForSelector('text/Sign In');
         currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
     it('rejected user should be sent to waiting page; return to login should work', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -126,7 +126,7 @@ describe('Login tests', () => {
         await page.waitForSelector('text/Sign In');
         currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
     it('logging out and back in should be functional', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -149,7 +149,7 @@ describe('Login tests', () => {
         await page.waitForSelector(HOME_TEXT);
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
-    }, 10000);
+    }, 30000);
 
     it('creating an account with a duplicate email should error', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -160,7 +160,7 @@ describe('Login tests', () => {
         const currentUrl = page.url();
 
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
     it('creating an account with a duplicate username should error', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -171,7 +171,7 @@ describe('Login tests', () => {
         const currentUrl = page.url();
 
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
 });
 

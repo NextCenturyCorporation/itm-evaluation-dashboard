@@ -11,8 +11,9 @@ module.exports = {
             '--disable-setuid-sandbox'
         ],
 
-        // Allow Puppeteer operations up to 5 minutes
-        protocolTimeout: 300000
+        // Bound individual Chrome DevTools protocol operations while still
+        // allowing slower Docker/dev-server responses.
+        protocolTimeout: 60000
     },
 
     browserContext: 'incognito',
@@ -21,8 +22,8 @@ module.exports = {
         command: 'npm run start:test',
         port: process.env.REACT_APP_TEST_PORT,
 
-        // Allow the test server up to 5 minutes to start
-        launchTimeout: 300000
+        // Startup can be substantially slower on the dev server than locally.
+        launchTimeout: 180000
     },
 
     globalTeardown: './testTeardown.js'

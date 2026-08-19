@@ -2,25 +2,25 @@
  * @jest-environment puppeteer
  */
 
-import { checkRouteContent, checkRouteSelector, loginAdmin, createAccount, FOOTER_TEXT } from "../__mocks__/testUtils";
+import { TEST_WAIT_TIMEOUT, LONG_TEST_TIMEOUT, checkRouteContent, checkRouteSelector, loginAdmin, createAccount, FOOTER_TEXT } from "../__mocks__/testUtils";
 
 
-jest.setTimeout(330000);
+jest.setTimeout(LONG_TEST_TIMEOUT);
 
 describe('Verify content on page matches expectation for route', () => {
     // log in as admin
     beforeAll(async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`, { timeout: 300000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/login`, { timeout: TEST_WAIT_TIMEOUT });
         // wait for the page to stop loading
         await page.waitForSelector('#password');
         await createAccount(page, 'admin', 'admin@123.com', 'secretAdminPassword123');
         await loginAdmin(page);
-    }, 330000);
+    });
 
     it('Check /survey-results route content', async () => {
         await checkRouteContent(page, '/survey-results', ['Survey Complete', 'Survey Incomplete']);
         // can take a long time to load this page
-    }, 330000);
+    });
 
     it('Check / route content', async () => {
         await checkRouteContent(page, '/', ['Program Questions', '1. Does alignment score predict measures of trust?']);
@@ -29,7 +29,7 @@ describe('Verify content on page matches expectation for route', () => {
     it('Check /survey route content', async () => {
         await checkRouteContent(page, '/survey', ['Enter Participant ID']);
         page = await browser.newPage();
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/`, { timeout: 300000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/`, { timeout: TEST_WAIT_TIMEOUT });
         await page.waitForSelector(FOOTER_TEXT);
     });
 
@@ -44,16 +44,16 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /text-based-results route content', async () => {
         await checkRouteSelector(page, '/text-based-results', '.text-results');
-    }, 330000);
+    });
     it('Check /humanSimParticipant route content', async () => {
         await checkRouteSelector(page, '/humanSimParticipant', '.aggregatePage', ['View Definitions', 'Download Participant Data']);
-    }, 330000);
+    });
     it('Check /humanProbeData route content', async () => {
         await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);
     });
     it('Check /human-results route content', async () => {
         await checkRouteSelector(page, '/human-results', '.human-results');
-    }, 330000);
+    });
 
     it('Check /results route content', async () => {
         // based off ph2 RQ2 table
@@ -80,7 +80,7 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /research-results/exploratory-analysis route content', async () => {
         await checkRouteSelector(page, '/research-results/exploratory-analysis', '.researchQuestion');
-    }, 330000);
+    });
     it('Check /myaccount route content', async () => {
         await checkRouteContent(page, '/myaccount', ['My Account', 'Manage your account settings', 'Username', 'admin', 'Email Address', 'admin@123.com', 'Confirm New Password']);
     });
@@ -89,9 +89,9 @@ describe('Verify content on page matches expectation for route', () => {
     });
 
     it('Admin Dashboard should require confirmation', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`, { timeout: 300000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`, { timeout: TEST_WAIT_TIMEOUT });
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 300000 });
+        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: TEST_WAIT_TIMEOUT });
         const password = await page.$('input[placeholder="Enter Password"]');
         await password.type('secretAdminPassword123');
         await page.$$eval('.btn-primary', buttons => {
@@ -99,21 +99,21 @@ describe('Verify content on page matches expectation for route', () => {
         });
         const expectedText = ['Admin Dashboard', 'Survey Version', 'Administrators', 'Evaluators', 'Experimenters', 'ADEPT Users']
         for (const txt of expectedText) {
-            await page.waitForSelector(`text/${txt}`, { timeout: 300000 });
+            await page.waitForSelector(`text/${txt}`, { timeout: TEST_WAIT_TIMEOUT });
         }
-    }, 330000);
+    });
 
     it('Admin Dashboard should error on incorrect password', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`, { timeout: 300000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/admin`, { timeout: TEST_WAIT_TIMEOUT });
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: 300000 });
+        await page.waitForSelector('input[placeholder="Enter Password"]', { timeout: TEST_WAIT_TIMEOUT });
         const password = await page.$('input[placeholder="Enter Password"]');
         await password.type('secretAdminPassword1234');
         await page.$$eval('.btn-primary', buttons => {
             Array.from(buttons).find(btn => btn.textContent == 'Submit').click();
         });
-        await page.waitForSelector(`.error-message`, { timeout: 300000 });
-    }, 330000);
+        await page.waitForSelector(`.error-message`, { timeout: TEST_WAIT_TIMEOUT });
+    });
     it('Check /participant-progress-table route content', async () => {
         await checkRouteContent(page, '/participant-progress-table', ['Participant Progress', 'Prolific ID']);
     });
@@ -124,16 +124,16 @@ describe('Verify content on page matches expectation for route', () => {
         await checkRouteContent(page, '/participantTextTester', ['Text Scenario Login', 'Home', 'Start Text Scenario', 'The experimenters will not have access to your email']);
     });
     it('Check /remote-text-survey route content', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`, { timeout: 300000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`, { timeout: TEST_WAIT_TIMEOUT });
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Consent Form', { timeout: 300000 });
+        await page.waitForSelector('text/Consent Form', { timeout: TEST_WAIT_TIMEOUT });
         await page.$$eval('button', btns => {
             Array.from(btns).find(btn => btn.innerText?.trim() === 'I Agree')?.click();
         });
         const expectedText = ['Instructions', 'Welcome to the ITM Text Scenario experiment', 'Guidelines:', 'Choose the option that best matches how you would triage the scenario'];
         for (const txt of expectedText) {
-            await page.waitForSelector(`text/${txt}`, { timeout: 300000 });
+            await page.waitForSelector(`text/${txt}`, { timeout: TEST_WAIT_TIMEOUT });
         }
-    }, 330000);
+    });
 
 });

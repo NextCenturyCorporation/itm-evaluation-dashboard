@@ -4,7 +4,9 @@ export const FOOTER_TEXT = 'text/This research was developed';
 export const WAITING_TEXT = 'Thank you for your interest in the DARPA In the Moment Program.';
 export const HOME_TEXT = 'text/Program Questions';
 
-export const TEST_WAIT_TIMEOUT = 300000;
+export const SURVEY_STEP_TIMEOUT = 60000;
+export const TEST_WAIT_TIMEOUT = 120000;
+export const LONG_TEST_TIMEOUT = 180000;
 
 export async function logPageDebug(page, label) {
     try {
@@ -94,7 +96,7 @@ export async function logout(page) {
                 Array.from(buttons).find(btn => btn.textContent == 'Logout').click();
             });
         }
-        await page.waitForSelector('text/Sign In', { timeout: 100000 });
+        await page.waitForSelector('text/Sign In', { timeout: TEST_WAIT_TIMEOUT });
     }
     currentUrl = page.url();
     expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -127,31 +129,31 @@ export async function testRouteRedirection(route, expectedRedirect = '/login') {
 export async function loginAdmin(page) {
     await logout(page);
     await login(page, 'admin', 'secretAdminPassword123', true);
-    await page.waitForSelector(HOME_TEXT);
+    await page.waitForSelector(HOME_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 }
 
 export async function loginEvaluator(page) {
     await logout(page);
     await login(page, 'eval', 'secretEvalPassword123', true);
-    await page.waitForSelector(HOME_TEXT);
+    await page.waitForSelector(HOME_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 }
 
 export async function loginExperimenter(page) {
     await logout(page);
     await login(page, 'exp', 'secretExperimenterPassword123', true);
-    await page.waitForSelector(HOME_TEXT);
+    await page.waitForSelector(HOME_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 }
 
 export async function loginAdeptUser(page) {
     await logout(page);
     await login(page, 'adept', 'secretAdeptPassword123', true);
-    await page.waitForSelector(HOME_TEXT);
+    await page.waitForSelector(HOME_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 }
 
 export async function loginBasicApprovedUser(page) {
     await logout(page);
     await login(page, 'basic', 'secretBasicPassword123', true);
-    await page.waitForSelector('text/Welcome to the ITM Program!');
+    await page.waitForSelector('text/Welcome to the ITM Program!', { timeout: TEST_WAIT_TIMEOUT });
 }
 
 export async function checkRouteContent(page, route, expectedText) {
@@ -205,43 +207,43 @@ export async function useMenuNavigation(page, header, selection, expectedRoute, 
 export async function startAdeptQualtrixSurvey(page) {
     const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
     await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
-    await page.waitForSelector('text/Consent Form', { timeout: 20000 });
+    await page.waitForSelector('text/Consent Form', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
         b?.click();
     });
-    await page.waitForSelector('text/Instructions', { timeout: 15000 });
+    await page.waitForSelector('text/Instructions', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
         b?.click();
     });
     if (IS_PH1) {
-        await page.waitForSelector('text/Page 1 of', { timeout: 30000 });
+        await page.waitForSelector('text/Page 1 of', { timeout: SURVEY_STEP_TIMEOUT });
     } else {
-        await page.waitForSelector('text/Scenario Details', { timeout: 30000 });
+        await page.waitForSelector('text/Scenario Details', { timeout: SURVEY_STEP_TIMEOUT });
     }
 }
 
 export async function startCaciProlificSurvey(page) {
     const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
     await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=ALS_test1210b`);
-    await page.waitForSelector('text/Consent Form', { timeout: 20000 });
+    await page.waitForSelector('text/Consent Form', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
         b?.click();
     });
-    await page.waitForSelector('text/Instructions', { timeout: 30000 });
+    await page.waitForSelector('text/Instructions', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
         b?.click();
     });
 
     if (IS_PH1) {
-        await page.waitForSelector('text/Page 1 of', { timeout: 30000 });
-        await page.waitForSelector('input[type="radio"]', { timeout: 30000 });
+        await page.waitForSelector('text/Page 1 of', { timeout: SURVEY_STEP_TIMEOUT });
+        await page.waitForSelector('input[type="radio"]', { timeout: SURVEY_STEP_TIMEOUT });
     }
     else {
-        await page.waitForSelector('text/Scenario Details', { timeout: 30000 });
+        await page.waitForSelector('text/Scenario Details', { timeout: SURVEY_STEP_TIMEOUT });
     }
 }
 
@@ -283,10 +285,10 @@ export async function takePhase1TextScenario(page) {
     let scenarios = 0;
     while (scenarios < 5) {
         try {
-            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 2000 });
+            await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 5000 });
         } catch (error) {
             if (error.name === 'TimeoutError') {
-                await page.waitForSelector(`text/Page 1 of`, { timeout: 2000 });
+                await page.waitForSelector(`text/Page 1 of`, { timeout: 5000 });
                 scenarios += 1;
                 pageNum = 1;
             } else {
@@ -312,7 +314,7 @@ export async function takePhase2TextScenario(page) {
     let pageNum = 1;
     let scenarios = 0;
     while (scenarios < 4) {
-        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 5000 });
         await page.focus('input[type="radio"]');
         await page.keyboard.press(' ');
         await page.keyboard.press('Tab');
@@ -328,7 +330,7 @@ export async function takePhase2TextScenario(page) {
 }
 
 export async function waitForSurveyIntro(page) {
-    await page.waitForSelector('text/In the final part of the study,', { timeout: 30000 });
+    await page.waitForSelector('text/In the final part of the study,', { timeout: SURVEY_STEP_TIMEOUT });
 }
 
 export async function clickNext(page) {
@@ -343,8 +345,8 @@ export async function completeTextScenarioAndReachSurvey(page, { isPhase1 }) {
     } else {
         await takePhase2TextScenario(page);
     }
-    await page.waitForSelector('text/Please do not close your browser', { timeout: 30000 });
-    await page.waitForSelector('text/In the final part of the study,', { timeout: 300000 });
+    await page.waitForSelector('text/Please do not close your browser', { timeout: SURVEY_STEP_TIMEOUT });
+    await page.waitForSelector('text/In the final part of the study,', { timeout: LONG_TEST_TIMEOUT });
     await pressAllKeys(page, 'In the final part of the study,');
 }
 
@@ -394,8 +396,8 @@ export async function fillVisibleSurveyQuestions(page) {
                 return false;
             }
 
-            // Click the actual native input. SurveyJS tracks this event even
-            // when the input itself is visually hidden.
+            // Click the native input so SurveyJS receives the normal choice event,
+            // even when the input itself is visually hidden.
             target.click();
             return true;
         };
@@ -446,32 +448,6 @@ export async function fillVisibleSurveyQuestions(page) {
                 }
             }
         });
-
-        Array.from(document.querySelectorAll(
-            'textarea, input[type="text"], input[type="number"], input[type="email"]'
-        ))
-            .filter(isVisible)
-            .forEach(input => {
-                if (input.value) {
-                    return;
-                }
-
-                const value = input.type === 'number' ? '1' : 'm';
-                const prototype = input.tagName === 'TEXTAREA'
-                    ? window.HTMLTextAreaElement.prototype
-                    : window.HTMLInputElement.prototype;
-                const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
-
-                if (valueSetter) {
-                    valueSetter.call(input, value);
-                } else {
-                    input.value = value;
-                }
-
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-                input.dispatchEvent(new Event('change', { bubbles: true }));
-                answered += 1;
-            });
 
         Array.from(document.querySelectorAll('select'))
             .filter(isVisible)
@@ -616,31 +592,6 @@ export async function fillSurveyValidationErrors(page) {
                 return;
             }
 
-            const textInput = Array.from(
-                questionContainer.querySelectorAll(
-                    'textarea, input[type="text"], input[type="number"], input[type="email"]'
-                )
-            ).find(input => isVisible(input) && !input.value);
-
-            if (textInput) {
-                const value = textInput.type === 'number' ? '1' : 'm';
-                const prototype = textInput.tagName === 'TEXTAREA'
-                    ? window.HTMLTextAreaElement.prototype
-                    : window.HTMLInputElement.prototype;
-                const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
-
-                if (setter) {
-                    setter.call(textInput, value);
-                } else {
-                    textInput.value = value;
-                }
-
-                textInput.dispatchEvent(new Event('input', { bubbles: true }));
-                textInput.dispatchEvent(new Event('change', { bubbles: true }));
-                repaired += 1;
-                return;
-            }
-
             const nativeSelect = Array.from(
                 questionContainer.querySelectorAll('select')
             ).find(select => isVisible(select) && !select.value);
@@ -686,15 +637,14 @@ export async function clickVisibleSurveyButton(page, buttonValue) {
 
 export async function completeCurrentPhase2Survey(page) {
     // Fill the current Phase 2 survey using the controls that are actually
-    // rendered, rather than depending on a fixed keyboard/tab sequence.
+    // rendered rather than depending on a fixed keyboard/tab sequence.
     for (let pageIndex = 0; pageIndex < 10; pageIndex++) {
         await page.waitForFunction(
             () => document.body?.innerText?.trim().length > 0,
             { timeout: TEST_WAIT_TIMEOUT }
         );
 
-        const answered = await fillVisibleSurveyQuestions(page);
-        console.log(`[TEST DEBUG] Phase 2 survey page ${pageIndex + 1}: answered ${answered} visible question groups/fields`);
+        await fillVisibleSurveyQuestions(page);
 
         const hasComplete = await page.evaluate(() => {
             const controls = Array.from(document.querySelectorAll('input, button'));
@@ -705,50 +655,58 @@ export async function completeCurrentPhase2Survey(page) {
 
         if (hasComplete) {
             let previousValidationCount = null;
+            let allReportedErrorsRepaired = false;
 
             for (let validationAttempt = 1; validationAttempt <= 10; validationAttempt++) {
-                await clickVisibleSurveyButton(page, 'Complete');
+                const clicked = await clickVisibleSurveyButton(page, 'Complete');
 
-                // Give SurveyJS a moment to either surface validation or begin
-                // the completion/redirect flow.
-                await new Promise(resolve => setTimeout(resolve, 750));
-
-                let validationCount;
-
-                try {
-                    validationCount = await page.evaluate(() =>
-                        Array.from(document.querySelectorAll('.sd-question, .sv_qstn'))
-                            .filter(question =>
-                                (question.innerText || '').includes('Response required.')
-                            )
-                            .length
-                    );
+                if (!clicked) {
+                    await logPageDebug(page, 'Phase 2 survey Complete button disappeared');
+                    throw new Error('Unable to complete Phase 2 survey: Complete button was not available.');
                 }
-                catch (_) {
-                    console.log('[TEST DEBUG] Survey page began navigating after Complete.');
+
+                // Once every error reported by SurveyJS has been repaired, the
+                // next Complete click is the submission action. Do not inspect
+                // the page after that click: CACI Prolific can immediately
+                // navigate to an external target, which can block Puppeteer
+                // protocol commands while Chromium initializes that target.
+                if (allReportedErrorsRepaired) {
                     return {
                         submitted: true,
                         navigationStarted: true
                     };
                 }
 
+                await new Promise(resolve => setTimeout(resolve, 750));
+
+                const validationCount = await page.evaluate(() =>
+                    Array.from(document.querySelectorAll('.sd-question, .sv_qstn'))
+                        .filter(question =>
+                            (question.innerText || '').includes('Response required.')
+                        )
+                        .length
+                );
+
                 if (validationCount === 0) {
-                    console.log(`[TEST DEBUG] Phase 2 survey submitted with no validation errors after ${validationAttempt} attempt(s).`);
                     return {
                         submitted: true,
                         navigationStarted: false
                     };
                 }
 
-                console.log(`[TEST DEBUG] SurveyJS reported ${validationCount} required response error(s) on attempt ${validationAttempt}.`);
-
-                const newlyAnswered = await fillVisibleSurveyQuestions(page);
+                // Repair fields SurveyJS explicitly marked invalid. Choice/select
+                // controls can be handled in-page; text fields use real typing so
+                // SurveyJS receives its normal input/change/blur event sequence.
                 const repaired = await fillSurveyValidationErrors(page);
                 const typed = await typeIntoRequiredSurveyTextFields(page);
 
-                console.log(`[TEST DEBUG] Validation attempt ${validationAttempt}: answered ${newlyAnswered} newly visible field(s), repaired ${repaired} required field(s), typed ${typed} required text field(s).`);
+                // Answer any conditional fields revealed by those repairs.
+                const newlyAnswered = await fillVisibleSurveyQuestions(page);
+
+                allReportedErrorsRepaired = repaired + typed >= validationCount;
 
                 if (
+                    !allReportedErrorsRepaired &&
                     newlyAnswered === 0 &&
                     repaired === 0 &&
                     typed === 0 &&
@@ -800,12 +758,12 @@ export async function surveyFlowNavigateAndComplete(page, { isPhase1 }) {
     // Legacy Phase 1 flow.
     await page.waitForSelector('text/Note that in some scenarios', { timeout: 50000 });
     await clickNext(page);
-    await page.waitForSelector('text/Situation', { timeout: 500 });
+    await page.waitForSelector('text/Situation', { timeout: 5000 });
 
     let pageNum = 3;
     let medics = 0;
     while (medics < 3) {
-        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 500 });
+        await page.waitForSelector(`text/Page ${pageNum} of`, { timeout: 5000 });
         await page.focus('input[type="radio"]');
 
         for (let i = 0; i < 4; i++) {
@@ -818,8 +776,8 @@ export async function surveyFlowNavigateAndComplete(page, { isPhase1 }) {
         pageNum += 1;
     }
 
-    await page.waitForSelector('text/Medic-B21 vs Medic-V17', { timeout: 500 });
-    await page.waitForSelector('text/Medic-B16 vs Medic-B21', { timeout: 500 });
+    await page.waitForSelector('text/Medic-B21 vs Medic-V17', { timeout: 5000 });
+    await page.waitForSelector('text/Medic-B16 vs Medic-B21', { timeout: 5000 });
     await page.focus('input[type="radio"]');
 
     for (let i = 0; i < 2; i++) {
