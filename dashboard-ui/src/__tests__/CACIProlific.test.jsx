@@ -49,14 +49,12 @@ describe('Test CACI Prolific entry method', () => {
           const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Do Not Agree');
           b?.click();
         });
-        await Promise.all([waitForReturnHit, clickDisagree]);
-        
-        await page.waitForNavigation({ waitUntil: 'load', timeout: 20000 }).catch(() => {});
-        const finalUrl = page.url();
-        expect(
-          finalUrl.startsWith('https://app.prolific.com') ||
-          finalUrl.startsWith('https://auth.prolific.com')
-        ).toBe(true);
+        const [returnRequest] = await Promise.all([waitForReturnHit, clickDisagree]);
+
+        // In CI, the corporate network may prevent Chromium from completing the
+        // external Prolific navigation. Verifying the exact outbound request tests
+        // the dashboard behavior without depending on Prolific being reachable.
+        expect(returnRequest.url()).toBe(PROLIFIC_RETURN_URL);
     }, 30000);
 
     it('any key combo during text scenario should have no effect on progress', async () => {
@@ -68,7 +66,7 @@ describe('Test CACI Prolific entry method', () => {
         await startCaciProlificSurvey(page);
         await completeTextScenarioAndReachSurvey(page, { isPhase1: IS_PH1 })
         // very long test because it connects to ST and ADEPT servers to send fake responses
-    }, 80000000);
+    }, 300000);
 
     it('any key combo during survey should have no effect on progress', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&startSurvey=true&PROLIFIC_PID=${PROLIFIC_PID}&pid=123`);
@@ -87,6 +85,6 @@ describe('Test CACI Prolific entry method', () => {
         await agreeToProlificConsent(page);
         await waitForSurveyIntro(page);
         await surveyFlowNavigateAndComplete(page, { isPhase1: IS_PH1 });
-    }, 40000);
+    }, 120000);
 
 });

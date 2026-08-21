@@ -29,7 +29,7 @@ const GET_SURVEY_RESULTS = gql`
 
 
 export default function AggregateResults({ type }) {
-    let evalOptions = getAllEvals()
+    let evalOptions = getAllEvals() ?? [];
     const dispatch = useDispatch();
     const storedEval = useSelector(state => state.configs.selectedResearchEval);
     const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -38,7 +38,9 @@ export default function AggregateResults({ type }) {
     const [fullData, setFullData] = React.useState([]);
     const [aggregateData, setAggregateData] = React.useState(null);
     const [showDefinitions, setShowDefinitions] = React.useState(false);
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const [selectedEval, setSelectedEval] = React.useState(
+        storedEval ?? evalOptions[0]?.value ?? null
+    );
     const [iframeLink, setIframeLink] = React.useState(null);
     const [showIframe, setShowIframe] = React.useState(false);
     const [iframeTitle, setIframeTitle] = React.useState(null);
@@ -46,15 +48,17 @@ export default function AggregateResults({ type }) {
 
 
     const { loading, error, data } = useQuery(GET_SURVEY_RESULTS, {
-        variables: { "evalNumber": selectedEval }
+        variables: { "evalNumber": selectedEval },
+        skip: !isDefined(selectedEval)
         // only pulls from network, never cached
         //fetchPolicy: 'network-only',
     });
     
     React.useEffect(() => {
-        evalOptions = getAllEvals()
-        setSelectedEval(storedEval ?? evalOptions[0].value);
-    }, [type]);
+        evalOptions = getAllEvals() ?? [];
+        const nextEval = storedEval ?? evalOptions[0]?.value ?? null;
+        setSelectedEval(nextEval);
+    }, [type, storedEval]);
 
 
 
@@ -287,8 +291,8 @@ export default function AggregateResults({ type }) {
                             onChange={selectEvaluation}
                             options={evalOptions}
                             placeholder="Select Evaluation"
-                            defaultValue={evalOptions[0]}
-                            value={evalOptions.find(option => option.value === selectedEval)}
+                            defaultValue={evalOptions[0] ?? null}
+                            value={evalOptions.find(option => option.value === selectedEval) ?? null}
                             styles={{
                                 // Fixes the overlapping problem of the component
                                 menu: provided => ({ ...provided, zIndex: 9999 })
@@ -343,9 +347,9 @@ export default function AggregateResults({ type }) {
                         <Select
                             onChange={selectEvaluation}
                             options={evalOptions}
-                            defaultValue={evalOptions[0]}
+                            defaultValue={evalOptions[0] ?? null}
                             placeholder="Select Evaluation"
-                            value={evalOptions.find(option => option.value === selectedEval)}
+                            value={evalOptions.find(option => option.value === selectedEval) ?? null}
                             styles={{
                                 // Fixes the overlapping problem of the component
                                 menu: provided => ({ ...provided, zIndex: 9999 })

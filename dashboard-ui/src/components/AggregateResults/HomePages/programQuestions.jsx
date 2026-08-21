@@ -24,16 +24,20 @@ const GET_SURVEY_RESULTS = gql`
 
 
 export default function ProgramQuestions() {
-    const evalOptions = getEvalOptionsForPage(PAGES.PROGRAM_QUESTIONS);
-    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0].value);
+    const evalOptions = getEvalOptionsForPage(PAGES.PROGRAM_QUESTIONS) ?? [];
+    const [selectedEval, setSelectedEval] = React.useState(evalOptions[0]?.value ?? null);
     const [fullData, setFullData] = React.useState(null);
     const [admKdmas, setAdmKdmas] = React.useState(null);
     const [admAlignment, setAdmAlignment] = React.useState(null);
 
     const { data } = useQuery(GET_ADM_DATA, {
         variables: { "evalNumber": selectedEval },
+        skip: selectedEval === null
     });
-    const { loading, error, data: allData } = useQuery(GET_SURVEY_RESULTS, { variables: { "evalNumber": selectedEval } });
+    const { loading, error, data: allData } = useQuery(GET_SURVEY_RESULTS, {
+        variables: { "evalNumber": selectedEval },
+        skip: selectedEval === null
+    });
 
     React.useEffect(() => {
         if (!loading && !error && allData?.getAllSurveyResultsByEval && allData?.getAllScenarioResultsByEval) {
@@ -93,9 +97,9 @@ export default function ProgramQuestions() {
                 <Select
                     onChange={selectEvaluation}
                     options={evalOptions.filter((o) => o.value !== 6)}
-                    defaultValue={evalOptions[0]}
+                    defaultValue={evalOptions[0] ?? null}
                     placeholder="Select Evaluation"
-                    value={evalOptions.find(option => option.value === selectedEval)}
+                    value={evalOptions.find(option => option.value === selectedEval) ?? null}
                     styles={{
                         // Fixes the overlapping problem of the component
                         menu: provided => ({ ...provided, zIndex: 9999 })

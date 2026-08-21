@@ -1,8 +1,14 @@
 module.exports = {
     launch: {
-        headless: true,  // Set to `false` to see the browser window
-        // slowMo: 25,       // Optional: Slow down actions to see what is happening
-        defaultViewport: null,  // Optional: Fullscreen viewport
+        headless: true, // Set to false to see the browser window
+        // slowMo: 25, // Optional: Slow down actions to see what is happening
+        defaultViewport: null, // Optional: Fullscreen viewport
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+        protocolTimeout: 300000,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+        ]
     },
     browserContext: 'incognito',
     server: {
@@ -10,5 +16,5 @@ module.exports = {
         port: process.env.REACT_APP_TEST_PORT,
         launchTimeout: 120000
     },
-    globalTeardown: './testTeardown.js',
+    globalTeardown: './testTeardown.js'
 };

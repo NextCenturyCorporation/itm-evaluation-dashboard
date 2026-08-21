@@ -64,29 +64,31 @@ const PH1_MAP = {
     "vol-ph1-eval-4": "vol-ph1-eval-4"
 };
 
+const phase2Config = { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true };
+
 const EVAL_CONFIG = {
     3: { type: 'MRE', scenarios: null, showTeamToggle: true, showKdma: true },
     4: { type: 'DRE', scenarios: DRE_SCENARIOS, showTeamToggle: false, showKdma: false },
     5: { type: 'PH1', scenarios: Object.keys(PH1_SCENARIOS), showTeamToggle: false, showKdma: true },
     6: { type: 'PH1', scenarios: Object.keys(PH1_SCENARIOS), showTeamToggle: false, showKdma: true },
-    8: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
-    9: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
-    10: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
-    12: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
-    16: { type: 'SUMMER', scenarios: SUMMER_SCENARIOS, showTeamToggle: false, showKdma: true },
+    8: phase2Config, 9: phase2Config, 10: phase2Config, 12: phase2Config, 
+    15: phase2Config, 16: phase2Config, 17: phase2Config,
 };
 
-const USE_OPEN_WORLD = [8, 9, 10, 12, 16];
+const USE_OPEN_WORLD = Object.entries(EVAL_CONFIG)
+    .filter(([, cfg]) => cfg.type === 'SUMMER')
+    .map(([n]) => Number(n));
 
 export default function HumanResults() {
-    const evalOptions = getAllEvals();
+    const evalOptions = getAllEvals() ?? [];
     const dispatch = useDispatch();
     const storedEval = useSelector(state => state.configs.selectedResearchEval);
-    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0].value);
+    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0]?.value ?? null);
 
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         variables: { evalNumber: selectedEval },
+        skip: selectedEval === null
     });
     const [dataByScene, setDataByScene] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
@@ -181,12 +183,7 @@ export default function HumanResults() {
                         }
                         last_action = action;
                     }
-                    if (Object.keys(organized).includes(scene)) {
-                        organized[scene][pid] = entry;
-                    } else {
-                        organized[scene] = {};
-                        organized[scene][pid] = entry;
-                    }
+                    (organized[scene] ??= {})[pid] = entry;
                 }
             }
             setDataByScene(organized);
@@ -230,8 +227,8 @@ export default function HumanResults() {
                         onChange={selectEvaluation}
                         options={evalOptions}
                         placeholder="Select Evaluation"
-                        defaultValue={evalOptions[0]}
-                        value={evalOptions.find(option => option.value === selectedEval)}
+                        defaultValue={evalOptions[0] ?? null}
+                        value={evalOptions.find(option => option.value === selectedEval) ?? null}
                     />
                 </div>}
             {evalConfig?.type === 'MRE' && dataByScene &&
@@ -329,6 +326,8 @@ export default function HumanResults() {
                                                     {isStringDefined(action.treatmentLocation) && <tr><td>Treatment Location:</td><td>{action.treatmentLocation}</td></tr>}
                                                     {isStringDefined(action.question) && <tr><td>Question:</td><td>{action.question}</td></tr>}
                                                     {isStringDefined(action.answer) && <tr><td>Answer:</td><td>{action.answer}</td></tr>}
+                                                    {action.answerChoice?.length > 0 && <tr><td>Answer:</td><td>{action.answerChoice.join(', ')}</td></tr>}
+                                                    {action.evacPatientIds?.length > 0 && <tr><td>Evacuated:</td><td>{action.evacPatientIds.join(', ')}</td></tr>}
                                                     {isStringDefined(action.breathing) && <tr><td>Breathing:</td><td>{action.breathing}</td></tr>}
                                                     {isStringDefined(action.pulse) && <tr><td>Pulse:</td><td>{action.pulse}</td></tr>}
                                                     {isStringDefined(action.SpO2) && <tr><td>SpO2:</td><td>{action.SpO2}</td></tr>}
