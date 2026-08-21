@@ -29,6 +29,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON @complexity(value: 10)
     getAllHistory(id: ID): [JSON] @complexity(value: 150)
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
+    getRQ2HistoryByEvalNumber(evalNumber: Float): [JSON] @complexity(value: 75)
     getAllOWData(evalNumber: Float, scenarioIDs: [ID]): [JSON] @complexity(value: 75)
     getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
     getAllEvalData: [JSON] @complexity(value: 10)
@@ -171,7 +172,7 @@ const resolvers = {
           "history.parameters.probe_id": 1
         }
       }).toArray();
-      return docs.map(doc => {
+       return docs.map(doc => {
         if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
           if (doc.probes?.length > 0) {
               doc.probe_ids = doc.probes.map(p => p.probe_id);
@@ -183,6 +184,19 @@ const resolvers = {
       }
         return doc;
       });
+    },
+    getRQ2HistoryByEvalNumber: async (obj, args, context, inflow) => {
+      const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"] }, {
+        projection: {
+          "synthetic": 1,
+          "probe_ids": 1,
+          "alignment_target": 1,
+          "evaluation": 1,
+          "results": 1,
+          "oracle_alignment": 1,
+        }
+      }).toArray();
+      return docs
     },
     getGroupAdmAlignmentByEval: async (obj, args, context, inflow) => {
       return await context.db.collection('admTargetRuns').find({
