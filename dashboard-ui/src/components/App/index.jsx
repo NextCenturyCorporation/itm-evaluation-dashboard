@@ -16,7 +16,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData, canadaParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
 import { computeTextThreshold } from '../Account/participantProgress';
 import '../../css/app.css';
@@ -377,6 +377,7 @@ export function App() {
             ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
 
             const participantDataFunctions = {
+                18: canadaParticipantData,
                 17: juneParticipantData,
                 16: aprilParticipantData,
                 15: febParticipantData,

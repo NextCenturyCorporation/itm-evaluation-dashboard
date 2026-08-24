@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { shuffle } from '../Survey/surveyUtils';
 export const evalNameToNumber = {
+    'Phase 2 Canada Evaluation': 18,
     'Phase 2 June 2026 Evaluation': 17,
     'Phase 2 April 2026 Evaluation': 16,
     'Phase 2 February 2026 Evaluation': 15,
@@ -228,10 +229,35 @@ export const juneParticipantData = (currentSearchParams, hashedEmail, newPid, ty
     };
 };
 
+export const canadaParticipantData = (currentSearchParams, hashedEmail, newPid, type, evalNum) => {
+    const prolificId = currentSearchParams ? currentSearchParams.get('PROLIFIC_PID') : null;
+    const contactId = currentSearchParams ? currentSearchParams.get('ContactID') : null;
+    const email = hashedEmail ? hashedEmail : bcrypt.hashSync(newPid.toString(), "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
+
+    return {
+        "ParticipantID": newPid,
+        "Type": type,
+        "prolificId": prolificId,
+        "contactId": contactId,
+        "claimed": true,
+        "simEntryCount": 0,
+        "surveyEntryCount": 0,
+        "textEntryCount": 0,
+        "hashedEmail": email,
+        'evalNum': evalNum
+    };
+};
+
 export const scenarioIdsFromLog = (participantLog, currentEval) => {
     const num = evalNameToNumber[currentEval];
 
     const configs = {
+        18: {
+            prefix: 'June2026', 
+            types: ['AF', 'MF', 'PS', 'SS'],
+            noDigitTypes: ['AF', 'MF', 'PS', 'SS'],
+            suffix: 'assess'
+        },
         17: { 
             prefix: 'June2026', 
             types: ['AF', 'MF', 'PS', 'SS'],
