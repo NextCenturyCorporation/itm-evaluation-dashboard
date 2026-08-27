@@ -125,6 +125,12 @@ const getEval16Groups = (scenarioId) => {
     return groups;
 };
 
+const getEval18Group = (scenarioId) => {
+    if (scenarioId.includes('AF') || scenarioId.includes('PS')) return 'AF-PS';
+    if (scenarioId.includes('MF') || scenarioId.includes('SS')) return 'MF-SS';
+    return null;
+};
+
 const getEval13Group = (scenarioId) => {
     const match = scenarioId.match(/-(AF|MF|PS|SS)\d+-/);
     return match ? match[1] : null;
@@ -353,6 +359,55 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
                         'AF-SS_mostLeastAligned': afSSmla,
                         'AF-SS_kdmas': afSSkdmas
                     } } });
+                }
+            }
+        } else if (evalNumber === 18) {
+            // (AF-PS, MF-SS) each scored on their own. one combined session holding all four documents.
+            const eval18Scenarios = allParticipantResults.filter(r => r.evalNumber === 18);
+
+            const pairGroups = { 'AF-PS': [], 'MF-SS': [] };
+            for (const scenario of eval18Scenarios) {
+                const gk = getEval18Group(scenario.scenario_id);
+                if (pairGroups[gk]) pairGroups[gk].push(scenario);
+            }
+
+            for (const [groupKey, groupScenarios] of Object.entries(pairGroups)) {
+                if (groupScenarios.length === 2) {
+                    onProgress?.(`Eval 18: scoring ${groupKey} pair group...`);
+                    const groupSid = await createAdeptSession(url);
+                    for (const scenario of groupScenarios) {
+                        await submitResponses(scenario, scenario.scenario_id, url, groupSid);
+                    }
+                    const groupMLA = await getMostLeastAligned(groupSid, url, groupScenarios[0], evalNumber, true);
+                    const groupKdmas = await getKdmaProfile(groupSid, url);
+                    for (const scenario of groupScenarios) {
+                        const docId = scenario._id?.$oid || scenario._id;
+                        await updateMutation({ variables: { id: docId, updates: {
+                            [`${groupKey}_sessionId`]: groupSid,
+                            [`${groupKey}_mostLeastAligned`]: groupMLA,
+                            [`${groupKey}_kdmas`]: groupKdmas
+                        } } });
+                    }
+                }
+            }
+
+            // Combined all-document session scoring
+            if (eval18Scenarios.length > 0) {
+                onProgress?.(`Eval 18: scoring combined session (${eval18Scenarios.length} documents)...`);
+                const combinedSid = await createAdeptSession(url);
+                for (const scenario of eval18Scenarios) {
+                    await submitResponses(scenario, scenario.scenario_id, url, combinedSid);
+                }
+                const combinedMLA = await getMostLeastAligned(combinedSid, url, eval18Scenarios[0], evalNumber, true);
+                const combinedKdmas = await getKdmaProfile(combinedSid, url);
+                for (const scenario of eval18Scenarios) {
+                    const docId = scenario._id?.$oid || scenario._id;
+                    await updateMutation({ variables: { id: docId, updates: {
+                        combinedSessionId: combinedSid,
+                        combinedMostLeastAligned: combinedMLA,
+                        combinedKdmas
+                    } } });
+                    if (missingScenarioIds.includes(scenario.scenario_id)) repaired++;
                 }
             }
         } else {
