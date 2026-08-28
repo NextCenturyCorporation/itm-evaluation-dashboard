@@ -2213,5 +2213,74 @@ export const createScenarioBlockv13 = (scenarioType, allPages, textResults, delV
 
     const doc = textResults.find(r => r.scenario_id === config.scenarioId);
     if (!doc) { console.warn(`No text document ${config.scenarioId} for v13 block ${scenarioType}`); return null; }
+
+    const entry = doc[config.field]?.find(o => o.target === null) ?? doc[config.field]?.[0]
+
+    const isGroupKey = key => key.split('-').pop().includes('_');
+    const keyMatches = key =>
+        !isGroupKey(key) &&
+        config.include.every(c => key.includes(c)) &&
+        config.exclude.every(c => !key.includes(c));
+
+    const ordered = (entry?.response || []).filter(o => keyMatches(Object.keys(o)[0]));
+    if (!ordered.length) { console.warn(`No alignment targets for v13 block ${scenarioType}`); return null; }
+
+    const pageForEntry = o => findPage(Object.keys(o)[0]);
+    const findPage = (target, baseline = false) => allPages.find(page =>
+        config.indexMatch(page.scenarioIndex) &&
+        (baseline
+            ? page.admName?.includes('Baseline')
+            : (!page.admName?.includes('Baseline') && page.target === target))
+    );
+
+    const baselineAdm = findPage(null, true);
+    if (!baselineAdm) { console.warn(`Missing baseline ADM page for v13 block ${scenarioType}`); return null; }
+
+    // most aligned: walk down from the top until we find one that doesn't
+    // behave identically to the baseline
+    let alignedAdm = null;
+    for (const o of ordered) {
+        const candidate = pageForEntry(o);
+        if (candidate && !haveSameResponses(candidate, baselineAdm)) { alignedAdm = candidate; break; }
+    }
+
+    // least aligned: walk up from the bottom until we find one that doesn't
+    // overlap with either the most aligned or the baseline
+    let misalignedAdm = null;
+    if (includeMisaligned) {
+        for (let i = ordered.length - 1; i >= 0; i--) {
+            const candidate = pageForEntry(ordered[i]);
+            if (candidate &&
+                !haveSameResponses(candidate, alignedAdm) &&
+                !haveSameResponses(candidate, baselineAdm)) {
+                misalignedAdm = candidate;
+                break;
+            }
+        }
+    }
+
+    if (!alignedAdm || (includeMisaligned && !misalignedAdm)) {
+        console.warn(`Missing ADM pages for v13 block ${scenarioType} - aligned:${!!alignedAdm} misaligned:${!!misalignedAdm}`);
+        return null;
+    }
+
+    Object.assign(alignedAdm, { alignment: 'aligned', admChoiceProcess: 'most aligned' });
+    baselineAdm.alignment = 'baseline';
+    if (misalignedAdm) Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
+
+    const admPages = [alignedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
+
+    // enforce delVersion
+    const removeVersion = delVersion === 'A' ? 'Del Version B' : 'Del Version A';
+    admPages.forEach(page => {
+        if (!page?.elements) return;
+        page.elements = page.elements.filter(el => !el.name?.includes(removeVersion));
+    });
+
+    return {
+        type: scenarioType,
+        delVersion,
+        pages: [...shuffle(admPages), genComparisonPagev12(alignedAdm, baselineAdm, misalignedAdm)]
+    };
 }
 

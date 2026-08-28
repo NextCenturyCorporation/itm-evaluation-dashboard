@@ -246,7 +246,7 @@ class SurveyPage extends Component {
             finalize(allBlocks);
         } else if (version === "13.0") {
             const isEven = parseInt(this.state.pid, 10) % 2 === 0;
-            const getVersion = (type) => type.startsWith('MF') === isEven ? 'A' : 'B';
+            const getVersion = (type) => type.startsWith('AF') === isEven ? 'A' : 'B';
             const allBlocks = ['AF-PS', 'MF-SS', 'MF', 'AF', 'PS']
                 .map(type => createScenarioBlockv13(type, allPages, participantTextResults, getVersion(type)))
                 .filter(Boolean)
