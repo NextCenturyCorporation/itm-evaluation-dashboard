@@ -206,7 +206,10 @@ export async function useMenuNavigation(page, header, selection, expectedRoute, 
 
 export async function startAdeptQualtrixSurvey(page) {
     const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
-    await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+    await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`, {
+        timeout: TEST_WAIT_TIMEOUT,
+        waitUntil: 'domcontentloaded'
+    });
     await page.waitForSelector('text/Consent Form', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
@@ -226,7 +229,10 @@ export async function startAdeptQualtrixSurvey(page) {
 
 export async function startCaciProlificSurvey(page) {
     const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
-    await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=ALS_test1210b`);
+    await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=ALS_test1210b`, {
+        timeout: TEST_WAIT_TIMEOUT,
+        waitUntil: 'domcontentloaded'
+    });
     await page.waitForSelector('text/Consent Form', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');

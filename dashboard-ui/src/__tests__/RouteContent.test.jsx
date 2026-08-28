@@ -124,7 +124,10 @@ describe('Verify content on page matches expectation for route', () => {
         await checkRouteContent(page, '/participantTextTester', ['Text Scenario Login', 'Home', 'Start Text Scenario', 'The experimenters will not have access to your email']);
     });
     it('Check /remote-text-survey route content', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`, { timeout: TEST_WAIT_TIMEOUT });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`, {
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
+        });
         await page.waitForSelector(FOOTER_TEXT);
         await page.waitForSelector('text/Consent Form', { timeout: TEST_WAIT_TIMEOUT });
         await page.$$eval('button', btns => {
