@@ -378,7 +378,7 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
                     for (const scenario of groupScenarios) {
                         await submitResponses(scenario, scenario.scenario_id, url, groupSid);
                     }
-                    const groupMLA = await getMostLeastAligned(groupSid, url, groupScenarios[0], evalNumber, true);
+                    const groupMLA = await getMostLeastAligned(groupSid, url, groupScenarios[0], evalNumber, true, false, true);
                     const groupKdmas = await getKdmaProfile(groupSid, url);
                     for (const scenario of groupScenarios) {
                         const docId = scenario._id?.$oid || scenario._id;
