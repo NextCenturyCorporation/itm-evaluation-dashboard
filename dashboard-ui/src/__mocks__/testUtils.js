@@ -159,7 +159,8 @@ export async function loginBasicApprovedUser(page) {
 export async function checkRouteContent(page, route, expectedText) {
     try {
         await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
-            timeout: TEST_WAIT_TIMEOUT
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
         });
         await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
         for (const txt of expectedText) {
@@ -175,7 +176,8 @@ export async function checkRouteContent(page, route, expectedText) {
 export async function checkRouteSelector(page, route, selector, expectedText = []) {
     try {
         await page.goto(`${process.env.REACT_APP_TEST_URL}${route}`, {
-            timeout: TEST_WAIT_TIMEOUT
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
         });
         await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
         await page.waitForSelector(selector, { timeout: TEST_WAIT_TIMEOUT });
