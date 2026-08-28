@@ -8,7 +8,7 @@ import gql from "graphql-tag";
 import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
 import { Mutation } from '@apollo/react-components';
 import { useQuery, useMutation } from 'react-apollo'
-import { getUID, shuffle, surveyVersion_x_0, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11, createScenarioBlockv12} from './surveyUtils';
+import { getUID, shuffle, surveyVersion_x_0, getTextScenariosForParticipant, createScenarioBlock, createAFMFBlock, createScenarioBlockv8, createScenarioBlockUK, createScenarioBlockv10, createScenarioBlockv11, createScenarioBlockv12, createScenarioBlockv13} from './surveyUtils';
 import Bowser from "bowser";
 import { useSelector } from "react-redux";
 import { Spinner } from 'react-bootstrap';
@@ -44,6 +44,7 @@ const GET_EVAL_DATA = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
+    "13.0": {evalName: 'Canada Evaluation', evalNumber: 18},
     "12.0": {evalName: 'June 2026 Evaluation', evalNumber: 17},
     "11.0": { evalName: 'April 2026 Evaluation', evalNumber: 16 },
     "10.0": { evalName: 'February 2026 Evaluation', evalNumber: 15 },
@@ -243,6 +244,13 @@ class SurveyPage extends Component {
                 .map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults, getVersion(blockType.attr, blockType.type)))
                 .filter(Boolean);
             finalize(allBlocks);
+        } else if (version === "13.0") {
+            const isEven = parseInt(this.state.pid, 10) % 2 === 0;
+            const getVersion = (type) => type.startsWith('MF') === isEven ? 'A' : 'B';
+            const allBlocks = ['AF-PS', 'MF-SS', 'MF', 'AF', 'PS']
+                .map(type => createScenarioBlockv13(type, allPages, participantTextResults, getVersion(type)))
+                .filter(Boolean)
+            finalize(shuffle(allBlocks));
         }
     }
 

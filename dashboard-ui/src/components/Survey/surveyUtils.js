@@ -2195,3 +2195,23 @@ export const createScenarioBlockv12 = (scenarioType, allPages, textResults, delV
 // same logic as version 10
 const genComparisonPagev12 = (aligned, baseline, misaligned) =>
     genComparisonPagev10(aligned, baseline, misaligned);
+
+export const createScenarioBlockv13 = (scenarioType, allPages, textResults, delVersion) => {
+    const configs = {
+        'AF-PS': { scenarioId: 'June2026-PS-assess', field: 'AF-PS_mostLeastAligned', include: ['PS', 'AF'], exclude: ['MF', 'SS'], indexMatch: idx => idx?.includes('PS') && !idx?.includes('trinary') },
+        'MF-SS': { scenarioId: 'June2026-MF-assess', field: 'MF-SS_mostLeastAligned', include: ['MF', 'SS'], exclude: ['PS', 'AF'], indexMatch: idx => idx?.includes('MF') && !idx?.includes('trinary') },
+        'MF': { scenarioId: 'June2026-MF-assess', field: 'combinedMostLeastAligned', include: ['MF'], exclude: ['AF', 'PS', 'SS'], indexMatch: idx => idx?.includes('MF') && !idx?.includes('trinary') && !idx?.includes('SS')},
+        'AF': { scenarioId: 'June2026-AF-assess', field: 'combinedMostLeastAligned', include: ['AF'], exclude: ['MF', 'PS', 'SS'], indexMatch: idx => idx?.includes('AF') && !idx?.includes('trinary') && !idx?.includes('SS')},
+        'PS': { scenarioId: 'June2026-PS-assess', field: 'combinedMostLeastAligned', include: ['PS'], exclude: ['MF', 'AF', 'SS'], indexMatch: idx => idx?.includes('PS') && !idx?.includes('trinary') },
+    }
+
+    const config = configs[scenarioType]
+    if (!config) { console.warn(`Unknown v13 block: ${scenarioType}`); return null; }
+
+    //2d blocks are aligned vs baseline only
+    const includeMisaligned = !(scenarioType.includes('-'))
+
+    const doc = textResults.find(r => r.scenario_id === config.scenarioId);
+    if (!doc) { console.warn(`No text document ${config.scenarioId} for v13 block ${scenarioType}`); return null; }
+}
+
