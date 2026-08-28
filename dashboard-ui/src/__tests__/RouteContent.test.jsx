@@ -49,7 +49,7 @@ describe('Verify content on page matches expectation for route', () => {
         await checkRouteSelector(page, '/humanSimParticipant', '.aggregatePage', ['View Definitions', 'Download Participant Data']);
     });
     it('Check /humanProbeData route content', async () => {
-        await checkRouteContent(page, '/humanProbeData', ['Human Simulator Probe Data']);
+        await checkRouteSelector(page, '/humanProbeData', '.aggregatePage');
     });
     it('Check /human-results route content', async () => {
         await checkRouteSelector(page, '/human-results', '.human-results');

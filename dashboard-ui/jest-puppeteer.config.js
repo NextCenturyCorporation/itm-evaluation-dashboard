@@ -13,7 +13,7 @@ module.exports = {
 
         // Bound individual Chrome DevTools protocol operations while still
         // allowing slower Docker/dev-server responses.
-        protocolTimeout: 60000
+        protocolTimeout: 120000
     },
 
     browserContext: 'incognito',

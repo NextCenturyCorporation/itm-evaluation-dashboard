@@ -5,12 +5,9 @@ services:
     expose:
       - "27017"
     healthcheck:
-      test:
-        - CMD
-        - mongo
-        - --quiet
-        - --eval
-        - db.adminCommand('ping').ok
+      # Use a TCP probe instead of launching the Mongo shell every 5 seconds.
+      # This avoids MongoDB 4.0 logging a client-metadata line for every healthcheck.
+      test: ["CMD-SHELL", "bash -c ': > /dev/tcp/127.0.0.1/27017'"]
       interval: 5s
       timeout: 5s
       retries: 20
