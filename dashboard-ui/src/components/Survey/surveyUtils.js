@@ -2250,17 +2250,32 @@ export const createScenarioBlockv13 = (scenarioType, allPages, textResults, delV
     if (!baselineAdm) { console.warn(`Missing baseline ADM page for v13 block ${scenarioType}`); return null; }
 
     const pages = orderedTargets.map(t => findPage(t));
-    const alignedAdm = pages.find(p => p && !haveSameResponses(p, baselineAdm));
-    const misalignedAdm = includeMisaligned
-        ? [...pages].reverse().find(p => p && !haveSameResponses(p, alignedAdm) && !haveSameResponses(p, baselineAdm))
-        : null;
+
+    let alignedAdm = null;
+    let misalignedAdm = null;
+    let primaryLabel = { alignment: 'aligned', admChoiceProcess: 'most aligned' };
+
+    if (config.attrs) {
+        // 2D: most aligned vs baseline. If the most aligned overlaps the baseline, use the least aligned instead
+        const existing = pages.filter(Boolean);
+        const mostAligned = existing[0];
+        if (mostAligned && !haveSameResponses(mostAligned, baselineAdm)) {
+            alignedAdm = mostAligned;
+        } else {
+            alignedAdm = [...existing].reverse().find(p => !haveSameResponses(p, baselineAdm)) ?? null;
+            primaryLabel = { alignment: 'misaligned', admChoiceProcess: 'least aligned' };
+        }
+    } else {
+        alignedAdm = pages.find(p => p && !haveSameResponses(p, baselineAdm)) ?? null;
+        misalignedAdm = [...pages].reverse().find(p => p && !haveSameResponses(p, alignedAdm) && !haveSameResponses(p, baselineAdm)) ?? null;
+    }
 
     if (!alignedAdm || (includeMisaligned && !misalignedAdm)) {
         console.warn(`Missing ADM pages for v13 block ${scenarioType} - aligned:${!!alignedAdm} misaligned:${!!misalignedAdm}`);
         return null;
     }
 
-    Object.assign(alignedAdm, { alignment: 'aligned', admChoiceProcess: 'most aligned' });
+    Object.assign(alignedAdm, primaryLabel);
     baselineAdm.alignment = 'baseline';
     if (misalignedAdm) Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
 
