@@ -2197,67 +2197,63 @@ const genComparisonPagev12 = (aligned, baseline, misaligned) =>
     genComparisonPagev10(aligned, baseline, misaligned);
 
 export const createScenarioBlockv13 = (scenarioType, allPages, textResults, delVersion) => {
-    const configs = {
-        'AF-PS': { scenarioId: 'June2026-PS-assess', field: 'AF-PS_mostLeastAligned', include: ['PS', 'AF'], exclude: ['MF', 'SS'], indexMatch: idx => idx?.includes('PS') && !idx?.includes('trinary') },
-        'MF-SS': { scenarioId: 'June2026-MF-assess', field: 'MF-SS_mostLeastAligned', include: ['MF', 'SS'], exclude: ['PS', 'AF'], indexMatch: idx => idx?.includes('MF') && !idx?.includes('trinary') },
-        'MF': { scenarioId: 'June2026-MF-assess', field: 'combinedMostLeastAligned', include: ['MF'], exclude: ['AF', 'PS', 'SS'], indexMatch: idx => idx?.includes('MF') && !idx?.includes('trinary') && !idx?.includes('SS')},
-        'AF': { scenarioId: 'June2026-AF-assess', field: 'combinedMostLeastAligned', include: ['AF'], exclude: ['MF', 'PS', 'SS'], indexMatch: idx => idx?.includes('AF') && !idx?.includes('trinary') && !idx?.includes('SS')},
-        'PS': { scenarioId: 'June2026-PS-assess', field: 'combinedMostLeastAligned', include: ['PS'], exclude: ['MF', 'AF', 'SS'], indexMatch: idx => idx?.includes('PS') && !idx?.includes('trinary') },
-    }
+    const ALL_ATTRS = ['AF', 'PS', 'MF', 'SS'];
 
-    const config = configs[scenarioType]
+    const configs = {
+        'AF-PS': { scenarioId: 'June2026-PS-assess', field: 'AF-PS_mostLeastAligned', attrs: ['AF', 'PS'], targetPrefix: 'Feb2026', indexMatch: idx => idx?.includes('AF') && idx?.includes('PS') && !idx?.includes('trinary') },
+        'MF-SS': { scenarioId: 'June2026-MF-assess', field: 'MF-SS_mostLeastAligned', attrs: ['MF', 'SS'], targetPrefix: 'Feb2026', indexMatch: idx => idx?.includes('MF') && idx?.includes('SS') && !idx?.includes('trinary') },
+        'MF': { scenarioId: 'June2026-MF-assess', field: 'combinedMostLeastAligned', include: ['MF'], exclude: ['AF', 'PS', 'SS'], targetPrefix: 'Feb2026', indexMatch: idx => idx?.includes('MF') && !idx?.includes('trinary') && !idx?.includes('SS') },
+        'AF': { scenarioId: 'June2026-AF-assess', field: 'combinedMostLeastAligned', include: ['AF'], exclude: ['MF', 'PS', 'SS'], indexMatch: idx => idx?.includes('AF') && !idx?.includes('trinary') && !idx?.includes('SS') },
+        'PS': { scenarioId: 'June2026-PS-assess', field: 'combinedMostLeastAligned', include: ['PS'], exclude: ['MF', 'AF', 'SS'], indexMatch: idx => idx?.includes('PS') && !idx?.includes('trinary') },
+    };
+
+    const config = configs[scenarioType];
     if (!config) { console.warn(`Unknown v13 block: ${scenarioType}`); return null; }
 
-    //2d blocks are aligned vs baseline only
-    const includeMisaligned = !(scenarioType.includes('-'))
+    const includeMisaligned = !config.attrs;
 
     const doc = textResults.find(r => r.scenario_id === config.scenarioId);
     if (!doc) { console.warn(`No text document ${config.scenarioId} for v13 block ${scenarioType}`); return null; }
 
-    const entry = doc[config.field]?.find(o => o.target === null) ?? doc[config.field]?.[0]
+    const entry = doc[config.field]?.find(o => o.target === null) ?? doc[config.field]?.[0];
+    const responses = entry?.response || [];
 
     const isGroupKey = key => key.split('-').pop().includes('_');
-    const keyMatches = key =>
-        !isGroupKey(key) &&
-        config.include.every(c => key.includes(c)) &&
-        config.exclude.every(c => !key.includes(c));
+    const targetIndex = key => key.match(/(\d+)$/)?.[1];
 
-    const ordered = (entry?.response || []).filter(o => keyMatches(Object.keys(o)[0]));
-    if (!ordered.length) { console.warn(`No alignment targets for v13 block ${scenarioType}`); return null; }
+    let orderedTargets;
+    if (config.attrs) {
+        //  build the 2D target from the top solo target of each
+        const soloKeys = attr => responses
+            .map(o => ({ index: targetIndex(Object.keys(o)[0]), score: Object.values(o)[0], key: Object.keys(o)[0] }))
+            .filter(o => !isGroupKey(o.key) && o.key.includes(attr) && o.index != null && ALL_ATTRS.every(a => a === attr || !o.key.includes(a)));
+        const [attr1, attr2] = config.attrs;
+        const [ranked1, ranked2] = [soloKeys(attr1), soloKeys(attr2)];
+        if (!ranked1.length || !ranked2.length) { console.warn(`Missing per-attribute alignment for v13 block ${scenarioType} - ${attr1}:${ranked1.length} ${attr2}:${ranked2.length}`); return null; }
+        orderedTargets = ranked1
+            .flatMap(a => ranked2.map(b => ({ target: `${config.targetPrefix}-${attr1}${a.index}-${attr2}${b.index}`, score: a.score + b.score })))
+            .sort((x, y) => y.score - x.score)
+            .map(c => c.target);
+    } else {
+        orderedTargets = responses
+            .map(o => Object.keys(o)[0])
+            .filter(key => !isGroupKey(key) && config.include.every(c => key.includes(c)) && config.exclude.every(c => !key.includes(c)))
+            .map(key => config.targetPrefix ? key.replace(/^[A-Za-z]+\d+/, config.targetPrefix) : key);
+    }
+    if (!orderedTargets.length) { console.warn(`No alignment targets for v13 block ${scenarioType}`); return null; }
 
-    const pageForEntry = o => findPage(Object.keys(o)[0]);
     const findPage = (target, baseline = false) => allPages.find(page =>
         config.indexMatch(page.scenarioIndex) &&
-        (baseline
-            ? page.admName?.includes('Baseline')
-            : (!page.admName?.includes('Baseline') && page.target === target))
-    );
+        (baseline ? page.admName?.includes('Baseline') : (!page.admName?.includes('Baseline') && page.target === target)));
 
     const baselineAdm = findPage(null, true);
     if (!baselineAdm) { console.warn(`Missing baseline ADM page for v13 block ${scenarioType}`); return null; }
 
-    // most aligned: walk down from the top until we find one that doesn't
-    // behave identically to the baseline
-    let alignedAdm = null;
-    for (const o of ordered) {
-        const candidate = pageForEntry(o);
-        if (candidate && !haveSameResponses(candidate, baselineAdm)) { alignedAdm = candidate; break; }
-    }
-
-    // least aligned: walk up from the bottom until we find one that doesn't
-    // overlap with either the most aligned or the baseline
-    let misalignedAdm = null;
-    if (includeMisaligned) {
-        for (let i = ordered.length - 1; i >= 0; i--) {
-            const candidate = pageForEntry(ordered[i]);
-            if (candidate &&
-                !haveSameResponses(candidate, alignedAdm) &&
-                !haveSameResponses(candidate, baselineAdm)) {
-                misalignedAdm = candidate;
-                break;
-            }
-        }
-    }
+    const pages = orderedTargets.map(t => findPage(t));
+    const alignedAdm = pages.find(p => p && !haveSameResponses(p, baselineAdm));
+    const misalignedAdm = includeMisaligned
+        ? [...pages].reverse().find(p => p && !haveSameResponses(p, alignedAdm) && !haveSameResponses(p, baselineAdm))
+        : null;
 
     if (!alignedAdm || (includeMisaligned && !misalignedAdm)) {
         console.warn(`Missing ADM pages for v13 block ${scenarioType} - aligned:${!!alignedAdm} misaligned:${!!misalignedAdm}`);
@@ -2269,18 +2265,13 @@ export const createScenarioBlockv13 = (scenarioType, allPages, textResults, delV
     if (misalignedAdm) Object.assign(misalignedAdm, { alignment: 'misaligned', admChoiceProcess: 'least aligned' });
 
     const admPages = [alignedAdm, baselineAdm, ...(misalignedAdm ? [misalignedAdm] : [])];
-
-    // enforce delVersion
     const removeVersion = delVersion === 'A' ? 'Del Version B' : 'Del Version A';
-    admPages.forEach(page => {
-        if (!page?.elements) return;
-        page.elements = page.elements.filter(el => !el.name?.includes(removeVersion));
-    });
+    admPages.forEach(page => { if (page?.elements) page.elements = page.elements.filter(el => !el.name?.includes(removeVersion)); });
 
     return {
         type: scenarioType,
         delVersion,
         pages: [...shuffle(admPages), genComparisonPagev12(alignedAdm, baselineAdm, misalignedAdm)]
     };
-}
+};
 

@@ -175,7 +175,6 @@ class SurveyPage extends Component {
         if (this.inSurveyVersionData() && this.state.pid == null) {
             this.surveyConfigClone.pages = [this.surveyConfigClone.pages[0]];
             return;
-            return;
         }
 
         const allPages = this.surveyConfigClone.pages;
@@ -189,6 +188,7 @@ class SurveyPage extends Component {
             const finalPages = [...introPages, ...blocks.flatMap(getPages)];
             if (postScenarioPage) finalPages.push(postScenarioPage);
             this.surveyConfigClone.pages = finalPages;
+            console.log(this.surveyConfigClone.pages)
             this.setState({ orderLog: finalPages.map(page => page.name) });
         };
 
