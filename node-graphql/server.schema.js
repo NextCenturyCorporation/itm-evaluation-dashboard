@@ -2,6 +2,7 @@ const { gql } = require('apollo-server');
 const { ObjectId } = require('mongodb');
 const { GraphQLScalarType, Kind, GraphQLError } = require("graphql");
 const jwt = require('jsonwebtoken');
+const { TOKEN_SECRET } = require('./account-configs');
 
 const typeDefs = gql`
   scalar JSON
@@ -128,13 +129,51 @@ const generateServerTimestamp = () => {
     isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)');
 };
 
+// Verifies the caller holds a valid, signed admin session before privileged
+// actions run. Does not trust client side.
+async function requireAdmin(context, caller) {
+    const accessToken = caller?.tokens?.accessToken;
+    const username = caller?.user?.username ?? caller?.username;
+
+    if (!accessToken) {
+        throw new GraphQLError('Invalid Access Token.', { extensions: { code: '401' } });
+    }
+
+    let sessionToken;
+    try {
+        sessionToken = jwt.verify(accessToken, TOKEN_SECRET)?.data?.token;
+    } catch (err) {
+        throw new GraphQLError('Invalid Access Token.', { extensions: { code: '401' } });
+    }
+    if (!sessionToken) {
+        throw new GraphQLError('Invalid Access Token.', { extensions: { code: '401' } });
+    }
+
+    const session = await context.db.collection('sessions')
+        .findOne({ token: sessionToken }, { projection: { userId: 1, valid: 1 } });
+    const user = await context.db.collection('users')
+        .findOne({ username }, { projection: { _id: 1, username: 1, admin: 1 } });
+
+    if (!(session?.valid && String(session.userId) === String(user?._id) && user?.admin)) {
+        throw new GraphQLError('Users outside of the admin group cannot perform this action.', {
+            extensions: { code: '403' }
+        });
+    }
+
+    return user;
+}
+
+
 const resolvers = {
   Query: {
     checkUserExists: async (obj, args, context, infow) => {
+      // Escape regex metacharacters so untrusted input can't inject a pattern
+      const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const username = escapeRegex(args.username.toLowerCase().trim());
       const userByEmail = await context.db.collection('users').findOne({
         $or: [
           { "emails.address": args.email.toLowerCase().trim() },
-          { "username": { $regex: `^${args.username.toLowerCase().trim()}$`, $options: 'i' } }
+          { "username": { $regex: `^${username}$`, $options: 'i' } }
         ]
       });
       return !!userByEmail;

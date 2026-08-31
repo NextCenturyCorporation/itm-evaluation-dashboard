@@ -4,7 +4,7 @@ const { AccountsServer } = require('@accounts/server');
 const { AccountsPassword } = require('@accounts/password');
 const nodemailer = require("nodemailer");
 const { RESET_PASSWORD_URL} = require('./config');
-const { MONGO_CONFIGS, AWS_CONFIGS } = require('./account-configs');
+const { MONGO_CONFIGS, AWS_CONFIGS, TOKEN_SECRET} = require('./account-configs');
 let AWS = require('aws-sdk');
 
 // AWS.config.update({
@@ -50,7 +50,7 @@ const accountsPassword = new AccountsPassword({
 const accountsServer = new AccountsServer(
   {
     db: dashboardDB,
-    tokenSecret: 'dashboardPassword',
+    tokenSecret: TOKEN_SECRET,
     sendMail: ({ from, subject, to, text, html }) => {
       from = "phi.le@caci.com";
       transporter.sendMail({
