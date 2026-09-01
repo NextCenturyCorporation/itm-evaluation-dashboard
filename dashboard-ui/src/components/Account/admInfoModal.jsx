@@ -84,8 +84,8 @@ function renderKDMAList(kdmas, labels, source) {
 
 // Shared builder for single-attribute / fixed-attribute blocks (June2026 AF/PS/AF-SS, MF).
 // Medics are identified by admAlignment config.docPredicate selects the doc (falls back to config.doc scenario_id match).
-function buildAlignmentBlock(config, ctx) {
-    const { docs, cmpPage, getMedicByAlignment, formatLoading } = ctx;
+function buildAlignmentBlock(config, context) {
+    const { docs, cmpPage, getMedicByAlignment, formatLoading } = context;
     const doc = config.docPredicate ? docs.find(config.docPredicate) : docs.find(d => d.scenario_id === config.doc);
     if (!doc) return { error: `No alignment data found for ${config.doc || config.label || 'this block'}` };
 
@@ -115,8 +115,8 @@ function buildAlignmentBlock(config, ctx) {
 }
 
 // July 2025 multi-KDMA (AF + MF)
-function resolveLegacyMulti(ctx) {
-    const { docs, medicIds, getMedicPage } = ctx;
+function resolveLegacyMulti(context) {
+    const { docs, medicIds, getMedicPage } = context;
     let doc = null;
     for (const d of docs) {
         if (d.kdmas?.some(k => k.kdma === 'merit') && d.kdmas?.some(k => k.kdma === 'affiliation')) { doc = d; break; }
@@ -138,8 +138,8 @@ function resolveLegacyMulti(ctx) {
 }
 
 // Eval 15+ multi-KDMA (AF-PS, MF-PS, MF-SS).
-function resolveMultiKDMA(ctx) {
-    const { scenarioId, docs, cmpPage, medicIds, getMedicPage, formatLoading } = ctx;
+function resolveMultiKDMA(context) {
+    const { scenarioId, docs, cmpPage, medicIds, getMedicPage, formatLoading } = context;
     const multiKDMA = getMultiKDMAConfig(scenarioId);
     const multiKey = Object.keys(MULTI_KDMA_CONFIG).find(k => MULTI_KDMA_CONFIG[k] === multiKDMA);
     let doc = null;
@@ -177,8 +177,8 @@ function resolveMultiKDMA(ctx) {
 }
 
 // Eval 16 Oracle (AF or MF)
-function resolveApril2026Oracle(ctx) {
-    const { scenarioId, docs, medicIds, getMedicPage } = ctx;
+function resolveApril2026Oracle(context) {
+    const { scenarioId, docs, medicIds, getMedicPage } = context;
     const attrCode = scenarioId.includes('AF') ? 'AF' : 'MF';
     const attrMap = { AF: 'affiliation', MF: 'merit' };
     const target_ = attrMap[attrCode];
@@ -227,8 +227,8 @@ function resolveApril2026Oracle(ctx) {
 }
 
 // June 2026 single-attribute binary/trinary (AF, PS) + AF-SS 2D
-function resolveJune2026(ctx) {
-    const { scenarioId } = ctx;
+function resolveJune2026(context) {
+    const { scenarioId } = context;
     const isAFSS = scenarioId.includes('AF') && scenarioId.includes('SS');
     const isTrinary = scenarioId.includes('trinary');
     const configs = {
@@ -239,26 +239,26 @@ function resolveJune2026(ctx) {
     const attrCode = isAFSS ? 'AF-SS' : scenarioId.includes('AF') ? 'AF' : scenarioId.includes('PS') ? 'PS' : null;
     const config = attrCode && configs[attrCode];
     if (!config) return { error: `No alignment data found for ${scenarioId}` };
-    return buildAlignmentBlock(config, ctx);
+    return buildAlignmentBlock(config, context);
 }
 
 // MF single-attribute block (pages: Feb2026-MF{n}-observe). Shared by eval 15 and eval 18,
 //   eval 18 -> June2026-MF-assess (combined*),   keys Jun2026-MF-n (page targets Feb2026-MF-n)
 //   eval 15 -> Feb2026-{..}-assess (individual*), keys Feb2026-MF-n
-function resolveMFSingle(ctx) {
-    const { docs } = ctx;
+function resolveMFSingle(context) {
+    const { docs } = context;
     const sources = [
         { docPredicate: d => d.scenario_id === 'June2026-MF-assess' && d.combinedMostLeastAligned, field: 'combinedMostLeastAligned', kdmaField: 'combinedKdmas' },
         { docPredicate: d => d.individualMostLeastAligned?.length, field: 'individualMostLeastAligned', kdmaField: 'individualKdmas' },
     ];
     const src = sources.find(s => docs.some(s.docPredicate));
     if (!src) return { error: 'No MF alignment data found' };
-    return buildAlignmentBlock({ ...src, include: ['MF'], exclude: ['AF', 'PS', 'SS'], kdmas: ['merit'], labels: ['Merit'] }, ctx);
+    return buildAlignmentBlock({ ...src, include: ['MF'], exclude: ['AF', 'PS', 'SS'], kdmas: ['merit'], labels: ['Merit'] }, context);
 }
 
 // legacy single-attribute (2025 / DryRun / qol / vol)
-function resolveSingleAttribute(ctx) {
-    const { scenarioId, docs, cmpPage, getMedicByAlignment, formatLoading, KDMA_MAP } = ctx;
+function resolveSingleAttribute(context) {
+    const { scenarioId, docs, cmpPage, getMedicByAlignment, formatLoading, KDMA_MAP } = context;
     const derivedCode = extractKDMACode(scenarioId);
     const target_ = KDMA_MAP[derivedCode] || derivedCode.toLowerCase();
 
@@ -342,8 +342,8 @@ export default function AdmInfoModal({ open, onClose, pid, scenarioId, dataTextR
                     const getMedicPage = id => surveyEntry.results?.[id];
                     const getMedicByAlignment = align => getMedicPage(medicIds.find(id => getMedicPage(id)?.admAlignment === align));
 
-                    const ctx = { scenarioId, docs, cmpPage, medicIds, getMedicPage, getMedicByAlignment, formatLoading, KDMA_MAP };
-                    const result = RESOLVERS.find(r => r.match(scenarioId)).resolve(ctx);
+                    const context = { scenarioId, docs, cmpPage, medicIds, getMedicPage, getMedicByAlignment, formatLoading, KDMA_MAP };
+                    const result = RESOLVERS.find(r => r.match(scenarioId)).resolve(context);
                     if (result.error) return <p>{result.error}</p>;
 
                     const { filteredArr = [], medicData = [], leftContent = {} } = result;
