@@ -7,7 +7,7 @@ import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore, setEvalDataInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import HomePage from '../Home/home';
-import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
+import { ErrorBoundary } from '../ErrorHandling/ErrorBoundaries';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -446,7 +446,7 @@ export function App() {
             return <Redirect push to="/login" />;
         } else {
             if (hasAccess(currentUser, ['admin', 'experimenter'])) {
-                return <PidLookup />
+                return <PidLookup/> 
             } else {
                 return <Redirect push to="/" />;
             }
@@ -487,11 +487,9 @@ export function App() {
         }
     };
 
-    // show error message if an participantLog Error occurs
+    // show error message if any error type occurs
     if (versionError) {
-        return(
-            <QueryErrorMessage error={versionError}></QueryErrorMessage>
-        );
+       throw versionError;
     }
     
     if (versionLoading) {
@@ -505,6 +503,7 @@ export function App() {
                     <Header currentUser={currentUser} logout={logout} />
                 }
                 <div className="main-content">
+                    <ErrorBoundary>
                     <React.Suspense fallback={<div>Loading...</div>}>
                     <Switch>
                         <Route exact path="/" component={Home} />
@@ -542,27 +541,28 @@ export function App() {
                             <AggregateResults type="HumanProbeData" />
                         </Route>}
 
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
-                        {hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
-                        {/* Redirection logic: If user is not logged in, send to /login. 
-                            If user is not approved, send to /awaitingApproval.
-                            Otherwise, send to homepage */}
-                        {currentUser ?
-                            (currentUser?.approved ?
-                                <Route path="*" render={() => <Redirect to="/" />} />
-                                : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
-                            : <Route path="*" render={() => <Redirect to="/login" />} />
-                        }
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
+                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
+                            {hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
+                            {/* Redirection logic: If user is not logged in, send to /login. 
+                                If user is not approved, send to /awaitingApproval.
+                                Otherwise, send to homepage */}
+                            {currentUser ?
+                                (currentUser?.approved ?
+                                    <Route path="*" render={() => <Redirect to="/" />} />
+                                    : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
+                                : <Route path="*" render={() => <Redirect to="/login" />} />
+                            }
 
                     </Switch>
                     </React.Suspense>
+                    </ErrorBoundary>
                 </div>
                 <AlreadyCompleteModal
                     open={alreadyComplete.open}

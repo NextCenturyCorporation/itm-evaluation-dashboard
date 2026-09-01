@@ -1,7 +1,6 @@
 import React from "react";
 import "../../../css/resultsTable.css";
 import { RQDefinitionTable } from "../variables/rq-variables";
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import CloseIcon from "@material-ui/icons/Close";
 import { Modal } from "@mui/material";
 import ph2Apr26DefinitionXLFile from "../variables/Variable Definitions RQ8_PH2_APR26.xlsx";
@@ -341,7 +340,7 @@ export function PH2RQ8Apr26({ evalNum }) {
         setShowDefinitions(false);
     };
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorTextResults,
@@ -350,7 +349,7 @@ export function PH2RQ8Apr26({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
