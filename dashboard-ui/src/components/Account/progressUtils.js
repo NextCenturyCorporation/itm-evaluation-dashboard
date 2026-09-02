@@ -83,6 +83,17 @@ const hasMLA = (scenarioResult) => {
         }
     }
 
+    // 2dfor eval 18
+    if (scenarioResult?.evalNumber === 18) {
+        const sid = scenarioResult.scenario_id;
+        if (sid.includes('AF') || sid.includes('PS')) {
+            if (!scenarioResult['AF-PS_mostLeastAligned']) return false;
+        }
+        if (sid.includes('MF') || sid.includes('SS')) {
+            if (!scenarioResult['MF-SS_mostLeastAligned']) return false;
+        }
+    }
+
     return true;
 };
 
