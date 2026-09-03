@@ -445,6 +445,32 @@ class TextBasedScenariosPage extends Component {
         }
 
         const evalProcessors = {
+            18: async () => {
+                const url = this.getAdeptUrl();
+                const id = scenario.scenario_id;
+                const pairKey = (id.includes('AF') || id.includes('PS')) ? 'AF-PS' : 'MF-SS';
+                const current = this.state.adeptGroupState[pairKey] || { scenarios: [], sessionId: null };
+                const sessionId = current.sessionId || await createAdeptSession(url);
+                await this.submitResponses(scenario, id, url, sessionId);
+                const updated = [...current.scenarios, scenario];
+                await new Promise(resolve => this.setState(prevState => ({
+                    adeptGroupState: { ...prevState.adeptGroupState, [pairKey]: { scenarios: updated, sessionId } }
+                }), resolve));
+                if (updated.length === 2) {
+                    const mla = await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
+                    const kdmas = await this.attachKdmaValue(sessionId, url);
+                    for (const s of updated) {
+                        s[`${pairKey}_sessionId`] = sessionId;
+                        s[`${pairKey}_mostLeastAligned`] = mla;
+                        s[`${pairKey}_kdmas`] = kdmas;
+                    }
+                }
+                // all four documents scored together on one combined session
+                await this.processGroupedAdeptScenario(scenario, {
+                    getGroupKey: () => 'all',
+                    getGroupSize: () => 4,
+                });
+            },
             17: async () => {
                 // doing the AF-SS group inline since it doesn't fit into my generic logic
                 const id = scenario.scenario_id;
