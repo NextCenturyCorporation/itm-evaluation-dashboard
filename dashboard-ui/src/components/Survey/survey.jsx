@@ -244,7 +244,7 @@ class SurveyPage extends Component {
                 .map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults, getVersion(blockType.attr, blockType.type)))
                 .filter(Boolean);
             finalize(allBlocks);
-        } else if (version === "13.0") {
+        } else if (version === "13.0" || version === "14.0") {
             const isEven = parseInt(this.state.pid, 10) % 2 === 0;
             const getVersion = (type) => type.startsWith('AF') === isEven ? 'A' : 'B';
             const allBlocks = ['AF-PS', 'MF-SS', 'MF', 'AF', 'PS']
