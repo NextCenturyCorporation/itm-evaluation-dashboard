@@ -202,11 +202,11 @@ export function PH2RQ8OWPart1() {
                 for (const param of PARAM_ORDER) kdmaHeaders.push(kdmaColLabel(k, param));
             }
         }
-        const alignedScoreIdx = HEADERS.indexOf('Aligned ADM Alignment score (ADM|target)');
+        const ceilingIdx = HEADERS.indexOf('Ceiling Alignment');
         return [
-            ...HEADERS.slice(0, alignedScoreIdx + 1),
+            ...HEADERS.slice(0, ceilingIdx + 1),
             ...kdmaHeaders,
-            ...HEADERS.slice(alignedScoreIdx + 1)
+            ...HEADERS.slice(ceilingIdx + 1)
         ];
     }, [filteredData]);
 
