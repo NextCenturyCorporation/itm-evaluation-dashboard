@@ -34,7 +34,8 @@ const CONFIG_METADATA = [
     { key: 'ph2_feb', version: 'delegation_v10.0', title: 'Phase 2 February 2026 Collaboration', isPhase2: true },
     { key: 'ph2_april', version: 'delegation_v11.0', title: 'Phase 2 April 2026 Collaboration', isPhase2: true },
     { key: 'ph2_june_2026', version: 'delegation_v12.0', title: 'Phase 2 June 2026 Collaboration', isPhase2: true},
-    { key: 'ph2_canada_2026', version: 'delegation_v13.0', title: 'Phase 2 Canada Evaluation', isPhase2: true}
+    { key: 'ph2_canada_2026', version: 'delegation_v13.0', title: 'Phase 2 Canada Evaluation', isPhase2: true},
+    { key: 'ph2_uk_2026', version: 'delegation_v14.0', title: 'Phase 2 UK Evaluation', isPhase2: true}
 ];
 
 
