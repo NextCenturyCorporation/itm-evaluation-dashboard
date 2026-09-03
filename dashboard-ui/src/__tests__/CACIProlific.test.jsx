@@ -2,74 +2,99 @@
  * @jest-environment puppeteer
  */
 
-import { pressAllKeys, takePhase1TextScenario, takePhase2TextScenario, startCaciProlificSurvey, agreeToProlificConsent, waitForSurveyIntro, surveyFlowNavigateAndComplete, completeTextScenarioAndReachSurvey } from "../__mocks__/testUtils";
+import { TEST_WAIT_TIMEOUT, SURVEY_STEP_TIMEOUT, LONG_TEST_TIMEOUT, pressAllKeys, startCaciProlificSurvey, agreeToProlificConsent, waitForSurveyIntro, surveyFlowNavigateAndComplete, completeTextScenarioAndReachSurvey, logPageDebug } from "../__mocks__/testUtils";
 
 const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 const PROLIFIC_PID = "ALS_test1210b";
 const PROLIFIC_RETURN_URL = "https://app.prolific.com/submissions/complete?cc=C155IMPM";
 
+const SURVEY_NAVIGATION_OPTIONS = {
+    timeout: TEST_WAIT_TIMEOUT,
+    waitUntil: 'domcontentloaded'
+};
+
+async function blockProlificNavigation(page) {
+    await page.setRequestInterception(true);
+
+    page.on('request', request => {
+        if (request.url() === PROLIFIC_RETURN_URL) {
+            request.abort();
+            return;
+        }
+
+        request.continue();
+    });
+}
+
+jest.setTimeout(LONG_TEST_TIMEOUT + 30000);
+
 describe('Test CACI Prolific entry method', () => {
     beforeEach(async () => {
         page = await browser.newPage();
-    }, 30000);
+    });
 
     it('/remote-text-survey?caciProlific=true shows consent and preserves PROLIFIC_PID', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=${PROLIFIC_PID}`);
-        await page.waitForSelector('text/Consent Form', { timeout: 20000 });
-        await page.waitForSelector('text/I Agree', { timeout: 20000 });
-        await page.waitForSelector('text/I Do Not Agree', { timeout: 20000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=${PROLIFIC_PID}`, SURVEY_NAVIGATION_OPTIONS);
+        await page.waitForSelector('text/Consent Form', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/I Agree', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/I Do Not Agree', { timeout: TEST_WAIT_TIMEOUT });
         await pressAllKeys(page, 'Consent Form');
-        await page.waitForSelector('text/Consent Form', { timeout: 2000 });
+        await page.waitForSelector('text/Consent Form', { timeout: TEST_WAIT_TIMEOUT });
         await page.$$eval('button', btns => {
             const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
             b?.click();
         });
-        await page.waitForSelector('text/Instructions', { timeout: 30000 });
+        await page.waitForSelector('text/Instructions', { timeout: TEST_WAIT_TIMEOUT });
         await page.$$eval('button', btns => {
             const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
             b?.click();
         });
         if (IS_PH1) {
-            await page.waitForSelector('text/Page 1 of', { timeout: 30000 });
-            await page.waitForSelector('input[type="radio"]', { timeout: 30000 });
+            await page.waitForSelector('text/Page 1 of', { timeout: TEST_WAIT_TIMEOUT });
+            await page.waitForSelector('input[type="radio"]', { timeout: TEST_WAIT_TIMEOUT });
         }
         else {
-            await page.waitForSelector('text/Scenario Details', { timeout: 30000 });
+            await page.waitForSelector('text/Scenario Details', { timeout: TEST_WAIT_TIMEOUT });
         }
         const currentUrl = page.url();
         expect(currentUrl.includes(`PROLIFIC_PID=${PROLIFIC_PID}`)).toBe(true);
-    }, 60000);
+    });
 
     it('Clicking "I Do Not Agree" redirects to Prolific return URL', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=${PROLIFIC_PID}`);
-        await page.waitForSelector('text/Consent Form', { timeout: 20000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&PROLIFIC_PID=${PROLIFIC_PID}`, SURVEY_NAVIGATION_OPTIONS);
+        await page.waitForSelector('text/Consent Form', { timeout: TEST_WAIT_TIMEOUT });
 
-        const waitForReturnHit = page.waitForRequest(req => req.url() === PROLIFIC_RETURN_URL, { timeout: 20000 });
+        const waitForReturnHit = page.waitForRequest(
+            req => req.url() === PROLIFIC_RETURN_URL,
+            { timeout: SURVEY_STEP_TIMEOUT }
+        );
+
         const clickDisagree = page.$$eval('button', btns => {
-          const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Do Not Agree');
-          b?.click();
+            const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Do Not Agree');
+            b?.click();
         });
+
         const [returnRequest] = await Promise.all([waitForReturnHit, clickDisagree]);
 
-        // In CI, the corporate network may prevent Chromium from completing the
-        // external Prolific navigation. Verifying the exact outbound request tests
-        // the dashboard behavior without depending on Prolific being reachable.
+        // The outbound request is the behavior this test owns. In headless Docker,
+        // Prolific may redirect Chromium again, so the eventual browser URL is not
+        // a stable assertion.
         expect(returnRequest.url()).toBe(PROLIFIC_RETURN_URL);
-    }, 30000);
+    });
 
     it('any key combo during text scenario should have no effect on progress', async () => {
         await startCaciProlificSurvey(page);
         await pressAllKeys(page, IS_PH1 ? "Page 1 of" : "Scenario Details");
-    }, 30000);
+    });
 
     it('text-scenario through CACI Prolific should be navigable and end with survey', async () => {
         await startCaciProlificSurvey(page);
-        await completeTextScenarioAndReachSurvey(page, { isPhase1: IS_PH1 })
+        await completeTextScenarioAndReachSurvey(page, { isPhase1: IS_PH1 });
         // very long test because it connects to ST and ADEPT servers to send fake responses
-    }, 300000);
+    });
 
     it('any key combo during survey should have no effect on progress', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&startSurvey=true&PROLIFIC_PID=${PROLIFIC_PID}&pid=123`);
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&startSurvey=true&PROLIFIC_PID=${PROLIFIC_PID}&pid=123`, SURVEY_NAVIGATION_OPTIONS);
         await agreeToProlificConsent(page);
         const startSurveyUrl = page.url();
         expect(startSurveyUrl.includes(`PROLIFIC_PID=${PROLIFIC_PID}`)).toBe(true);
@@ -78,13 +103,32 @@ describe('Test CACI Prolific entry method', () => {
 
         await waitForSurveyIntro(page);
         await pressAllKeys(page, 'In the final part of the study,');
-    }, 100000);
+    });
 
     it('survey through CACI Prolific should be navigable', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&startSurvey=true&PROLIFIC_PID=${PROLIFIC_PID}&pid=123`);
-        await agreeToProlificConsent(page);
-        await waitForSurveyIntro(page);
-        await surveyFlowNavigateAndComplete(page, { isPhase1: IS_PH1 });
-    }, 120000);
+        try {
+            await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?caciProlific=true&startSurvey=true&PROLIFIC_PID=${PROLIFIC_PID}&pid=123`, SURVEY_NAVIGATION_OPTIONS);
+            await agreeToProlificConsent(page);
+            await waitForSurveyIntro(page);
+
+            if (!IS_PH1) {
+                // The test only needs to verify that the survey submits. Prevent
+                // Chromium from actually loading the external Prolific completion
+                // page, which can hang target initialization in headless Docker.
+                await blockProlificNavigation(page);
+            }
+
+            const result = await surveyFlowNavigateAndComplete(page, { isPhase1: IS_PH1 });
+
+            if (!IS_PH1) {
+                expect(result).toBeDefined();
+                expect(result.submitted).toBe(true);
+            }
+        }
+        catch (error) {
+            await logPageDebug(page, 'CACI Prolific final survey test failed');
+            throw error;
+        }
+    });
 
 });

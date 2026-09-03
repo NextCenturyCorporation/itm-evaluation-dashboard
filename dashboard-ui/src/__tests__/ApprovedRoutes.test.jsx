@@ -1,7 +1,9 @@
 /**
  * @jest-environment puppeteer
  */
-import { FOOTER_TEXT, loginAdeptUser, loginAdmin, loginBasicApprovedUser, loginEvaluator, loginExperimenter, testRouteRedirection } from "../__mocks__/testUtils";
+import { TEST_WAIT_TIMEOUT, LONG_TEST_TIMEOUT, FOOTER_TEXT, loginAdeptUser, loginAdmin, loginBasicApprovedUser, loginEvaluator, loginExperimenter, testRouteRedirection } from "../__mocks__/testUtils";
+
+jest.setTimeout(LONG_TEST_TIMEOUT);
 
 
 function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimenter = false, isAdeptUser = false) {
@@ -55,7 +57,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
                 page = await browser.newPage();
             }
             // /survey-results can take a long time to load because of multiple queries
-        }, 30000);
+        });
     });
     unallowedRoutes.forEach(route => {
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
@@ -63,7 +65,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
             if (route == '/text-based') {
                 page = await browser.newPage();
             }
-        }, 30000);
+        });
     });
 }
 
@@ -71,16 +73,19 @@ describe('Route Redirection and Access Control Tests for admin', () => {
     // log in as admin
     beforeAll(async () => {
         await loginAdmin(page);
-    }, 30000);
+    });
 
     runAllowedRoutesTests(true);
     it('Administrators should see extra headers on progress table', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
-        await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
-        await page.waitForSelector('text/Prolific ID', { timeout: 5000 });
-        await page.waitForSelector('text/Contact ID', { timeout: 5000 });
-        await page.waitForSelector('text/Survey Link', { timeout: 5000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`, {
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
+        });
+        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Participant Progress', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Prolific ID', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Contact ID', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Survey Link', { timeout: TEST_WAIT_TIMEOUT });
     });
 });
 
@@ -92,10 +97,13 @@ describe('Route Redirection and Access Control Tests for evaluators', () => {
 
     runAllowedRoutesTests(false, true);
     it('Evaluators should not see extra headers on progress table', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
-        await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
-        await page.waitForSelector('text/Participant ID', { timeout: 5000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`, {
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
+        });
+        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Participant Progress', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Participant ID', { timeout: TEST_WAIT_TIMEOUT });
         const prolificIdExists = await page.evaluate(() => {
             return document.body.innerText.includes('Prolific ID');
         });
@@ -121,10 +129,13 @@ describe('Route Redirection and Access Control Tests for experimenters', () => {
 
     runAllowedRoutesTests(false, false, true);
     it('Experimenters should not see extra headers on progress table', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
-        await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
-        await page.waitForSelector('text/Participant ID', { timeout: 5000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`, {
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
+        });
+        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Participant Progress', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Participant ID', { timeout: TEST_WAIT_TIMEOUT });
         const prolificIdExists = await page.evaluate(() => {
             return document.body.innerText.includes('Prolific ID');
         });
@@ -150,12 +161,15 @@ describe('Route Redirection and Access Control Tests for adeptUsers', () => {
 
     runAllowedRoutesTests(false, false, false, true);
     it('ADEPT users should see extra headers on progress table', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`);
-        await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Participant Progress', { timeout: 5000 });
-        await page.waitForSelector('text/Prolific ID', { timeout: 5000 });
-        await page.waitForSelector('text/Contact ID', { timeout: 5000 });
-        await page.waitForSelector('text/Survey Link', { timeout: 5000 });
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`, {
+            timeout: TEST_WAIT_TIMEOUT,
+            waitUntil: 'domcontentloaded'
+        });
+        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Participant Progress', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Prolific ID', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Contact ID', { timeout: TEST_WAIT_TIMEOUT });
+        await page.waitForSelector('text/Survey Link', { timeout: TEST_WAIT_TIMEOUT });
     });
 });
 
