@@ -2,7 +2,7 @@
  * @jest-environment puppeteer
  */
 
-import { countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys, takePhase1TextScenario, agreeToProlificConsent} from "../__mocks__/testUtils";
+import { clickElementByText, countElementsWithText, loginAdmin, logout, takePhase2TextScenario, pressAllKeys, takePhase1TextScenario, agreeToProlificConsent } from "../__mocks__/testUtils";
 
 const IS_PH1 = Number(process.env.REACT_APP_TEST_SURVEY_VERSION) <= 5;
 let firstPid = 0;
@@ -66,9 +66,7 @@ describe('Test email-entry text scenarios', () => {
 
         await email1.type('ptextTester@123.com');
         await email2.type('ptextTester@123.com');
-        await page.$$eval('.form-group button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
-        });
+        await clickElementByText(page, '.form-group button', 'Start');
         
         await agreeToProlificConsent(page);
         
@@ -87,9 +85,7 @@ describe('Test email-entry text scenarios', () => {
 
         await email1.type('tester1@123.com');
         await email2.type('TESTER1@123.com');
-        await page.$$eval('.form-group button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
-        });
+        await clickElementByText(page, '.form-group button', 'Start');
         
         await agreeToProlificConsent(page);
         
@@ -109,9 +105,7 @@ describe('Test email-entry text scenarios', () => {
 
         await email1.type('ptextTester@123.com');
         await email2.type('PTEXTTESTER@123.com');
-        await page.$$eval('.form-group button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
-        });
+        await clickElementByText(page, '.form-group button', 'Start');
         
         await agreeToProlificConsent(page);
         
@@ -129,17 +123,16 @@ describe('Test email-entry text scenarios', () => {
         await loginAdmin(page);
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
-        const menu = await page.$('#basic-nav-dropdown');
-        await menu.click();
-        await page.$$eval('a', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'PID Lookup').click();
+        const menu = await page.waitForSelector('#basic-nav-dropdown', {
+            visible: true,
+            timeout: 30000
         });
+        await menu.click();
+        await clickElementByText(page, 'a', 'PID Lookup', 30000);
         await page.waitForSelector('#emailOnly');
         const emailInput = await page.$('#emailOnly');
         await emailInput.type('pTEXTtester@123.com');
-        await page.$$eval('.form-group button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Find PID').click();
-        });
+        await clickElementByText(page, '.form-group button', 'Find PID', 30000);
         // will time out if it fails
         await page.waitForSelector('text/PID: ' + firstPid.toString(), { timeout: 30000 });
     }, 30000);
@@ -153,16 +146,12 @@ describe('Test email-entry text scenarios', () => {
 
         await email1.type('keyTester@702.com');
         await email2.type('KeyTester@702.com');
-        await page.$$eval('.form-group button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
-        });
+        await clickElementByText(page, '.form-group button', 'Start');
         
         await agreeToProlificConsent(page);
         
         await page.waitForSelector('text/Welcome');
-        await page.$$eval('button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
-        });
+        await clickElementByText(page, 'button', 'Start');
         await pressAllKeys(page, IS_PH1 ? 'Move Springer to evac' : 'Scenario Details');
     }, 30000);
 
@@ -175,16 +164,12 @@ describe('Test email-entry text scenarios', () => {
 
         await email1.type('keyTester@702.com');
         await email2.type('KeyTester@702.com');
-        await page.$$eval('.form-group button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
-        });
+        await clickElementByText(page, '.form-group button', 'Start');
         
         await agreeToProlificConsent(page);
         
         await page.waitForSelector('text/Welcome');
-        await page.$$eval('button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Start').click();
-        });
+        await clickElementByText(page, 'button', 'Start');
         if (IS_PH1) {
             await takePhase1TextScenario(page);
         }

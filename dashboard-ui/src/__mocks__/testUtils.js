@@ -34,72 +34,149 @@ export async function countElementsWithText(page, text) {
     }, text);
 }
 
-export async function createAccount(page, username, email, password) {
-    await page.$$eval('button', buttons => {
-        Array.from(buttons).find(btn => btn.textContent == 'Create Account').click();
+export async function clickElementByText(page, selector, text, timeout = TEST_WAIT_TIMEOUT) {
+    await page.waitForFunction(
+        (selector, text) => {
+            const isVisible = element => {
+                const style = window.getComputedStyle(element);
+                const rect = element.getBoundingClientRect();
+                return !element.disabled &&
+                    style.display !== 'none' &&
+                    style.visibility !== 'hidden' &&
+                    rect.width > 0 &&
+                    rect.height > 0;
+            };
+
+            const normalizeText = value => (value || '').replace(/\s+/g, ' ').trim();
+
+            return Array.from(document.querySelectorAll(selector)).some(element =>
+                isVisible(element) &&
+                normalizeText(element.textContent) === normalizeText(text)
+            );
+        },
+        { timeout },
+        selector,
+        text
+    );
+
+    const clicked = await page.$$eval(
+        selector,
+        (elements, text) => {
+            const isVisible = element => {
+                const style = window.getComputedStyle(element);
+                const rect = element.getBoundingClientRect();
+                return !element.disabled &&
+                    style.display !== 'none' &&
+                    style.visibility !== 'hidden' &&
+                    rect.width > 0 &&
+                    rect.height > 0;
+            };
+
+            const normalizeText = value => (value || '').replace(/\s+/g, ' ').trim();
+
+            const target = Array.from(elements).find(element =>
+                isVisible(element) &&
+                normalizeText(element.textContent) === normalizeText(text)
+            );
+
+            if (!target) {
+                return false;
+            }
+
+            target.click();
+            return true;
+        },
+        text
+    );
+
+    if (!clicked) {
+        throw new Error(`Unable to click "${text}" using selector "${selector}".`);
+    }
+}
+
+async function clearAndType(page, selector, value, timeout = TEST_WAIT_TIMEOUT) {
+    const input = await page.waitForSelector(selector, {
+        visible: true,
+        timeout
     });
 
-    const emailInput = await page.$('#createEmail');
-    const usernameInput = await page.$('#createUserName');
-    const passwordInput = await page.$('#createPassword');
-    // clear input
-    await page.evaluate(() => document.getElementById("createEmail").value = "");
-    await page.evaluate(() => document.getElementById("createUserName").value = "");
-    await page.evaluate(() => document.getElementById("createPassword").value = "");
-    await emailInput.type(email);
-    await usernameInput.type(username);
-    await passwordInput.type(password);
-    await page.$$eval('.form-group button', buttons => {
-        Array.from(buttons).find(btn => btn.textContent == 'Create Account').click();
-    });
+    await input.click({ clickCount: 3 });
+    await page.keyboard.press('Backspace');
+    await input.type(value);
+}
+
+export async function createAccount(page, username, email, password) {
+    await clickElementByText(page, 'button', 'Create Account');
+
+    await clearAndType(page, '#createEmail', email);
+    await clearAndType(page, '#createUserName', username);
+    await clearAndType(page, '#createPassword', password);
+
+    await clickElementByText(page, '.form-group button', 'Create Account');
 }
 
 export async function login(page, username, password, createIfDNE = false) {
-    const usernameInput = await page.$('input[placeholder="Email / Username"]');
-    const passwordInput = await page.$('#password');
-    await page.evaluate(() => document.getElementById("userName").value = "");
-    await page.evaluate(() => document.getElementById("password").value = "");
-    await usernameInput.type(username);
-    await passwordInput.type(password);
-    await page.$$eval('.form-group button', buttons => {
-        Array.from(buttons).find(btn => btn.textContent == 'Sign In').click();
-    });
+    await clearAndType(page, 'input[placeholder="Email / Username"]', username);
+    await clearAndType(page, '#password', password);
+
+    await clickElementByText(page, '.form-group button', 'Sign In');
 
     if (createIfDNE) {
-        await page.waitForNavigation();
-        let currentUrl = page.url();
-        // if we're still on the login page, the user does not exist. Create a new one!
-        if (currentUrl == `${process.env.REACT_APP_TEST_URL}/login`) {
+        await page.waitForFunction(
+            () =>
+                window.location.pathname !== '/login' ||
+                (document.body?.innerText || '').includes('Error logging in'),
+            { timeout: TEST_WAIT_TIMEOUT }
+        );
+
+        // If we're still on the login page, the user does not exist. Create a new one.
+        if (page.url() === `${process.env.REACT_APP_TEST_URL}/login`) {
             await createAccount(page, username, username + '@123.com', password);
         }
     }
 }
 
 export async function logout(page) {
-    // make sure page navigates somewhere before logging out
-    await page.goto(`${process.env.REACT_APP_TEST_URL}/login`, {
-        timeout: TEST_WAIT_TIMEOUT
+    // Use the app root to determine the current authentication state. Navigating
+    // an authenticated user directly to /login can briefly render the login page
+    // before React redirects, which creates a race in browser tests.
+    await page.goto(`${process.env.REACT_APP_TEST_URL}/`, {
+        timeout: TEST_WAIT_TIMEOUT,
+        waitUntil: 'domcontentloaded'
     });
     await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
-    let currentUrl = page.url();
-    if (currentUrl == `${process.env.REACT_APP_TEST_URL}/awaitingApproval`) {
-        await page.$$eval('button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Return to Login').click();
-        });
-        await page.waitForSelector('text/Sign In');
+
+    await page.waitForFunction(
+        waitingText => {
+            const bodyText = document.body?.innerText || '';
+            return document.querySelector('#basic-nav-dropdown') !== null ||
+                document.querySelector('input[placeholder="Email / Username"]') !== null ||
+                bodyText.includes(waitingText);
+        },
+        { timeout: TEST_WAIT_TIMEOUT },
+        WAITING_TEXT
+    );
+
+    const bodyText = await page.evaluate(() => document.body?.innerText || '');
+    const menu = await page.$('#basic-nav-dropdown');
+
+    if (bodyText.includes(WAITING_TEXT)) {
+        await clickElementByText(page, 'button', 'Return to Login');
     }
-    else if (![`${process.env.REACT_APP_TEST_URL}/login`, `${process.env.REACT_APP_TEST_URL}/participantText`].includes(currentUrl)) {
-        const menu = await page.$('#basic-nav-dropdown');
-        if (menu != null) {
-            await menu.click();
-            await page.$$eval('a', buttons => {
-                Array.from(buttons).find(btn => btn.textContent == 'Logout').click();
-            });
-        }
-        await page.waitForSelector('text/Sign In', { timeout: TEST_WAIT_TIMEOUT });
+    else if (menu) {
+        await menu.click();
+        await clickElementByText(page, 'a', 'Logout');
     }
-    currentUrl = page.url();
-    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
+
+    await page.waitForFunction(
+        () =>
+            window.location.pathname === '/login' &&
+            document.querySelector('input[placeholder="Email / Username"]') !== null,
+        { timeout: TEST_WAIT_TIMEOUT }
+    );
+    await page.waitForSelector('text/Sign In', { timeout: TEST_WAIT_TIMEOUT });
+
+    expect(page.url()).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
 }
 
 export async function testRouteRedirection(route, expectedRedirect = '/login') {
@@ -193,17 +270,29 @@ export async function checkRouteSelector(page, route, selector, expectedText = [
 }
 
 export async function useMenuNavigation(page, header, selection, expectedRoute, userMenu = false) {
-    await page.$$eval((userMenu ? '.login-user-content ' : '') + '.dropdown-toggle', (buttons, header) => {
-        if (header != '')
-            Array.from(buttons).find(btn => btn.textContent == header).click();
-        else
-            Array.from(buttons)[0].click();
-    }, header);
-    await page.$$eval('.dropdown-item', (buttons, selection) => {
-        Array.from(buttons).find(btn => btn.textContent == selection).click();
-    }, selection);
-    const currentUrl = page.url();
-    expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}${expectedRoute}`);
+    const toggleSelector = (userMenu ? '.login-user-content ' : '') + '.dropdown-toggle';
+
+    if (header !== '') {
+        await clickElementByText(page, toggleSelector, header);
+    }
+    else {
+        const toggle = await page.waitForSelector(toggleSelector, {
+            visible: true,
+            timeout: TEST_WAIT_TIMEOUT
+        });
+        await toggle.click();
+    }
+
+    await clickElementByText(page, '.dropdown-item', selection);
+
+    const expectedUrl = `${process.env.REACT_APP_TEST_URL}${expectedRoute}`;
+    await page.waitForFunction(
+        expectedUrl => window.location.href === expectedUrl,
+        { timeout: TEST_WAIT_TIMEOUT },
+        expectedUrl
+    );
+
+    expect(page.url()).toBe(expectedUrl);
 }
 
 export async function startAdeptQualtrixSurvey(page) {

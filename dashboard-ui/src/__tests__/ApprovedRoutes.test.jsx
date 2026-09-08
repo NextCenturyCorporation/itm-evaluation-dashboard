@@ -72,6 +72,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
 describe('Route Redirection and Access Control Tests for admin', () => {
     // log in as admin
     beforeAll(async () => {
+        await jestPuppeteer.resetPage();
         await loginAdmin(page);
     });
 
@@ -92,6 +93,7 @@ describe('Route Redirection and Access Control Tests for admin', () => {
 describe('Route Redirection and Access Control Tests for evaluators', () => {
     // log in as evaluator
     beforeAll(async () => {
+        await jestPuppeteer.resetPage();
         await loginEvaluator(page);
     });
 
@@ -124,6 +126,7 @@ describe('Route Redirection and Access Control Tests for evaluators', () => {
 describe('Route Redirection and Access Control Tests for experimenters', () => {
     // log in as experimenter
     beforeAll(async () => {
+        await jestPuppeteer.resetPage();
         await loginExperimenter(page);
     });
 
@@ -156,6 +159,7 @@ describe('Route Redirection and Access Control Tests for experimenters', () => {
 describe('Route Redirection and Access Control Tests for adeptUsers', () => {
     // log in as experimenter
     beforeAll(async () => {
+        await jestPuppeteer.resetPage();
         await loginAdeptUser(page);
     });
 
@@ -176,6 +180,7 @@ describe('Route Redirection and Access Control Tests for adeptUsers', () => {
 describe('Route Redirection and Access Control Tests for approved users with no elevation', () => {
     // log in as experimenter
     beforeAll(async () => {
+        await jestPuppeteer.resetPage();
         await loginBasicApprovedUser(page);
     });
 
