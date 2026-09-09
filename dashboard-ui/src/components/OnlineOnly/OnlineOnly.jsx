@@ -67,6 +67,7 @@ export default function StartOnline() {
         ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
         
         const participantDataFunctions = {
+            19: canadaParticipantData,
             18: canadaParticipantData,
             17: juneParticipantData,
             16: aprilParticipantData,

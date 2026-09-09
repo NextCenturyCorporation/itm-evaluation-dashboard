@@ -26,8 +26,7 @@ const isAlignedAdm = (admName) => admName.includes('Regression');
 
 const HEADERS = [
     'Trial_ID', 'OW Scenario', 'Target', 'ADM Name', 'Aligned Server Session ID', 'Aligned ADM Alignment score (ADM|target)',
-
-    'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'
+    'Ceiling Alignment', 'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'
 ];
 const KDMA_ORDER = ['affiliation', 'merit', 'personal_safety', 'search'];
 const KDMA_LABELS = {
@@ -102,6 +101,7 @@ export function PH2RQ8OWPart1() {
                         admName,
                         alignment,
                         sessionId: adm.results?.ta1_session_id,
+                        ceiling_alignment: adm.ceiling_alignment,
                         kdmas: adm.results?.kdmas ?? []
                     };
                 }
@@ -122,6 +122,7 @@ export function PH2RQ8OWPart1() {
                     'ADM Name': aligned.admName.split('__')[0],
                     'Aligned Server Session ID': aligned.sessionId ?? '-',
                     'Aligned ADM Alignment score (ADM|target)': aligned.alignment,
+                    'Ceiling Alignment' : aligned.ceiling_alignment,
                     'Baseline ADM Alignment score (ADM|target)': baseline?.alignment ?? '-',
                     'Baseline Server Session ID': baseline?.sessionId ?? '-'
                 };
@@ -201,11 +202,11 @@ export function PH2RQ8OWPart1() {
                 for (const param of PARAM_ORDER) kdmaHeaders.push(kdmaColLabel(k, param));
             }
         }
-        const alignedScoreIdx = HEADERS.indexOf('Aligned ADM Alignment score (ADM|target)');
+        const ceilingIdx = HEADERS.indexOf('Ceiling Alignment');
         return [
-            ...HEADERS.slice(0, alignedScoreIdx + 1),
+            ...HEADERS.slice(0, ceilingIdx + 1),
             ...kdmaHeaders,
-            ...HEADERS.slice(alignedScoreIdx + 1)
+            ...HEADERS.slice(ceilingIdx + 1)
         ];
     }, [filteredData]);
 

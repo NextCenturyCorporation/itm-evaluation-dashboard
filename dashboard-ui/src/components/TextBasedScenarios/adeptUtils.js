@@ -3,6 +3,8 @@
 import axios from 'axios';
 
 export const submitResponses = async (scenario, scenarioID, urlBase, sessionID) => {
+    // if we don't have a session, don't cause more errors
+    if (!sessionID) return;
     for (const [, fieldValue] of Object.entries(scenario)) {
         if (typeof fieldValue !== 'object' || !fieldValue?.questions) continue;
         for (const [questionName, question] of Object.entries(fieldValue.questions)) {
@@ -54,31 +56,35 @@ export const getMostLeastAligned = async (sessionId, url, scenario, evalNumber, 
             : ['Moral judgement', 'Ingroup Bias'];
     };
 
+    if (!sessionId) return null;
+
     const targets = getTargets();
     const responses = [];
 
-    try {
-        for (const target of targets) {
-            const params = { session_id: sessionId };
-            if (target) params.kdma_id = target;
-            if (enable_subpop) params.enable_subpop = enable_subpop
-            if (allow_multiattribute_targets) params.allow_multiattribute_targets = allow_multiattribute_targets
+    for (const target of targets) {
+        const params = { session_id: sessionId };
+        if (target) params.kdma_id = target;
+        if (enable_subpop) params.enable_subpop = enable_subpop
+        if (allow_multiattribute_targets) params.allow_multiattribute_targets = allow_multiattribute_targets
 
+        try {
             const response = await axios.get(`${url}${endpoint}`, { params });
             const filteredData = response.data.filter(obj =>
                 !Object.keys(obj).some(key => key.toLowerCase().includes('-group-'))
             );
             responses.push({ target, response: filteredData });
+        } catch (err) {
+            console.error('Error getting ordered alignment:', err);
         }
-    } catch (err) {
-        console.error('Error getting ordered alignment:', err);
     }
 
-    return responses;
+    // null (rather than an empty array) so alignment checks can tell scoring never happened
+    return responses.length > 0 ? responses : null;
 };
 
 export const getKdmaProfile = async (sessionId, url, enable_subpop = false) => {
     const endpoint = '/api/v1/computed_kdma_profile'
+    if (!sessionId) return null;
     const params = {session_id: sessionId}
     if (enable_subpop) params.enable_subpop = enable_subpop
     try {
@@ -95,7 +101,18 @@ export const createAdeptSession = async (url) => {
     return response.data;
 };
 
+// Return null instead of throwing if it fails. Record data as normal, no scoring tho (fix on participant progress table)
+export const createAdeptSessionSafe = async (url) => {
+    try {
+        return await createAdeptSession(url);
+    } catch (e) {
+        console.error('Error creating ADEPT session, data will be uploaded without alignment:', e);
+        return null;
+    }
+};
+
 export const getSubPop = async (sessionId, url) => {
+    if (!sessionId) return null;
     try {
         const response = await axios.get(`${url}/api/v1/subpopulation?session_id=${sessionId}`);
         return response.data
