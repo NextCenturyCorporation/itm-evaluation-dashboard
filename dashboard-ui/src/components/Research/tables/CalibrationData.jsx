@@ -9,7 +9,6 @@ import calibrationDefinitions from '../variables/Variable Definitions Calibratio
 import { getRQ134Data } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 
 const GET_PARTICIPANT_LOG = gql`
@@ -275,7 +274,7 @@ export function CalibrationData({ evalNum }) {
         return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
     };
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorSurveyResults,
@@ -287,7 +286,7 @@ export function CalibrationData({ evalNum }) {
 
     if (errors.length > 0) {
         console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingADMs || loadingComparisonData || loadingSim) return <p>Loading...</p>;

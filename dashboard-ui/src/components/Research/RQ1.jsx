@@ -14,9 +14,9 @@ export function RQ1() {
     const evalOptions = getAllEvals();
     const dispatch = useDispatch()
     const storedEval = useSelector(state => state.configs.selectedResearchEval)
-
+    const fn = null;
+    fn();
     const [rq1CodeShowing, setRQ1CodeShowing] = React.useState(false);
-
     const close1Code = () => {
         setRQ1CodeShowing(false);
     }
