@@ -53,25 +53,29 @@ export const setScenarioCompletion = (obj, completedScenarios) => {
     });
 };
 
+// an alignment result counts only if it actually carries scored responses
+const isPopulatedMLA = (mla) => {
+    if (!mla) return false;
+    if (!Array.isArray(mla)) return true;
+    return mla.some(entry => Array.isArray(entry?.response) && entry.response.length > 0);
+};
+
 // has mostLeastAligned (and populated) or not
 const hasMLA = (scenarioResult) => {
     if (scenarioResult?.scenario_id === 'April2026-subpopulation') {
         return !!scenarioResult?.subPopResult;
     }
     const mla = scenarioResult?.mostLeastAligned || scenarioResult?.combinedMostLeastAligned;
-    if (!mla || (Array.isArray(mla) && mla.length === 0)) return false;
-    if (Array.isArray(mla)) {
-        if (!mla.some(entry => Array.isArray(entry?.response) && entry.response.length > 0)) return false;
-    }
+    if (!isPopulatedMLA(mla)) return false;
 
     // Eval 16: also verify pair group data exists
     if (scenarioResult?.evalNumber === 16 && scenarioResult?.scenario_id !== 'April2026-subpopulation') {
         const sid = scenarioResult.scenario_id;
         if (sid.includes('AF') || sid.includes('PS')) {
-            if (!scenarioResult['AF-PS_mostLeastAligned']) return false;
+            if (!isPopulatedMLA(scenarioResult['AF-PS_mostLeastAligned'])) return false;
         }
         if (sid.includes('MF') || sid.includes('PS')) {
-            if (!scenarioResult['MF-PS_mostLeastAligned']) return false;
+            if (!isPopulatedMLA(scenarioResult['MF-PS_mostLeastAligned'])) return false;
         }
     }
 
@@ -79,7 +83,7 @@ const hasMLA = (scenarioResult) => {
     if (scenarioResult?.evalNumber === 17) {
         const sid = scenarioResult.scenario_id;
         if (!sid.includes('trinary') && (sid.includes('AF') || sid.includes('SS'))) {
-            if (!scenarioResult['AF-SS_mostLeastAligned']) return false;
+            if (!isPopulatedMLA(scenarioResult['AF-SS_mostLeastAligned'])) return false;
         }
     }
 
@@ -87,10 +91,10 @@ const hasMLA = (scenarioResult) => {
     if (scenarioResult?.evalNumber === 18 || scenarioResult?.evalNumber === 19) {
         const sid = scenarioResult.scenario_id;
         if (sid.includes('AF') || sid.includes('PS')) {
-            if (!scenarioResult['AF-PS_mostLeastAligned']) return false;
+            if (!isPopulatedMLA(scenarioResult['AF-PS_mostLeastAligned'])) return false;
         }
         if (sid.includes('MF') || sid.includes('SS')) {
-            if (!scenarioResult['MF-SS_mostLeastAligned']) return false;
+            if (!isPopulatedMLA(scenarioResult['MF-SS_mostLeastAligned'])) return false;
         }
     }
 
@@ -393,6 +397,11 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
                     }
                     const groupMLA = await getMostLeastAligned(groupSid, url, groupScenarios[0], evalNumber, true, false, true);
                     const groupKdmas = await getKdmaProfile(groupSid, url);
+                    // don't overwrite existing data with an empty result if scoring failed
+                    if (!groupMLA) {
+                        errors.push({ scenario_id: groupKey, error: 'No alignment returned for pair group' });
+                        continue;
+                    }
                     for (const scenario of groupScenarios) {
                         const docId = scenario._id?.$oid || scenario._id;
                         await updateMutation({ variables: { id: docId, updates: {
@@ -413,6 +422,9 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
                 }
                 const combinedMLA = await getMostLeastAligned(combinedSid, url, eval18Scenarios[0], evalNumber, true);
                 const combinedKdmas = await getKdmaProfile(combinedSid, url);
+                if (!combinedMLA) {
+                    throw new Error('No alignment returned for combined session');
+                }
                 for (const scenario of eval18Scenarios) {
                     const docId = scenario._id?.$oid || scenario._id;
                     await updateMutation({ variables: { id: docId, updates: {
