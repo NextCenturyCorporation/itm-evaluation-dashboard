@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import { submitResponses as sharedSubmitResponses, getMostLeastAligned, getKdmaProfile, getAdeptUrl as sharedGetAdeptUrl, getSubPop, createAdeptSession } from './adeptUtils';
+import { submitResponses as sharedSubmitResponses, getMostLeastAligned, getKdmaProfile, getAdeptUrl as sharedGetAdeptUrl, getSubPop, createAdeptSessionSafe as createAdeptSession } from './adeptUtils';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, Spinner, Button, Modal } from 'react-bootstrap';
@@ -421,7 +420,13 @@ class TextBasedScenariosPage extends Component {
         scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id)
         scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
         scenarioData.evalName = (this.props.currentTextEval).replace(/Phase 2\s*/g, '')
-        await this.getAlignmentScore(scenarioData)
+        // even if this fails, data still recorded
+        try {
+            await this.getAlignmentScore(scenarioData)
+        } catch (e) {
+            console.error('Error scoring alignment, uploading responses without it:', e);
+            scenarioData.alignmentScoringError = e.message;
+        }
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
         this.setState({
@@ -448,18 +453,20 @@ class TextBasedScenariosPage extends Component {
             const url = this.getAdeptUrl();
             const id = scenario.scenario_id;
             const pairKey = (id.includes('AF') || id.includes('PS')) ? 'AF-PS' : 'MF-SS';
-            const current = this.state.adeptGroupState[pairKey] || { scenarios: [], sessionId: null };
+            const current = this.state.adeptGroupState[pairKey] || { scenarios: [], sessionId: null, sessionFailed: false };
             const sessionId = current.sessionId || await createAdeptSession(url);
+            // makes sure neither were failed (prevents scoring incorrectly if one worked and the other didnt)
+            const sessionFailed = current.sessionFailed || !sessionId;
             await this.submitResponses(scenario, id, url, sessionId);
             const updated = [...current.scenarios, scenario];
             await new Promise(resolve => this.setState(prevState => ({
-                adeptGroupState: { ...prevState.adeptGroupState, [pairKey]: { scenarios: updated, sessionId } }
+                adeptGroupState: { ...prevState.adeptGroupState, [pairKey]: { scenarios: updated, sessionId, sessionFailed } }
             }), resolve));
             if (updated.length === 2) {
-                const mla = await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
-                const kdmas = await this.attachKdmaValue(sessionId, url);
+                const mla = sessionFailed ? null : await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
+                const kdmas = sessionFailed ? null : await this.attachKdmaValue(sessionId, url);
                 for (const s of updated) {
-                    s[`${pairKey}_sessionId`] = sessionId;
+                    s[`${pairKey}_sessionId`] = sessionFailed ? null : sessionId;
                     s[`${pairKey}_mostLeastAligned`] = mla;
                     s[`${pairKey}_kdmas`] = kdmas;
                 }
@@ -479,18 +486,19 @@ class TextBasedScenariosPage extends Component {
                 const id = scenario.scenario_id;
                 if (!id.includes('trinary') && (id.includes('AF') || id.includes('SS'))) {
                     const url = this.getAdeptUrl();
-                    const current = this.state.adeptGroupState['AF-SS-multi'] || { scenarios: [], sessionId: null };
+                    const current = this.state.adeptGroupState['AF-SS-multi'] || { scenarios: [], sessionId: null, sessionFailed: false };
                     const sessionId = current.sessionId || await createAdeptSession(url);
+                    const sessionFailed = current.sessionFailed || !sessionId;
                     await this.submitResponses(scenario, id, url, sessionId);
                     const updated = [...current.scenarios, scenario];
                     await new Promise(resolve => this.setState(prevState => ({
-                        adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId } }
+                        adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId, sessionFailed } }
                     }), resolve));
                     if (updated.length === 2) {
-                        const mla = await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
-                        const kdmas = await this.attachKdmaValue(sessionId, url);
+                        const mla = sessionFailed ? null : await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
+                        const kdmas = sessionFailed ? null : await this.attachKdmaValue(sessionId, url);
                         for (const s of updated) {
-                            s['AF-SS_sessionId'] = sessionId;
+                            s['AF-SS_sessionId'] = sessionFailed ? null : sessionId;
                             s['AF-SS_mostLeastAligned'] = mla;
                             s['AF-SS_kdmas'] = kdmas;
                         }
@@ -551,25 +559,23 @@ class TextBasedScenariosPage extends Component {
     }
 
     processIsolatedAdeptScenario = async (scenario) => {
-        const sessionEndpoint = '/api/v1/new_session';
         const url = this.getAdeptUrl();
+        // sessionId is null when ADEPT is unreachable - scoring calls no-op and we still upload
+        const sessionId = await createAdeptSession(url);
         try {
-            const session = await axios.post(`${url}${sessionEndpoint}`);
-            if (session.status === 200) {
-                const sessionId = session.data;
-
-                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
-                const mostLeastAligned = await this.mostLeastAligned(sessionId, url, scenario);
-
-                scenario.combinedSessionId = sessionId;
-                scenario.mostLeastAligned = mostLeastAligned;
-                scenario.kdmas = await this.attachKdmaValue(sessionId, url);
-                // can upload without waiting for the others
-                await this.uploadSingleScenario(scenario);
-            }
+            await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
+            scenario.combinedSessionId = sessionId;
+            scenario.mostLeastAligned = await this.mostLeastAligned(sessionId, url, scenario);
+            scenario.kdmas = await this.attachKdmaValue(sessionId, url);
         } catch (e) {
-            console.error('Error creating isolated session:', e);
+            console.error('Error scoring isolated scenario:', e);
+            scenario.combinedSessionId = sessionId;
+            scenario.mostLeastAligned = null;
+            scenario.kdmas = null;
+            scenario.combinedScoringError = e.message;
         }
+        // can upload without waiting for the others
+        await this.uploadSingleScenario(scenario);
     }
 
     // refactored a lot of similar logic into generic group session id handling
@@ -599,12 +605,14 @@ class TextBasedScenariosPage extends Component {
             }
         }
 
-        const currentGroup = this.state.adeptGroupState[groupKey] || { scenarios: [], sessionId: null };
+        const currentGroup = this.state.adeptGroupState[groupKey] || { scenarios: [], sessionId: null, sessionFailed: false };
         let sessionId = currentGroup.sessionId;
 
         if (!sessionId) {
             sessionId = await createAdeptSession(url);
         }
+
+        const sessionFailed = currentGroup.sessionFailed || !sessionId;
 
         await this.submitResponses(scenario, scenarioId, url, sessionId);
 
@@ -612,17 +620,17 @@ class TextBasedScenariosPage extends Component {
         await new Promise(resolve => this.setState(prevState => ({
             adeptGroupState: {
                 ...prevState.adeptGroupState,
-                [groupKey]: { scenarios: updatedScenarios, sessionId }
+                [groupKey]: { scenarios: updatedScenarios, sessionId, sessionFailed }
             }
         }), resolve));
 
         if (updatedScenarios.length === getGroupSize(groupKey)) {
             try {
-                const combinedMostLeastAligned = await this.mostLeastAligned(sessionId, url, updatedScenarios[0], true);
-                const combinedKdmas = await this.attachKdmaValue(sessionId, url);
+                const combinedMostLeastAligned = sessionFailed ? null : await this.mostLeastAligned(sessionId, url, updatedScenarios[0], true);
+                const combinedKdmas = sessionFailed ? null : await this.attachKdmaValue(sessionId, url);
 
                 for (const s of updatedScenarios) {
-                    s.combinedSessionId = sessionId;
+                    s.combinedSessionId = sessionFailed ? null : sessionId;
                     s.combinedMostLeastAligned = combinedMostLeastAligned;
                     s.combinedKdmas = combinedKdmas;
                     await this.uploadSingleScenario(s);
@@ -646,21 +654,20 @@ class TextBasedScenariosPage extends Component {
 
         // subpop - create combined session, get subpop result, upload immediately
         if (scenarioId === 'April2026-subpopulation') {
+            const combinedSessionId = await createAdeptSession(url);
+            this.setState({ eval16CombinedSessionId: combinedSessionId });
+            let subPopResult = null;
             try {
-                const combinedSessionId = await createAdeptSession(url);
-                this.setState({ eval16CombinedSessionId: combinedSessionId });
-
                 await this.submitResponses(scenario, scenarioId, url, combinedSessionId);
-
-                const subPopResult = await getSubPop(combinedSessionId, url);
-                this.setState({ eval16SubPopResult: subPopResult });
-
-                scenario.combinedSessionId = combinedSessionId;
-                scenario.subPopResult = subPopResult;
-                await this.uploadSingleScenario(scenario, this.state.resumedSubpop);
+                subPopResult = await getSubPop(combinedSessionId, url);
             } catch (e) {
                 console.error('Error processing eval 16 subpopulation:', e);
+                scenario.subPopError = e.message;
             }
+            this.setState({ eval16SubPopResult: subPopResult });
+            scenario.combinedSessionId = combinedSessionId;
+            scenario.subPopResult = subPopResult;
+            await this.uploadSingleScenario(scenario, this.state.resumedSubpop);
             return;
         }
 
@@ -752,18 +759,10 @@ class TextBasedScenariosPage extends Component {
 
     beginRunningSession = async (scenario) => {
         const url = this.getAdeptUrl();
-        const sessionEndpoint = '/api/v1/new_session';
+        const sessionId = await createAdeptSession(url);
 
-        try {
-            const session = await axios.post(`${url}${sessionEndpoint}`);
-            if (session.status === 200) {
-                this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
-                })
-            }
-        } catch (e) {
-            console.error(e)
-        }
+        await new Promise(resolve => this.setState({ combinedSessionId: sessionId }, resolve));
+        await this.submitResponses(scenario, scenario.scenario_id, url, sessionId)
     }
 
     continueRunningSession = async (scenario) => {
