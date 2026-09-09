@@ -83,8 +83,8 @@ const hasMLA = (scenarioResult) => {
         }
     }
 
-    // 2dfor eval 18
-    if (scenarioResult?.evalNumber === 18) {
+    // 2d for eval 18/19
+    if (scenarioResult?.evalNumber === 18 || scenarioResult?.evalNumber === 19) {
         const sid = scenarioResult.scenario_id;
         if (sid.includes('AF') || sid.includes('PS')) {
             if (!scenarioResult['AF-PS_mostLeastAligned']) return false;
@@ -136,6 +136,7 @@ const getEval16Groups = (scenarioId) => {
     return groups;
 };
 
+// shared by eval 18 and eval 19, which use identical pair grouping
 const getEval18Group = (scenarioId) => {
     if (scenarioId.includes('AF') || scenarioId.includes('PS')) return 'AF-PS';
     if (scenarioId.includes('MF') || scenarioId.includes('SS')) return 'MF-SS';
@@ -372,9 +373,10 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
                     } } });
                 }
             }
-        } else if (evalNumber === 18) {
+        } else if (evalNumber === 18 || evalNumber === 19) {
             // (AF-PS, MF-SS) each scored on their own. one combined session holding all four documents.
-            const eval18Scenarios = allParticipantResults.filter(r => r.evalNumber === 18);
+            // Eval 19 uses the same grouping/scoring logic as eval 18.
+            const eval18Scenarios = allParticipantResults.filter(r => r.evalNumber === evalNumber);
 
             const pairGroups = { 'AF-PS': [], 'MF-SS': [] };
             for (const scenario of eval18Scenarios) {
@@ -384,7 +386,7 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
 
             for (const [groupKey, groupScenarios] of Object.entries(pairGroups)) {
                 if (groupScenarios.length === 2) {
-                    onProgress?.(`Eval 18: scoring ${groupKey} pair group...`);
+                    onProgress?.(`Eval ${evalNumber}: scoring ${groupKey} pair group...`);
                     const groupSid = await createAdeptSession(url);
                     for (const scenario of groupScenarios) {
                         await submitResponses(scenario, scenario.scenario_id, url, groupSid);
@@ -404,7 +406,7 @@ export const repairAlignment = async (missingScenarioIds, allParticipantResults,
 
             // Combined all-document session scoring
             if (eval18Scenarios.length > 0) {
-                onProgress?.(`Eval 18: scoring combined session (${eval18Scenarios.length} documents)...`);
+                onProgress?.(`Eval ${evalNumber}: scoring combined session (${eval18Scenarios.length} documents)...`);
                 const combinedSid = await createAdeptSession(url);
                 for (const scenario of eval18Scenarios) {
                     await submitResponses(scenario, scenario.scenario_id, url, combinedSid);

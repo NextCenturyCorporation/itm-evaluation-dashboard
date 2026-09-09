@@ -44,6 +44,7 @@ const GET_EVAL_DATA = gql`
     }`;
 
 export const SURVEY_VERSION_DATA = {
+    "14.0": {evalName: 'UK Evaluation', evalNumber: 19},
     "13.0": {evalName: 'Canada Evaluation', evalNumber: 18},
     "12.0": {evalName: 'June 2026 Evaluation', evalNumber: 17},
     "11.0": { evalName: 'April 2026 Evaluation', evalNumber: 16 },
@@ -244,7 +245,7 @@ class SurveyPage extends Component {
                 .map(blockType => createScenarioBlockv12(blockType, allPages, participantTextResults, getVersion(blockType.attr, blockType.type)))
                 .filter(Boolean);
             finalize(allBlocks);
-        } else if (version === "13.0") {
+        } else if (version === "13.0" || version === "14.0") {
             const isEven = parseInt(this.state.pid, 10) % 2 === 0;
             const getVersion = (type) => type.startsWith('AF') === isEven ? 'A' : 'B';
             const allBlocks = ['AF-PS', 'MF-SS', 'MF', 'AF', 'PS']

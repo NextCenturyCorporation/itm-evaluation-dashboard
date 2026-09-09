@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { shuffle } from '../Survey/surveyUtils';
 export const evalNameToNumber = {
+    'Phase 2 UK Evaluation': 19,
     'Phase 2 Canada Evaluation': 18,
     'Phase 2 June 2026 Evaluation': 17,
     'Phase 2 April 2026 Evaluation': 16,
@@ -252,6 +253,12 @@ export const scenarioIdsFromLog = (participantLog, currentEval) => {
     const num = evalNameToNumber[currentEval];
 
     const configs = {
+        19: {
+            prefix: 'June2026', 
+            types: ['AF', 'MF', 'PS', 'SS'],
+            noDigitTypes: ['AF', 'MF', 'PS', 'SS'],
+            suffix: 'assess'
+        },
         18: {
             prefix: 'June2026', 
             types: ['AF', 'MF', 'PS', 'SS'],
