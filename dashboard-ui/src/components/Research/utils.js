@@ -373,6 +373,8 @@ const ATTR_IDX_EVAL_10 = { AF: 0, MF: 1, PS: 2, 'PS-AF': 3, PSAF: 4 };
 const TYPES_EVAL_16 = ['baseline', 'aligned', 'misaligned', 'comparison'];
 
 const DATASOURCE = {
+    19: 'P2E_UK_2026',
+    18: 'P2E_Canada_2026',
     17: 'P2E_June_2026',
     16: 'P2E_April_2026',
     15: 'P2E_Feb_2026',

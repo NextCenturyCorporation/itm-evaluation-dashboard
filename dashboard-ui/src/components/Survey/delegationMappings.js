@@ -50,11 +50,12 @@ export const admOrderMapping = {
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-AF" }],
-    // UK Expierment
+    // UK Expierment phase 1 materials
     7: [{ "TA2": "Kitware", "TA1": "Adept", "Attribute": "MJ" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "IO" },
     { "TA2": "Parallax", "TA1": "ST", "Attribute": "VOL" }
     ],
+    // feb 2026
     8: [
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF-SS", "admName": "DeepSeek-R1-Distill-Llama-8B_01_27" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF",    "admName": "Mistral-7B-Instruct-v0.3_01_26" },
@@ -62,18 +63,28 @@ export const admOrderMapping = {
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS", "admName": "Mistral-7B-Instruct-v0.3_01_12" },
     { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS", "admName": "spectrum-Llama-3.1-8B-v1_01_12" },
     ],
+    // april 2026
     9: [
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF-PS" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
     ],
+    // june 2026
     10: [
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-Bi" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-Tri" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-Bi" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS-Tri" },
         { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-SS" },
+    ],
+    // can + uk
+    11: [
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF-PS" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF-SS" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "MF" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "AF" },
+        { "TA2": "Kitware", "TA1": "Adept", "Attribute": "PS" },
     ]
 }
 
