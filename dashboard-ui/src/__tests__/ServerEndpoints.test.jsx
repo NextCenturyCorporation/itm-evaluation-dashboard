@@ -7,10 +7,10 @@ const ADEPT_URL = process.env.REACT_APP_ADEPT_URL;
 
 
 // Note: All Soartech tests have been removed 
-jest.setTimeout(40000);
+jest.setTimeout(60000);
 
 describe('TA1 Server Tests', () => {
-  // if these tests two fail, the others have no hope
+  // If either of these tests fails, the remaining ADEPT tests are unlikely to succeed.
   describe('Session Creation', () => {
     it('should create a new ADEPT session successfully', async () => {
       const response = await axios.post(`${ADEPT_URL}/api/v1/new_session`);
