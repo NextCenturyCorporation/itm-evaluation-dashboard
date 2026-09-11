@@ -88,6 +88,18 @@ export const admOrderMapping = {
     ]
 }
 
+export const ADM_ORDER_BY_EVAL = {
+    8: 5,
+    9: 5,
+    10: 6,
+    12: 7,
+    15: 8,
+    16: 9,
+    17: 10,
+    18: 11,
+    19: 11
+};
+
 export const getKitwareBaselineMapping = (sv) => {
     return {
         "DryRunEval-IO2-eval": sv === 4 ? "ADEPT-DryRun-Ingroup Bias-0.5" : "ADEPT-DryRun-Ingroup Bias-0.6",

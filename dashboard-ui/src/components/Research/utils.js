@@ -1,7 +1,7 @@
 import * as FileSaver from 'file-saver';
 import XLSX from 'xlsx-js-style';
 import { isDefined } from "../AggregateResults/DataFunctions";
-import { admOrderMapping, getDelEnvMapping } from '../Survey/delegationMappings';
+import { admOrderMapping, getDelEnvMapping, ADM_ORDER_BY_EVAL } from '../Survey/delegationMappings';
 import { formatTargetWithDecimal, adjustScenarioNumber } from '../Survey/surveyUtils';
 import store from '../../store/store';
 
@@ -39,6 +39,32 @@ const DELEGATION2_MAP = {
     "Delegate all of the patients in the next wave to the medic": 5,
     '-': '-'
 };
+
+export const CANADA_UK_EVALS = [18, 19];
+export const isCanadaUK = (evalNum) => CANADA_UK_EVALS.includes(evalNum);
+
+export function filterAlignments(arr, include, exclude) {
+    return (arr || []).filter(o => {
+        const key = Object.keys(o)[0];
+        if (key.split("-").pop().includes("_")) return false;
+        return include.every(c => key.includes(c)) && !exclude.some(c => key.includes(c));
+    });
+}
+
+// AF3, PS8 -> AF3-PS8
+export function synthesizeCombined2DRanking(response, codes, targetPrefix = 'Feb2026') {
+    const [c1, c2] = codes;
+    const soloRanking = code =>
+        filterAlignments(response, [code], ['MF', 'SS', 'AF', 'PS'].filter(c => c !== code))
+            .map(o => ({ index: Object.keys(o)[0].match(/(\d+)$/)?.[1], score: o[Object.keys(o)[0]] }))
+            .filter(o => o.index != null);
+    const r1 = soloRanking(c1), r2 = soloRanking(c2);
+    const combos = [];
+    for (const a of r1) for (const b of r2) {
+        combos.push({ [`${targetPrefix}-${c1}${a.index}-${c2}${b.index}`]: a.score + b.score });
+    }
+    return combos.sort((x, y) => Object.values(y)[0] - Object.values(x)[0]);
+}
 
 
 const PH1_COMPETENCE = {
@@ -164,8 +190,36 @@ export function getAlignments(evalNum, textResults, pid) {
     const distanceAlignments = [];
     const eval16Alignments = {};
     const eval17Alignments = {};
+    const eval18Alignments = {};
     let addedMJ = false;
 
+    if (isCanadaUK(evalNum)) {
+        //  - AF / PS: combinedMostLeastAligned keys used as-is (eval 17 adms)
+        //  - MF: combinedMostLeastAligned keys re-prefixed to Feb2026 (eval 15 adms)
+        //  - AF-PS / MF-SS: use two solo rankings combined together (eval 15 adms)
+        const ALL_CODES = ['AF', 'MF', 'PS', 'SS'];
+        const SOLO_PREFIX = { AF: null, PS: null, MF: 'Feb2026' };
+        const PAIR_CODES = { 'AF-PS': ['AF', 'PS'], 'MF-SS': ['MF', 'SS'] };
+        const pickEntry = (mla) => mla?.find(o => o.target === null) ?? mla?.[0];
+        const toAtts = (arr) => arr.map(o => { const k = Object.keys(o)[0]; return { 'target': k, 'score': o[k] }; });
+
+        for (const textRes of textResultsForPID) {
+            const combinedEntry = pickEntry(textRes['combinedMostLeastAligned']);
+            for (const [attr, prefix] of Object.entries(SOLO_PREFIX)) {
+                if (eval18Alignments[attr] || !combinedEntry) continue;
+                const atts = toAtts(filterAlignments(combinedEntry.response, [attr], ALL_CODES.filter(c => c !== attr)));
+                eval18Alignments[attr] = prefix
+                    ? atts.map(a => ({ ...a, target: a.target.replace(/^[A-Za-z]+\d+/, prefix) }))
+                    : atts;
+            }
+            for (const [pair, codes] of Object.entries(PAIR_CODES)) {
+                const pairEntry = pickEntry(textRes[`${pair}_mostLeastAligned`]);
+                if (eval18Alignments[pair] || !pairEntry) continue;
+                eval18Alignments[pair] = toAtts(synthesizeCombined2DRanking(pairEntry.response, codes));
+            }
+        }
+        return { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments, eval18Alignments };
+    }
     if (evalNum === 17) {
         // keyed by attribute block (AF-Bi, AF-Tri, PS-Bi, PS-Tri, AF-SS); bi/tri docs each carry
         // their group's combinedMostLeastAligned; the AF/SS binary docs also carry AF-SS_mostLeastAligned
@@ -402,6 +456,7 @@ function findMatchingPages(evalNum, results, entry, t, logData, st_scenario, ad_
         if (evalNum === 15) return alignMatches && ta2Matches && matchEval15(obj, entry);
         if (evalNum === 16) return ta2Matches && matchEval16(obj, entry, t, results);
         if (evalNum === 17) return alignMatches && ta2Matches && matchEval17(obj, entry);
+        if (isCanadaUK(evalNum)) return alignMatches && ta2Matches && matchEval18(obj, entry);
         // Default: evals 4, 5, 6
         return alignMatches && ta2Matches && matchDefault(obj, entry, evalNum, st_scenario, ad_scenario);
     });
@@ -500,6 +555,20 @@ function matchEval17(obj, entry) {
     }
 }
 
+function matchEval18(obj, entry) {
+    // Canada/UK (evals 18/19) 
+    const index = obj['scenarioIndex'] ?? '';
+    const has = (c) => index.includes(c);
+    switch (entry['Attribute']) {
+        case 'AF-PS': return has('AF') && has('PS');
+        case 'MF-SS': return has('MF') && has('SS');
+        case 'AF': return has('AF') && !has('PS') && !has('MF') && !has('SS');
+        case 'PS': return has('PS') && !has('AF') && !has('MF') && !has('SS');
+        case 'MF': return has('MF') && !has('SS') && !has('AF') && !has('PS');
+        default: return false;
+    }
+}
+
 function findMatchingADM(admData, page, evalNum) {
     if (evalNum < 8) {
         return admData.find((adm) =>
@@ -553,8 +622,9 @@ function resolveAttribute(targetStr, baselineTarget, scenarioIndex) {
 
 function handleStandardComparison(evalNum, page, entryObj, allObjs, entry) {
     const adms = page['pageName'].split(' vs ');
-    const alignedAdm = (evalNum === 15 || evalNum === 16 || evalNum === 17) ? adms[0] : adms[1];
-    const baselineAdm = (evalNum === 15 || evalNum === 16 || evalNum === 17) ? adms[1] : adms[0];
+    const alignedFirst = evalNum === 15 || evalNum === 16 || evalNum === 17 || isCanadaUK(evalNum);
+    const alignedAdm = alignedFirst ? adms[0] : adms[1];
+    const baselineAdm = alignedFirst ? adms[1] : adms[0];
     const misalignedAdm = adms[2];
 
     const extractPct = (response, medicName) => {
@@ -673,7 +743,7 @@ function buildEntryRow(context) {
         evalNum, isPhase2, pid, logData, entry, page, t,
         wrong_del_materials, orderLog, trial_num,
         ad_scenario, st_scenario, populationHeader,
-        admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments, eval17Alignments,
+        admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments, eval17Alignments, eval18Alignments,
         textResultsForPID, res, fullSetOnly, includeDreServer, calibrationScores,
         allObjs, demoEntry
     } = context;
@@ -753,7 +823,10 @@ function buildEntryRow(context) {
         entryObj[popPrefix + 'Alignment score (Delegator|target)'] = eval16Alignments[entry['Attribute']]?.find(a => a.target === page['admTarget'])?.score ?? '-';
     } else if (evalNum === 17) {
         entryObj[popPrefix + 'Alignment score (Delegator|target)'] = eval17Alignments[entry['Attribute']]?.find(a => a.target === page['admTarget'])?.score ?? '-';
-    } else {
+    } else if (isCanadaUK(evalNum)) {
+        entryObj[popPrefix + 'Alignment score (Delegator|target)'] = eval18Alignments[entry['Attribute']]?.find(a => a.target === page['admTarget'])?.score ?? '-';
+    }
+    else {
         entryObj[popPrefix + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target === page['admTarget']?.replaceAll('.', '') || a.target === page['admTarget'])?.score ?? '-';
     }
     const txt_distance = distanceAlignments.find((a) => a.target === page['admTarget'] || ((evalNum === 5 || evalNum === 6) && a.target === page['admTarget']?.replace('.', '')))?.score ?? '-';
@@ -782,6 +855,10 @@ function buildEntryRow(context) {
     const choiceProcess = evalNum === 17
         ? ((t === 'aligned' || t === 'misaligned')
             ? determineChoiceProcessEval17(eval17Alignments, entry, page, t)
+            : page['admChoiceProcess'])
+        : isCanadaUK(evalNum)
+        ? ((t === 'aligned' || t === 'misaligned')
+            ? determineChoiceProcessEval17(eval18Alignments, entry, page, t) // reusing eval 17 helper - same logic
             : page['admChoiceProcess'])
         : (isPhase2 && t !== 'comparison' && (t !== 'baseline' || isOracleBlock) && !page['admChoiceProcess'])
             ? (evalNum === 16
@@ -864,7 +941,7 @@ function buildEntryRow(context) {
         }
 
         // Probe sets
-        if (evalNum !== 17) {
+        if (evalNum < 17) {
             entryObj['Probe Set Assessment'] = page['scenarioIndex'].includes('PS-AF') ? logData['PS-AF-text-scenario'] : logData['AF-text-scenario'];
             if (evalNum === 15) {
                 const match = page['scenarioIndex']?.match(/(\d+)-observe$/);
@@ -903,6 +980,14 @@ function buildEntryRow(context) {
                 r.scenario_id?.includes(attr) && isTri === !!r.scenario_id?.includes('trinary'));
             entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
                 (isAFSS ? doc?.['AF-SS_sessionId'] : doc?.combinedSessionId) ?? '-';
+        } else if (isCanadaUK(evalNum)) {
+            const attr = entry['Attribute'];
+            const isPair = attr === 'AF-PS' || attr === 'MF-SS';
+            const doc = textResultsForPID.find(r => isPair
+                ? isDefined(r[`${attr}_sessionId`])
+                : r.scenario_id?.includes(attr));
+            entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' :
+                (isPair ? doc?.[`${attr}_sessionId`] : doc?.combinedSessionId) ?? '-';
         } else {
             entryObj['Server Session ID (Delegator)'] = t === 'comparison' ? '-' : textResultsForPID[0]?.combinedSessionId;
         }
@@ -924,7 +1009,7 @@ function buildEntryRow(context) {
     entryObj['Trustworthy_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': this medic is trustworthy' : ': This medic is trustworthy')];
     entryObj['Agreement_Rating'] = RATING_MAP[ratingQ(isPhase2 ? ': Do you agree with the decision that this medic made?' : ': Do you agree with the decisions that this medic made?')];
     entryObj['SRAlign_Rating'] = RATING_MAP[ratingQ(': The way this medic makes medical decisions is how I make decisions')];
-    if ((evalNum === 16 || evalNum === 17) && t !== "comparison") {
+    if ((evalNum >= 16) && t !== "comparison") {
         entryObj["Distrust_Rating"] = RATING_MAP[
             ratingQ(": Based on this experience, I cannot rely on this person with complete confidence.")
         ];
@@ -960,7 +1045,7 @@ function buildEntryRow(context) {
 }
 
 export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, dataADMs, comparisonData, dataSim, fullSetOnly = false, includeDreServer = true, calibrationScores = false, demoData = null) {
-    const isPhase2 = [8, 9, 10, 15, 16, 17].includes(evalNum);
+    const isPhase2 = (evalNum >= 8 && evalNum !== 12)
     const surveyResults = Array.isArray(surveyData) ? surveyData : surveyData?.getAllSurveyResults ?? [];
     const participantLog = dataParticipantLog.getParticipantLog;
     const textResults = Array.isArray(textResultsData) ? textResultsData : textResultsData?.getAllScenarioResults ?? [];
@@ -977,7 +1062,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
     let populationHeader = true;
     if (evalNum === 4 && (!fullSetOnly || !includeDreServer)) populationHeader = false;
 
-    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (([5, 6, 8, 9, 10, 12, 15, 16, 17].includes(evalNum)) && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
+    const completed_surveys = surveyResults.filter((res) => res.results?.evalNumber === evalNum && ((evalNum === 4 && isDefined(res.results['Post-Scenario Measures'])) || (evalNum >= 5 && Object.keys(res.results).filter((pg) => pg.includes(' vs ')).length > 0)));
     const wrong_del_materials = evalNum === 5 ? findWrongDelMaterials(evalNum, participantLog, surveyResults) : [];
     for (const res of completed_surveys) {
         const pid = res.results['Participant ID Page']?.questions['Participant ID']?.response ?? res.results['pid'];
@@ -991,13 +1076,12 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
         if (!logData || textCount < TEXT_COUNT_NEEDED) continue;
         if (fullSetOnly && (logData.surveyEntryCount < 1 || textCount < TEXT_COUNT_NEEDED || logData.simEntryCount < SIM_ENTRY_COUNT_NEEDED)) continue;
 
-        const { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments } = getAlignments(evalNum, textResults, pid);
+        const { textResultsForPID, alignments, distanceAlignments, eval16Alignments, eval17Alignments, eval18Alignments } = getAlignments(evalNum, textResults, pid);
         const orderLog = res.results['orderLog']?.filter((x) => x.includes('Medic'));
         const demoEntry = demoData?.find(entry => entry.surveyId === pid) ?? null;
 
         // ADM order override
-        if (isPhase2) logData['ADMOrder'] = evalNum == 10 ? 6 : evalNum == 15 ? 8 : evalNum == 16 ? 9 : evalNum == 17 ? 10 : 5;
-        if (evalNum === 12) logData['ADMOrder'] = 7;
+        logData['ADMOrder'] = ADM_ORDER_BY_EVAL[evalNum] ?? logData['ADMOrder'];
 
         const admOrder = pid === '202411327' ? admOrderMapping[3] : (wrong_del_materials.includes(pid) ? admOrderMapping[1] : admOrderMapping[logData['ADMOrder']]);
         const st_scenario = pid === '202411327' ? 'ST-2' : (wrong_del_materials.includes(pid) ? 'ST-3' : (logData['Del-1']?.includes('ST') ? logData['Del-1'] : logData['Del-2']));

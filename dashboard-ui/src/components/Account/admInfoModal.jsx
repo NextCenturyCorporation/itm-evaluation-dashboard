@@ -1,6 +1,6 @@
 import '../../css/admInfo.css';
 import { Modal } from "@mui/material";
-import { determineChoiceProcessJune2025 } from '../Research/utils';
+import { determineChoiceProcessJune2025, filterAlignments, synthesizeCombined2DRanking } from '../Research/utils';
 import { formatTargetWithDecimal } from "../Survey/surveyUtils";
 
 const MULTI_KDMA_CONFIG = {
@@ -23,29 +23,6 @@ function extractKDMACode(scenarioId) {
         return scenarioId.split('-')[1]?.replace(/\d+$/, '') || '';
     }
     return '';
-}
-
-function filterAlignments(arr, include, exclude) {
-    return (arr || []).filter(o => {
-        const key = Object.keys(o)[0];
-        if (key.split("-").pop().includes("_")) return false;
-        return include.every(c => key.includes(c)) && !exclude.some(c => key.includes(c));
-    });
-}
-
-// AF3, PS8 -> AF3-PS8
-function synthesizeCombined2DRanking(response, codes, targetPrefix = 'Feb2026') {
-    const [c1, c2] = codes;
-    const soloRanking = code =>
-        filterAlignments(response, [code], ['MF', 'SS', 'AF', 'PS'].filter(c => c !== code))
-            .map(o => ({ index: Object.keys(o)[0].match(/(\d+)$/)?.[1], score: o[Object.keys(o)[0]] }))
-            .filter(o => o.index != null);
-    const r1 = soloRanking(c1), r2 = soloRanking(c2);
-    const combos = [];
-    for (const a of r1) for (const b of r2) {
-        combos.push({ [`${targetPrefix}-${c1}${a.index}-${c2}${b.index}`]: a.score + b.score });
-    }
-    return combos.sort((x, y) => Object.values(y)[0] - Object.values(x)[0]);
 }
 
 // A medic is "Normal" when its target is the expected pick for its slot — the
