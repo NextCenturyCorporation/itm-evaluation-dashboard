@@ -15,7 +15,7 @@ import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb
 import aprilDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_April.xlsx';
 import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import june2026DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_June2026.xlsx'
-import { getRQ134Data } from "../utils";
+import { getRQ134Data, isCanadaUK } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
@@ -35,7 +35,12 @@ const GET_SCENARIO_RESULTS_BY_EVAL_ARRAY = gql`
         getScenarioResultsByEvalArray(evalNumbers: $evalNumbers)
   }`;
 
-const GET_ADM_DATA_BY_EVAL = gql`
+const GET_ADM_DATA_BY_EVAL_ARRAY = gql`
+    query getAllHistoryByEvalArray($evalNumbers: [Float!]!){
+        getAllHistoryByEvalArray(evalNumbers: $evalNumbers)
+    }`;
+
+    const GET_ADM_DATA_BY_EVAL = gql`
     query getAllHistoryByEvalNumber($evalNumber: Float!){
         getAllHistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
@@ -68,6 +73,25 @@ const HEADERS_PH2_SEPT_2025 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'D
 const HEADERS_PH2_FEB_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Probe Set Observation', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation preference (A/M)', 'Delegation Percentage (Aligned/Misaligned)', 'Trustworthy_Rating', 'Agreement_Rating', 'SRAlign_Rating'];
 const HEADERS_PH2_APRIL_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation Preference (AlignedSS/AlignedOS)', 'Delegation Percentage (AlignedSS/AlignedOS)', 'Delegation Preference (AlignedOS/Misaligned)', 'Delegation Percentage (AlignedOS/Misaligned)'];
 const HEADERS_PH2_JUNE_2026 = ['Delegator ID', 'Datasource', 'Delegator_grp', 'Delegator_mil', 'Trial_ID', 'Attribute', 'Kitware Model', 'ADM_Type', 'Target', 'Alignment score (ADM|target)', 'Alignment score (Delegator|target)', 'Server Session ID (Delegator)', 'ADM_Aligned_Status (Baseline/Misaligned/Aligned)', 'ADM Loading', 'Alignment score (Delegator|Observed_ADM (target))', 'Trust_Rating', 'Distrust_Rating', 'Trustworthy(INT)_Rating', 'Trustworthy(BEN)_Rating', 'Delegation1', 'Delegation2', 'Delegation preference (A/B)', 'Delegation Percentage (Aligned/Baseline)', 'Delegation preference (A/M)', 'Delegation Percentage (Aligned/Misaligned)', 'Alignment score (DelegatorTRI|Observed_ADM (target))'];
+const HEADERS_PH2_CANADA_UK = HEADERS_PH2_JUNE_2026.filter(h => h !== 'Alignment score (DelegatorTRI|Observed_ADM (target))');
+const HEADERS_MAP = {
+    5: HEADERS_PH1,
+    6: HEADERS_PH1,
+    8: HEADERS_PH2_JUNE_2025,
+    9: HEADERS_PH2_JUNE_2025,
+    10: HEADERS_PH2_SEPT_2025,
+    15: HEADERS_PH2_FEB_2026,
+    16: HEADERS_PH2_APRIL_2026,
+    17: HEADERS_PH2_JUNE_2026,
+};
+
+const ADM_EVALS_BY_EVAL = {
+    6: [5],
+    12: [5],
+    18: [15, 17],
+    19: [15, 17],
+};
+
 export function RQ134({ evalNum, tableTitle }) {
     // -------------------------- State: filters, toggles, and table data --------------------------
     const [formattedData, setFormattedData] = React.useState([]);
@@ -113,7 +137,6 @@ export function RQ134({ evalNum, tableTitle }) {
     const [columnsToHide, setColumnsToHide] = React.useState([]);
     // searching rows
     const [searchPid, setSearchPid] = React.useState('');
-    const [headers, setHeaders] = React.useState([]);
     const [processedForEval, setProcessedForEval] = React.useState(null);
 
     // Set evals to be rendered by number
@@ -150,10 +173,15 @@ export function RQ134({ evalNum, tableTitle }) {
 
     // ------------------------------------ GraphQL query hooks ------------------------------------
     const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
-    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA_BY_EVAL, {
-        variables: { "evalNumber": (evalNum === 6 ? 5 : evalNum === 12 ? 5 : evalNum) },
+    const admEvalNumbers = React.useMemo(() => ADM_EVALS_BY_EVAL[evalNum] ?? [evalNum], [evalNum]);
+    const { loading: loadingADMs, error: errorADMs, data: dataADMs } = useQuery(GET_ADM_DATA_BY_EVAL_ARRAY, {
+        variables: { evalNumbers: admEvalNumbers },
         skip: evalNum === 16
     });
+    const admHistory = React.useMemo(
+        () => ({ getAllHistoryByEvalNumber: dataADMs?.getAllHistoryByEvalArray ?? [] }),
+        [dataADMs]
+    );
     const { loading: loadingMedics, error: errorMedics, data: dataMedics } = useQuery(GET_MEDICS_BY_EVAL, {
         variables: { evalNumber: evalNum },
         skip: evalNum !== 16
@@ -269,29 +297,15 @@ export function RQ134({ evalNum, tableTitle }) {
         clearFilters();
     }, [evalNum]);
 
-    React.useEffect(() => {
-        let currentHeaders = evalNum === 5 || evalNum === 6 ? [...HEADERS_PH1] : [...HEADERS_DRE];
-        if (evalNum === 17) {
-            currentHeaders = [...HEADERS_PH2_JUNE_2026]
-        }
-        if (evalNum === 16) {
-            currentHeaders = [...HEADERS_PH2_APRIL_2026]
-        }
-        if (evalNum === 15) {
-            currentHeaders = [...HEADERS_PH2_FEB_2026]
-        }
-        if ([8, 9].includes(evalNum)) {
-            currentHeaders = [...HEADERS_PH2_JUNE_2025];
-        }
-        if (evalNum === 10) {
-            currentHeaders = [...HEADERS_PH2_SEPT_2025];
-        }
-        if (!(evalNum === 6 || (evalNum === 5 && includeJAN))) {
-            currentHeaders = currentHeaders.filter(header => header !== 'Truncation Error');
-        }
+    const headers = React.useMemo(() => {
+        const baseHeaders = isCanadaUK(evalNum)
+            ? HEADERS_PH2_CANADA_UK
+            : HEADERS_MAP[evalNum] ?? HEADERS_DRE;
 
-        setHeaders(currentHeaders);
-    }, [evalNum, includeJAN]);
+        return shouldShowTruncationError
+            ? baseHeaders
+            : baseHeaders.filter(header => header !== 'Truncation Error');
+    }, [evalNum, shouldShowTruncationError]);
 
     const needsDre = includeDRE || includeUSEvals;
     const needsJan = includeJAN || includeUSEvals;
@@ -303,7 +317,7 @@ export function RQ134({ evalNum, tableTitle }) {
             surveyData.length > 0 &&
             dataParticipantLog?.getParticipantLog &&
             textResultsData.length > 0 &&
-            (evalNum === 16 ? dataMedics?.getMedicsByEval : dataADMs?.getAllHistoryByEvalNumber) &&
+            (evalNum === 16 ? dataMedics?.getMedicsByEval : dataADMs?.getAllHistoryByEvalArray) &&
             comparisonData.length > 0 &&
             dataSim?.getAllSimAlignmentByEval &&
             (evalNum < 16 || dataDemo?.getDemographicsByEval) &&
@@ -314,7 +328,7 @@ export function RQ134({ evalNum, tableTitle }) {
         ) {
             const admDataForEval = evalNum === 16
                 ? { getAllHistoryByEvalNumber: dataMedics?.getMedicsByEval ?? [] }
-                : dataADMs;
+                : admHistory;
             const data = getRQ134Data(evalNum, surveyData, dataParticipantLog, textResultsData, admDataForEval, comparisonData, dataSim, false, true, false, dataDemo?.getDemographicsByEval);
             if (evalNum === 6) {
                 data.allObjs = data.allObjs.map(obj => ({
@@ -327,7 +341,7 @@ export function RQ134({ evalNum, tableTitle }) {
                 includeExtraData(data, 4, dreSim, dreAdms);
             }
             if (includeJAN && janSim) {
-                includeExtraData(data, 6, janSim, dataADMs);
+                includeExtraData(data, 6, janSim, admHistory);
             }
             if (includeJune && juneAdms && juneSim) {
                 includeExtraData(data, 8, juneSim, juneAdms);
@@ -337,8 +351,8 @@ export function RQ134({ evalNum, tableTitle }) {
             }
             if (includeUSEvals) {
                 if (dreAdms && dreSim) includeExtraData(data, 4, dreSim, dreAdms);
-                includeExtraData(data, 5, dataSim, dataADMs);
-                if (janSim) includeExtraData(data, 6, janSim, dataADMs);
+                includeExtraData(data, 5, dataSim, admHistory);
+                if (janSim) includeExtraData(data, 6, janSim, admHistory);
             }
             data.allObjs.sort((a, b) => {
                 // Compare PID
@@ -384,7 +398,8 @@ export function RQ134({ evalNum, tableTitle }) {
         needsJune,
         needsJuly,
         dataMedics,
-        dataDemo
+        dataDemo,
+        admHistory
     ]);
 
     const allFetched = fetchedSurveyEvals.includes(evalNum) &&
@@ -535,7 +550,7 @@ export function RQ134({ evalNum, tableTitle }) {
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, targetFilters, attributeFilters, admTypeFilters, delGrpFilters, delMilFilters, searchPid, probeSetAssessmentFilters, probeSetObservationFilters, evalNum]);
 
     const getFilteredHeaders = () => {
-        return headers.filter(x => !columnsToHide.includes(x) && (shouldShowTruncationError || x !== 'Truncation Error'));
+        return headers.filter(x => !columnsToHide.includes(x));
     };
 
     // init virtualizer
@@ -844,6 +859,8 @@ export function RQ134({ evalNum, tableTitle }) {
     </>);
 }
 const DEFINITION_FILE_MAP = {
+    19: june2026DefinitionXLFile,
+    18: june2026DefinitionXLFile,
     17: june2026DefinitionXLFile,
     16: aprilDefinitionXLFile,
     15: febDefinitionXLFile,

@@ -29,6 +29,7 @@ const typeDefs = gql`
     getHistory(id: ID): JSON @complexity(value: 10)
     getAllHistory(id: ID): [JSON] @complexity(value: 150)
     getAllHistoryByEvalNumber(evalNumber: Float, showMainPage: Boolean): [JSON] @complexity(value: 75)
+    getAllHistoryByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 75)
     getRQ2HistoryByEvalNumber(evalNumber: Float): [JSON] @complexity(value: 75)
     getAllOWData(evalNumber: Float, scenarioIDs: [ID]): [JSON] @complexity(value: 75)
     getGroupAdmAlignmentByEval(evalNumber: Float): [JSON] @complexity(value: 80)
@@ -129,6 +130,38 @@ const generateServerTimestamp = () => {
     isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)');
 };
 
+// Fields the ADM history queries return. Shared by getAllHistoryByEvalNumber and getAllHistoryByEvalArray 
+const ADM_HISTORY_PROJECTION = {
+  "synthetic": 1, "probe_ids": 1, "probes": 1, "scenario": 1,
+  "alignment_target": 1, "evaluation": 1, "results": 1, "adm_name": 1,
+  "oracle_alignment": 1,
+  "history.parameters.adm_name": 1,
+  "history.response.id": 1,
+  "history.parameters.target_id": 1,
+  "history.response.kdma_values.value": 1,
+  "history.response.score": 1,
+  "history.response.distance_based_score": 1,
+  "history.response.dre_alignment.score": 1,
+  "history.parameters.session_id": 1,
+  "history.parameters.dreSessionId": 1,
+  "history.command": 1,
+  "history.parameters.probe_id": 1
+};
+
+// Older runs have no probe_ids array; derive it from probes, or from the probe responses in history
+const backfillProbeIds = (doc) => {
+  if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
+    if (doc.probes?.length > 0) {
+      doc.probe_ids = doc.probes.map(p => p.probe_id);
+    } else {
+      doc.probe_ids = (doc.history || [])
+        .filter(h => h.command === 'Respond to TA1 Probe')
+        .map(h => h.parameters?.probe_id);
+    }
+  }
+  return doc;
+};
+
 const resolvers = {
   Query: {
     checkUserExists: async (obj, args, context, infow) => {
@@ -147,43 +180,21 @@ const resolvers = {
       return await context.db.collection('admTargetRuns').find().toArray().then(result => { return result; });
     },
     getAllHistoryByEvalNumber: async (obj, args, context, inflow) => {
-      const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"] }, {
-        projection: {
-          "synthetic": 1,
-          "probe_ids": 1,
-          "probes": 1,
-          "scenario": 1,
-          "alignment_target": 1,
-          "evaluation": 1,
-          "results": 1,
-          "adm_name": 1,
-          "oracle_alignment": 1,
-          "history.parameters.adm_name": 1,
-          "history.response.id": 1,
-          "history.parameters.target_id": 1,
-          "history.response.kdma_values.value": 1,
-          "history.parameters.target_id": 1,
-          "history.response.score": 1,
-          "history.response.distance_based_score": 1,
-          "history.response.dre_alignment.score": 1,
-          "history.parameters.session_id": 1,
-          "history.parameters.dreSessionId": 1,
-          "history.command": 1,
-          "history.parameters.probe_id": 1
-        }
-      }).toArray();
-       return docs.map(doc => {
-        if (!Array.isArray(doc.probe_ids) || doc.probe_ids.length === 0) {
-          if (doc.probes?.length > 0) {
-              doc.probe_ids = doc.probes.map(p => p.probe_id);
-          } else {
-              doc.probe_ids = (doc.history || [])
-                  .filter(h => h.command === 'Respond to TA1 Probe')
-                  .map(h => h.parameters?.probe_id);
-          }
+      const docs = await context.db.collection('admTargetRuns')
+        .find({ "evalNumber": args["evalNumber"] }, { projection: ADM_HISTORY_PROJECTION }).toArray();
+      return docs.map(backfillProbeIds);
+    },
+    // same as above but can take array of evals
+    getAllHistoryByEvalArray: async (obj, args, context, inflow) => {
+      const { evalNumbers } = args;
+
+      if (!evalNumbers || evalNumbers.length === 0) {
+        return [];
       }
-        return doc;
-      });
+
+      const docs = await context.db.collection('admTargetRuns')
+        .find({ evalNumber: { $in: evalNumbers } }, { projection: ADM_HISTORY_PROJECTION }).toArray();
+      return docs.map(backfillProbeIds);
     },
     getRQ2HistoryByEvalNumber: async (obj, args, context, inflow) => {
       const docs = await context.db.collection('admTargetRuns').find({ "evalNumber": args["evalNumber"] }, {
