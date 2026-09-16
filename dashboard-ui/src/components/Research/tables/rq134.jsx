@@ -15,6 +15,7 @@ import febDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Feb
 import aprilDefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_April.xlsx';
 import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import june2026DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_June2026.xlsx'
+import canUk2026DefinitionXLFile from '../variables/Variable Definitions RQ134_PH2_Can_UK2026.xlsx'
 import { getRQ134Data, isCanadaUK } from "../utils";
 import { DownloadButtons } from "./download-buttons";
 import { Checkbox, FormControlLabel } from "@material-ui/core";
@@ -859,8 +860,8 @@ export function RQ134({ evalNum, tableTitle }) {
     </>);
 }
 const DEFINITION_FILE_MAP = {
-    19: june2026DefinitionXLFile,
-    18: june2026DefinitionXLFile,
+    19: canUk2026DefinitionXLFile,
+    18: canUk2026DefinitionXLFile,
     17: june2026DefinitionXLFile,
     16: aprilDefinitionXLFile,
     15: febDefinitionXLFile,
