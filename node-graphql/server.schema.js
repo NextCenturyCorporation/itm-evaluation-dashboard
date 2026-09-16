@@ -193,7 +193,7 @@ const resolvers = {
       }
 
       const docs = await context.db.collection('admTargetRuns')
-        .find({ evalNumber: { $in: evalNumbers } }, { projection: ADM_HISTORY_PROJECTION }).toArray();
+        .find({ evalNumber: { $in: evalNumbers }, synthetic: {$exists: false} }, { projection: ADM_HISTORY_PROJECTION }).toArray();
       return docs.map(backfillProbeIds);
     },
     getRQ2HistoryByEvalNumber: async (obj, args, context, inflow) => {

@@ -824,7 +824,7 @@ function buildEntryRow(context) {
     } else if (evalNum === 17) {
         entryObj[popPrefix + 'Alignment score (Delegator|target)'] = eval17Alignments[entry['Attribute']]?.find(a => a.target === page['admTarget'])?.score ?? '-';
     } else if (isCanadaUK(evalNum)) {
-        entryObj[popPrefix + 'Alignment score (Delegator|target)'] = eval18Alignments[entry['Attribute']]?.find(a => a.target === page['admTarget'])?.score ?? '-';
+        entryObj[popPrefix + 'Alignment score (Delegator|target)'] = eval18Alignments?.[entry['Attribute']]?.find(a => a.target === page['admTarget'])?.score ?? '-';
     }
     else {
         entryObj[popPrefix + 'Alignment score (Delegator|target)'] = alignments.find((a) => a.target === page['admTarget']?.replaceAll('.', '') || a.target === page['admTarget'])?.score ?? '-';
@@ -1105,7 +1105,7 @@ export function getRQ134Data(evalNum, surveyData, dataParticipantLog, textResult
                         evalNum, isPhase2, pid, logData, entry, page, t,
                         wrong_del_materials, orderLog, trial_num,
                         ad_scenario, st_scenario, populationHeader,
-                        admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments, eval17Alignments,
+                        admData, comparisons, simData, alignments, distanceAlignments, eval16Alignments, eval17Alignments, eval18Alignments,
                         textResultsForPID, res, fullSetOnly, includeDreServer, calibrationScores,
                         allObjs, demoEntry
                     });
