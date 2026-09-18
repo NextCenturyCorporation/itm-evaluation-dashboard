@@ -2,6 +2,7 @@ import React from 'react';
 import './dre-rq.css';
 import { PH2RQ8OWPart1 } from "./tables/ph2_rq8_ow_part1";
 import { PH2RQ8OWPart2 } from "./tables/ph2_rq8_ow_part2";
+import { PH2RQ8OWPart3 } from './tables/ph2_rq8_ow_part3';
 
 export function OpenWorldADMs() {
 
@@ -14,6 +15,10 @@ export function OpenWorldADMs() {
             <div className="section-container">
                 <h2>Open World Part 2</h2>
                 <PH2RQ8OWPart2 />
+            </div>
+            <div className="section-container">
+                <h2>Open World Part 3</h2>
+                <PH2RQ8OWPart3 />
             </div>
         </>
     )
