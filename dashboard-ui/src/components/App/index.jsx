@@ -32,6 +32,7 @@ import 'react-dual-listbox/lib/react-dual-listbox.css';
 import '../../css/surveyResults.css';
 import store from '../../store/store';
 import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
+import { findParticipantByEmail, getNextParticipantId } from '../../services/participantService';
 
 // Lazy load components that are very expensive or only reachable via admin accounts.
 // React.lazy requires a module with a default export, so named exports are remapped below.
@@ -87,11 +88,6 @@ const GET_CURRENT_STYLE = gql`
   }
 `;
 
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }`;
-
 const ADD_PARTICIPANT = gql`
     mutation addNewParticipantToLog($participantData: JSON!) {
         addNewParticipantToLog(participantData: $participantData) 
@@ -131,7 +127,6 @@ export function hasAccess(currentUser, allowedRoles) {
 
 export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
-    const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
     // Get current text eval name from Redux
     const currentTextEvalName = useSelector((state) => state.configs.currentTextEval);
@@ -338,14 +333,15 @@ export function App() {
     }
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
-        const dbPLog = await fetchParticipantLog();
-
         if (!textEvalData?.getCurrentTextEval) {
             console.error("Text eval data not loaded yet");
             return;
         }
 
         const evalNum = evalNameToNumber[store.getState().configs.currentTextEval]
+        if (!Number.isFinite(evalNum)) {
+            throw new Error('The current evaluation is not configured. Please reload and try again.');
+        }
 
         const pidBounds = store.getState().configs.pidBounds;
 
@@ -355,10 +351,7 @@ export function App() {
             return;
         }
 
-        const lowPid = pidBounds.lowPid;
-        const highPid = pidBounds.highPid;
-
-        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
+        const foundParticipant = await findParticipantByEmail(hashedEmail, evalNum);
 
         if (foundParticipant) {
             const participantId = foundParticipant['ParticipantID'];
@@ -372,9 +365,7 @@ export function App() {
             }
             return;
         } else {
-            let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
-                x.ParticipantID >= lowPid && x.ParticipantID <= highPid
-            ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
+            let newPid = await getNextParticipantId();
 
             const participantDataFunctions = {
                 19: canadaParticipantData,

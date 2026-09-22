@@ -2,11 +2,23 @@ const { gql } = require('apollo-server');
 const { ObjectId } = require('mongodb');
 const { GraphQLScalarType, Kind, GraphQLError } = require("graphql");
 const jwt = require('jsonwebtoken');
+const { participantIdFilter, getParticipantByEmail, getNextParticipantId, getParticipantProgressDetails } = require('./participantQueries');
+const { getParticipantProgress } = require('./participantProgress');
 
 const typeDefs = gql`
   scalar JSON
 
   scalar StringOrFloat
+
+  input ParticipantProgressFilter {
+    phase: String!
+    evalNumbers: [Float!]
+    participantTypes: [String!]
+    completionFilters: [String!]
+    searchPid: String
+    sortField: String
+    descending: Boolean
+  }
 
   extend input CreateUserInput {
     admin: Boolean
@@ -69,6 +81,11 @@ const typeDefs = gql`
     countHumanGroupFirst: Int @complexity(value: 10)
     countAIGroupFirst: Int @complexity(value: 10)
     getParticipantLog: [JSON] @complexity(value: 50)
+    getParticipantByPid(pid: String!): JSON @complexity(value: 5)
+    getParticipantByEmail(hashedEmail: String!, evalNumber: Float): JSON @complexity(value: 5)
+    getNextParticipantId: Float @complexity(value: 10)
+    getParticipantProgress(filter: ParticipantProgressFilter!, offset: Int, limit: Int): JSON @complexity(value: 150)
+    getParticipantProgressDetails(pid: String!): JSON @complexity(value: 30)
     getHumanToADMComparison: [JSON] @complexity(value: 250)
     getHumanToADMComparisonByEvalArray(evalNumbers: [Float!]!): [JSON] @complexity(value: 250)
     getCurrentSurveyVersion: String @complexity(value: 5)
@@ -673,6 +690,11 @@ const resolvers = {
     getParticipantLog: async (obj, args, context, info) => {
       return await context.db.collection('participantLog').find().toArray().then(result => { return result });
     },
+    getParticipantByPid: (obj, args, context) => context.db.collection('participantLog').findOne(participantIdFilter(args.pid), { sort: { _id: 1 } }),
+    getParticipantByEmail: (obj, args, context) => getParticipantByEmail(context.db, args.hashedEmail, args.evalNumber),
+    getNextParticipantId: (obj, args, context) => getNextParticipantId(context.db),
+    getParticipantProgress: (obj, args, context) => getParticipantProgress(context.db, args),
+    getParticipantProgressDetails: (obj, args, context) => getParticipantProgressDetails(context.db, args.pid),
     getHumanToADMComparison: async (obj, args, context, info) => {
       return await context.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
     },

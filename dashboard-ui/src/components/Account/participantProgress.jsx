@@ -1,40 +1,21 @@
-import React, { useCallback } from "react";
+import React from "react";
 import '../../css/resultsTable.css';
 import '../../css/admInfo.css';
 import '../../css/repairAlignment.css';
-import { Autocomplete, TextField, Modal, Box, Snackbar, Alert } from "@mui/material";
+import { Autocomplete, TextField, Modal, Box, Snackbar, Alert, TablePagination } from "@mui/material";
 import { VisibilityOff, Delete, Build, CheckCircle, Error } from '@material-ui/icons';
 import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
-import { DownloadButtons } from "../Research/tables/download-buttons";
+import { exportToExcel } from "../Research/utils";
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
 import { Spinner } from 'react-bootstrap';
-import { setScenarioCompletion, SCENARIO_HEADERS, checkAlignmentStatus } from "./progressUtils";
-import { accountsClient } from "../../services/accountsService";
+import { SCENARIO_HEADERS } from "./progressUtils";
+import { accountsClient, apolloClient } from "../../services/accountsService";
 import AdmInfoModal from "./admInfoModal";
 import RepairAlignmentModal from "./repairAlignmentModal";
-import { evalNameToNumber } from "../OnlineOnly/config";
-
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }`;
-
-const GET_SURVEY_RESULTS = gql`
-    query GetAllResults {
-        getAllSurveyResults
-    }`;
-
-const GET_TEXT_RESULTS = gql`
-    query GetAllResults {
-        getAllScenarioResults
-    }`;
-
-const GET_SIM_DATA = gql`
-    query GetAllSimAlignment {
-        getAllSimAlignment
-    }`;
+import { GET_PROGRESS_DETAILS, evaluationLabel, formatProgressRows, fetchProgressExport } from "./participantProgressData";
+import { useParticipantProgress } from "./useParticipantProgress";
 
 const DELETE_PID_DATA = gql`
     mutation deleteDataByPID($caller: JSON!, $pid: String!) {
@@ -70,29 +51,6 @@ const computeDelThreshold = (evalNumber, isUK, isPH2OrUK) => {
     return 4;
 };
 
-// basically reverses the evalNameToNumber dict
-const numberToEvalName = Object.fromEntries(
-    Object.entries(evalNameToNumber).map(([name, num]) => [num, name])
-);
-
-
-const formatDateTime = (date) => {
-    return String(date) !== 'Invalid Date'
-        ? `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} - ${date.toLocaleTimeString('en-US', { hour12: false })}`
-        : undefined;
-};
-
-const getParticipantPhase = (participant) => {
-    const evalNumber = participant['_evalNumber'];
-    if (evalNumber === 12) return 'UK1';
-    return participant['_phase'] || 1;
-};
-
-const participantMatchesPhase = (participant, phase) => {
-    const participantPhase = getParticipantPhase(participant);
-    return phase === (participantPhase === 'UK1' ? 'UK Phase 1' : `Phase ${participantPhase}`);
-};
-
 function formatLoading(val) {
     if (val === 'exemption') return 'Exemption';
     if (val === 'most aligned' || val === 'least aligned') return 'Normal';
@@ -101,22 +59,15 @@ function formatLoading(val) {
 
 export function ParticipantProgressTable({ canViewProlific = false, isAdmin = false, currentUser = null }) {
     const KDMA_MAP = { AF: 'affiliation', MF: 'merit', PS: 'personal_safety', SS: 'search', MJ: 'Moral judgement', IO: 'Ingroup Bias', vol: 'PerceivedQuantityOfLivesSaved' };
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog, refetch: refetchPLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSurveyResults, error: errorSurveyResults, data: dataSurveyResults, refetch: refetchSurveyResults } = useQuery(GET_SURVEY_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults, refetch: refetchTextResults } = useQuery(GET_TEXT_RESULTS, { fetchPolicy: 'no-cache' });
-    const { loading: loadingSim, error: errorSim, data: dataSim, refetch: refetchSimData } = useQuery(GET_SIM_DATA);
-    const [formattedData, setFormattedData] = React.useState([]);
-    const [, setTypes] = React.useState([]);
-    const [evals, setEvals] = React.useState([]);
     const [typeFilters, setTypeFilters] = React.useState([]);
     const [evalFilters, setEvalFilters] = React.useState([]);
     const [completionFilters, setCompletionFilters] = React.useState([]);
-    const [filteredData, setFilteredData] = React.useState([]);
     const [columnsToHide, setColumnsToHide] = React.useState([]);
     const [sortOptions] = React.useState(['Participant ID ↑', 'Participant ID ↓', 'Text Start Time ↑', 'Text Start Time ↓', 'Sim Count ↑', 'Sim Count ↓', 'Del Count ↑', 'Del Count ↓', 'Text Count ↑', 'Text Count ↓'])
     const [sortBy, setSortBy] = React.useState('Participant ID ↑');
     const [searchPid, setSearchPid] = React.useState('');
-    const [isRefreshing, setIsRefreshing] = React.useState(false);
+    const [downloading, setDownloading] = React.useState(false);
+    const [actionError, setActionError] = React.useState(null);
     const [selectedPhase, setSelectedPhase] = React.useState('Phase 2');
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = React.useState(false);
     const [rowToDelete, setRowToDelete] = React.useState({});
@@ -162,6 +113,39 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         pid: null,
         scenarioId: null
     });
+
+    const { progress, rows: filteredData, evalOptions, filter, page, setPage, pageSize, setPageSize,
+        loading: isRefreshing, error: progressError, refetch: refetchProgress } = useParticipantProgress({
+        selectedPhase, evalFilters, typeFilters, completionFilters, searchPid, sortBy, canViewProlific
+    });
+    const detailPid = repairModal.open ? repairModal.pid : popupInfo.open ? popupInfo.pid : null;
+    const { data: detailData, loading: detailLoading, error: detailError } = useQuery(GET_PROGRESS_DETAILS, {
+        variables: { pid: detailPid }, skip: !detailPid, fetchPolicy: 'network-only', notifyOnNetworkStatusChange: true
+    });
+    const details = detailData?.getParticipantProgressDetails;
+    const changeFilter = (setter, value) => { setter(value); setPage(0); };
+    const changePhase = value => {
+        setSelectedPhase(value || 'Phase 1');
+        setTypeFilters([]); setEvalFilters([]); setCompletionFilters([]); setPage(0);
+    };
+    const refreshData = async () => {
+        setActionError(null);
+        try { await refetchProgress(); } catch (error) { setActionError(error.message); }
+    };
+    const downloadData = async filtered => {
+        setDownloading(true); setActionError(null);
+        try {
+            const exportFilter = filtered ? filter : { ...filter, evalNumbers: [], participantTypes: [], completionFilters: [], searchPid: '' };
+            const records = await fetchProgressExport(apolloClient, exportFilter);
+            const rows = refineData(formatProgressRows(records, canViewProlific, window.location.origin));
+            await exportToExcel('Participant_Progress' + (filtered ? ' (filtered)' : ''), rows,
+                HEADERS.filter(header => !columnsToHide.includes(header) && header !== 'Delete'), true, selectedPhase);
+        } catch (error) {
+            setActionError(error.message);
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     const openPopup = (pid, scenarioId) => {
         setPopupInfo({ open: true, pid, scenarioId });
@@ -255,207 +239,6 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
 
     };
 
-    const sortData = React.useCallback((data) => {
-        if (typeof sortBy !== 'string' || !sortBy) return;
-        const dataCopy = structuredClone(data);
-        const sortKeyMap = {
-            "Participant ID": "Participant ID",
-            "Text Start Time": "Text Start Date-Time",
-            "Sim Count": "Sim Count",
-            "Del Count": "Delegation",
-            "Text Count": "Text"
-        }
-        dataCopy.sort((a, b) => {
-            const simpleK = sortKeyMap[sortBy.split(' ').slice(0, -1).join(' ')];
-            const incOrDec = sortBy.split(' ').slice(-1)[0] === '↑' ? 'i' : 'd';
-            let aVal = a[simpleK];
-            let bVal = b[simpleK];
-            if (simpleK.includes('Date-Time')) {
-                aVal = getDateFromString(aVal);
-                bVal = getDateFromString(bVal);
-            }
-            if (incOrDec === 'i') {
-                return (aVal > bVal) ? 1 : -1;
-            } else {
-                return (aVal < bVal) ? 1 : -1;
-            }
-        });
-        setFilteredData(dataCopy);
-    }, [sortBy]);
-
-    const findPagesV10 = (survey) => {
-        if (!survey?.results?.orderLog) {
-            return [];
-        }
-
-        const uniquePageKeys = [];
-        const seenIndices = new Set();
-
-        for (const pageName of survey.results.orderLog) {
-            if (pageName.includes('Medic') && !pageName.includes('vs.')) {
-                const scenarioIndex = survey.results[pageName]?.scenarioIndex;
-
-                if (scenarioIndex && !seenIndices.has(scenarioIndex)) {
-                    seenIndices.add(scenarioIndex);
-                    uniquePageKeys.push(pageName);
-                }
-            }
-        }
-
-        return uniquePageKeys;
-    };
-
-    React.useEffect(() => {
-        if (dataParticipantLog?.getParticipantLog && dataSurveyResults?.getAllSurveyResults && dataTextResults?.getAllScenarioResults && dataSim?.getAllSimAlignment) {
-            const participantLog = dataParticipantLog.getParticipantLog;
-            const surveyResults = dataSurveyResults.getAllSurveyResults;
-            const textResults = dataTextResults?.getAllScenarioResults || [];
-            const simResults = dataSim.getAllSimAlignment;
-            const allObjs = [];
-            const allTypes = [];
-            const allEvals = [];
-
-            for (const res of participantLog) {
-                const obj = {};
-                const pid = res['ParticipantID']?.toString();
-                obj['Participant ID'] = pid;
-                obj['Participant Type'] = res['Type'];
-                obj['Participant Creation Date-Time'] = res['timeCreated'];
-                if (res['Type']) {
-                    allTypes.push(res['Type']);
-                }
-
-                const sims = simResults.filter((x) => x.pid === pid).sort((a, b) => a.timestamp - b.timestamp);
-
-                let evalNumber = null;
-
-                if (sims[0]?.evalNumber) {
-                    evalNumber = sims[0].evalNumber;
-                }
-
-                obj['Evaluation'] = sims[0]?.evalName;
-
-                if (canViewProlific) {
-                    obj['Prolific ID'] = res['prolificId'];
-                    obj['Contact ID'] = res['contactId'];
-                    if (res['prolificId']) {
-                        const urlParam = evalNumber >= 8 || pid.startsWith('202506') ? 'caciProlific' : 'adeptQualtrix';
-                        obj['Survey Link'] = `${window.location.protocol}//${window.location.host}/remote-text-survey?${urlParam}=true&PROLIFIC_PID=${res['prolificId']}&ContactID=${res['contactId']}&pid=${pid}&class=Online&startSurvey=true`;
-                    }
-                }
-                const sim_date = new Date(sims[0]?.timestamp);
-                obj['Sim Date-Time'] = formatDateTime(sim_date);
-                obj['Sim Count'] = res['simEntryCount'] || 0;
-                obj['Sim-1'] = sims[0]?.scenario_id;
-                obj['Sim-2'] = sims[1]?.scenario_id;
-                obj['Sim-3'] = sims[2]?.scenario_id;
-                obj['Sim-4'] = sims[3]?.scenario_id;
-
-                const surveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || (x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response ?? x.results?.pid) === pid)
-                    && (x.results.evalNumber >= 15 || x.results?.['Post-Scenario Measures']));
-                const incompleteSurveys = surveyResults.filter((x) => ((x.results?.pid && (x.results.pid === pid)) || x.results?.['Participant ID Page']?.questions?.['Participant ID']?.response === pid));
-                const lastSurvey = surveys?.slice(-1)?.[0];
-                const lastIncompleteSurvey = incompleteSurveys?.slice(-1)?.[0];
-                const surveyToUse = lastSurvey || lastIncompleteSurvey;
-                const survey_start_date = new Date(surveyToUse?.results?.startTime);
-                const survey_end_date = new Date(lastSurvey?.results?.timeComplete);
-
-                obj['Unformatted Delegation Start'] = survey_start_date;
-                obj['Unformatted Delegation End'] = survey_end_date;
-                obj['Del Start Date-Time'] = formatDateTime(survey_start_date);
-                obj['Del End Date-Time'] = formatDateTime(survey_end_date);
-                const delScenarios = surveyToUse?.results?.evalNumber < 10 ? surveyToUse?.results?.orderLog?.filter((x) => x.includes(' vs ')) : findPagesV10(surveyToUse);
-                if (delScenarios) {
-                    obj['Del-1'] = surveyToUse?.results?.[delScenarios[0]]?.scenarioIndex;
-                    obj['Del-2'] = surveyToUse?.results?.[delScenarios[1]]?.scenarioIndex;
-                    obj['Del-3'] = surveyToUse?.results?.[delScenarios[2]]?.scenarioIndex;
-                    obj['Del-4'] = surveyToUse?.results?.[delScenarios[3]]?.scenarioIndex;
-                    if (delScenarios.length > 4) {
-                        obj['Del-5'] = surveyToUse?.results?.[delScenarios[4]]?.scenarioIndex;
-                    }
-                }
-                if (obj['Delegation'] > 0) obj['Survey Link'] = null;
-
-                const delKeys = ['Del-1', 'Del-2', 'Del-3', 'Del-4', 'Del-5'];
-                obj['Delegation'] = delKeys.filter(key => !!obj[key]).length;
-
-                if (!evalNumber && lastSurvey) {
-                    evalNumber = lastSurvey.evalNumber ?? lastSurvey.results?.evalNumber;
-                }
-
-                obj['Evaluation'] = obj['Evaluation'] ?? lastSurvey?.evalName ?? lastSurvey?.results?.evalName;
-
-                const scenarios = textResults.filter((x) => x.participantID === pid);
-                const lastScenario = scenarios?.slice(-1)?.[0];
-                const text_start_date = new Date(scenarios[0]?.startTime);
-                const text_end_date = new Date(lastScenario?.timeComplete);
-                obj['Unformatted Text Start'] = text_start_date;
-                obj['Unformatted Text End'] = text_end_date;
-                obj['Text Start Date-Time'] = formatDateTime(text_start_date);
-                obj['Text End Date-Time'] = formatDateTime(text_end_date);
-                obj['Text'] = scenarios.length;
-
-                if (!evalNumber && lastScenario?.evalNumber) {
-                    evalNumber = lastScenario.evalNumber;
-                }
-
-                obj['Evaluation'] = (obj['Evaluation'] ?? lastScenario?.evalName)?.replace(/Phase 2\s*/g, '');
-                const completedScenarios = scenarios.map((x) => x.scenario_id);
-
-                const isPhase2 = evalNumber >= 8;
-
-                obj['_phase'] = isPhase2 ? 2 : 1;
-                obj['_evalNumber'] = evalNumber;
-
-                const textThreshold = isPhase2 ? 4 : 5;
-                if (obj['Text'] < textThreshold) {
-                    obj['Survey Link'] = null;
-                }
-
-                if (!evalNumber) {
-                    const loggedEvalNumber = res['evalNum'];
-                    if (loggedEvalNumber) {
-                        obj['_phase'] = loggedEvalNumber >= 8 ? 2 : 1;
-                        obj['_evalNumber'] = loggedEvalNumber;
-                    } else if (pid > 202506100) {
-                        obj['_phase'] = 2;
-                        obj['_evalNumber'] = 8;
-                    } else {
-                        obj['_phase'] = 1;
-                        obj['_evalNumber'] = 1;
-                    }
-                }
-
-                // for eval numbers not in the map (e.g. legacy Phase 1 records).
-                const canonicalEvalName = numberToEvalName[obj['_evalNumber']];
-                if (canonicalEvalName) {
-                    obj['Evaluation'] = canonicalEvalName.replace(/Phase 2\s*/g, '');
-                }
-
-                // set scenario completions using utility function
-                setScenarioCompletion(obj, completedScenarios);
-                // Check alignment status for phase 2 participants
-                if (isPhase2) {
-                    const alignStatus = checkAlignmentStatus(textResults, pid);
-                    obj['Alignment Status'] = alignStatus.totalScenarios === 0
-                        ? 'No Data'
-                        : alignStatus.allPopulated
-                            ? `Complete (${alignStatus.totalScenarios})`
-                            : `Missing (${alignStatus.missingCount}/${alignStatus.totalScenarios})`;
-                    obj['_alignmentStatus'] = alignStatus;
-                }
-
-                if (res['Type']) {
-                    allObjs.push(obj);
-                }
-                obj['Evaluation'] && allEvals.push(obj['Evaluation']);
-            }
-            setFormattedData(allObjs);
-            setTypes(Array.from(new Set(allTypes)));
-            setEvals(Array.from(new Set(allEvals)));
-        }
-    }, [dataParticipantLog, dataSim, dataSurveyResults, dataTextResults, canViewProlific, sortData]);
-
     const confirmDeletion = async (toDelete) => {
         setRowToDelete(toDelete);
         setDeleteConfirmationOpen(true);
@@ -502,10 +285,9 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         }
 
         const val = dataSet[header];
-        const scenarioResults = dataTextResults?.getAllScenarioResults || [];
 
         if ((selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1') && /^Del-\d+$/.test(header) && val && dataSet['Delegation'] > 0) {
-            const exists = scenarioResults.some(r => r.participantID === dataSet['Participant ID']);
+            const exists = dataSet['Text'] > 0;
             if (exists) {
                 return (
                     <td key={`${dataSet['Participant ID']}-${header}`} className='white-cell'>
@@ -546,94 +328,6 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         navigator.clipboard.writeText(linkToCopy);
     };
 
-    const getEvalsForPhase = useCallback(() => {
-        return evals.filter(evaluation => {
-            const participant = formattedData.find(p => p['Evaluation'] === evaluation);
-            if (!participant) return false;
-            return participantMatchesPhase(participant, selectedPhase);
-        });
-    }, [evals, selectedPhase, formattedData]);
-
-    const getTypesForPhase = useCallback(() => {
-        const phaseParticipants = formattedData.filter(participant => participantMatchesPhase(participant, selectedPhase));
-
-        const phaseTypes = phaseParticipants
-            .map(participant => participant['Participant Type'])
-            .filter(type => type);
-
-        return Array.from(new Set(phaseTypes));
-    }, [formattedData, selectedPhase]);
-
-    React.useEffect(() => {
-        if (formattedData.length > 0) {
-            const isPH2OrUK = selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1';
-            const isUK = selectedPhase === 'UK Phase 1';
-            const textThreshold = isPH2OrUK ? 4 : 5;
-            const getDelThreshold = (x) => computeDelThreshold(x['_evalNumber'], isUK, isPH2OrUK);
-
-            setFilteredData(formattedData.filter((x) => {
-                if (!participantMatchesPhase(x, selectedPhase)) return false;
-
-                const sims = [x['Sim-1'], x['Sim-2'], x['Sim-3'], x['Sim-4']];
-                const didAdept = sims.filter((s) => s?.includes('MJ')).length > 0;
-                const didOW = sims.filter((s) => s?.includes('open_world')).length > 0;
-                return (typeFilters.length === 0 || typeFilters.includes(x['Participant Type'])) &&
-                    (evalFilters.length === 0 || evalFilters.includes(x['Evaluation'])) &&
-                    (!completionFilters.includes(`All Text (${textThreshold})`) || x['Text'] >= textThreshold) &&
-                    (!completionFilters.includes('Missing Text') || x['Text'] < textThreshold) &&
-                    (!completionFilters.includes('Complete Delegation') || x['Delegation'] >= getDelThreshold(x)) &&
-                    (!completionFilters.includes('No Delegation') || x['Delegation'] === 0) &&
-                    (!completionFilters.includes('All Sim (4)') || x['Sim Count'] >= 4) &&
-                    (!completionFilters.includes('Any Sim') || x['Sim Count'] >= 1) &&
-                    (!completionFilters.includes('Adept + OW Sim') || (didAdept && didOW)) &&
-                    (!completionFilters.includes('No Sim') || x['Sim Count'] === 0) &&
-                    (searchPid.length === 0 || x['Participant ID'].includes(searchPid))
-            }));
-        }
-    }, [formattedData, typeFilters, evalFilters, completionFilters, searchPid, selectedPhase]);
-
-    React.useEffect(() => {
-        const validEvals = getEvalsForPhase();
-        const validEvalFilters = evalFilters.filter(filter => validEvals.includes(filter));
-        if (validEvalFilters.length !== evalFilters.length) {
-            setEvalFilters(validEvalFilters);
-        }
-
-        const validTypes = getTypesForPhase();
-        const validTypeFilters = typeFilters.filter(filter => validTypes.includes(filter));
-        if (validTypeFilters.length !== typeFilters.length) {
-            setTypeFilters(validTypeFilters);
-        }
-    }, [selectedPhase, evals, formattedData, evalFilters, getEvalsForPhase, getTypesForPhase, typeFilters]);
-
-    const getDateFromString = (s) => {
-        if (s) {
-            const t = 'T' + s.split(' - ')[1];
-            const mdy = s.split(' - ')[0].split('/');
-            const ydm = mdy[2] + '-' + mdy[0].toString().padStart(2, '0') + '-' + mdy[1].toString().padStart(2, '0');
-            let date = new Date(ydm + t);
-            return (isNaN(date.getTime()) || String(date) === 'Invalid Date') ? -1 : date.getTime();
-        }
-        return -1;
-    }
-
-    React.useEffect(() => {
-        if (sortBy && filteredData.length > 0) {
-            sortData(filteredData);
-        }
-    }, [sortBy, sortData, filteredData.length]);
-
-    const refreshData = async () => {
-        setIsRefreshing(true);
-        const resPLog = await refetchPLog();
-        const resSim = await refetchSimData();
-        const resSurvey = await refetchSurveyResults();
-        const resText = await refetchTextResults();
-        if (resPLog && resSim && resSurvey && resText) {
-            setIsRefreshing(false);
-        }
-    };
-
     const hideColumn = (val) => {
         setColumnsToHide([...columnsToHide, val]);
     };
@@ -663,23 +357,11 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         setSearchPid(event.target.value);
     };
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
-    const errors = [
-        errorParticipantLog,
-        errorSurveyResults,
-        errorTextResults,
-        errorSim,
-    ].filter(Boolean);
-
-    if (errors.length > 0) {
-        console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
-    }
-
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
-
     return (<>
         <h2 className='progress-header'>Participant Progress</h2>
+        {(progressError || actionError) && <Alert severity="error" action={<button onClick={refreshData}>Retry</button>}>
+            {progressError?.message || actionError}
+        </Alert>}
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -694,21 +376,16 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                             placeholder=""
                         />
                     )}
-                    onChange={(_, newVal) => setSelectedPhase(newVal || 'Phase 1')}
+                    onChange={(_, newVal) => changePhase(newVal)}
                 />
             </div>
         </section>
-        {(() => {
-            const currentPhaseData = formattedData.filter((x) => participantMatchesPhase(x, selectedPhase));
-            return filteredData.length < currentPhaseData.length && (
-                <p className='filteredText'>Showing {filteredData.length} of {currentPhaseData.length} rows based on filters</p>
-            );
-        })()}
+        <p className='filteredText'>{progress?.totalCount ?? 0} matching participants of {progress?.phaseCount ?? 0} in this phase</p>
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
                     multiple
-                    options={getTypesForPhase()}
+                    options={progress?.participantTypes || []}
                     filterSelectedOptions
                     size="small"
                     value={typeFilters}
@@ -719,11 +396,13 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                             placeholder=""
                         />
                     )}
-                    onChange={(_, newVal) => setTypeFilters(newVal)}
+                    onChange={(_, newVal) => changeFilter(setTypeFilters, newVal)}
                 />
                 <Autocomplete
                     multiple
-                    options={getEvalsForPhase()}
+                    options={evalOptions}
+                    getOptionLabel={evaluationLabel}
+                    isOptionEqualToValue={(option, value) => option.evalNumber === value.evalNumber}
                     filterSelectedOptions
                     size="small"
                     style={{ width: '400px' }}
@@ -735,7 +414,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                             placeholder=""
                         />
                     )}
-                    onChange={(_, newVal) => setEvalFilters(newVal)}
+                    onChange={(_, newVal) => changeFilter(setEvalFilters, newVal)}
                 />
                 <Autocomplete
                     multiple
@@ -751,7 +430,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                             placeholder=""
                         />
                     )}
-                    onChange={(_, newVal) => setCompletionFilters(newVal)}
+                    onChange={(_, newVal) => changeFilter(setCompletionFilters, newVal)}
                 />
                 <Autocomplete
                     multiple
@@ -781,20 +460,17 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                             placeholder=""
                         />
                     )}
-                    onChange={(_, newVal) => setSortBy(newVal)}
+                    onChange={(_, newVal) => changeFilter(setSortBy, newVal || sortOptions[0])}
                 />
                 <TextField label="Search PIDs" size="small" value={searchPid} onInput={updatePidSearch}></TextField>
             </div>
-            <DownloadButtons
-                formattedData={refineData(formattedData.filter((x) => participantMatchesPhase(x, selectedPhase)))}
-                filteredData={refineData(filteredData)}
-                HEADERS={HEADERS.filter((x) => !columnsToHide.includes(x) && x !== 'Delete')}
-                fileName={'Participant_Progress'}
-                extraAction={refreshData}
-                extraActionText={'Refresh Data'}
-                isParticipantData={true}
-                selectedPhase={selectedPhase}
-            />
+            <div className="option-section">
+                <button className="downloadBtn" onClick={() => downloadData(false)} disabled={downloading || isRefreshing || !progress?.phaseCount}>Download All Data</button>
+                {(typeFilters.length > 0 || evalFilters.length > 0 || completionFilters.length > 0 || filter.searchPid.length > 0) &&
+                    <button className="downloadBtn" onClick={() => downloadData(true)} disabled={downloading || isRefreshing || !progress?.totalCount}>Download Filtered Data</button>}
+                <button className="downloadBtn" onClick={refreshData} disabled={isRefreshing}>Refresh Data</button>
+                {downloading && <span role="status">Preparing download...</span>}
+            </div>
         </section>
         <div className='resultTableSection'>
             <table className='itm-table'>
@@ -817,6 +493,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                                 </div>
                             </td>
                         </tr>
+                        : filteredData.length === 0 ? <tr><td colSpan={HEADERS.length}>No participants match these filters.</td></tr>
                         : filteredData.map((dataSet, index) => {
                             return (<tr key={dataSet['Participant ID'] + '-' + index}>
                                 {HEADERS.map((val) => {
@@ -827,6 +504,11 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 </tbody>
             </table>
         </div>
+        <TablePagination component="div" count={progress?.totalCount || 0} page={page} rowsPerPage={pageSize}
+            rowsPerPageOptions={[25, 50, 100]} onPageChange={(_, nextPage) => setPage(nextPage)}
+            onRowsPerPageChange={event => { setPageSize(Number(event.target.value)); setPage(0); }}
+            backIconButtonProps={{ disabled: isRefreshing || page === 0 }}
+            nextIconButtonProps={{ disabled: isRefreshing || (page + 1) * pageSize >= (progress?.totalCount || 0) }} />
         <Modal open={deleteConfirmationOpen} onClose={cancelDeletion}>
             <Box className='delete-modal-box'>
                 <h2 className="deletion-header">
@@ -877,21 +559,29 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 {repairSnackbar.message}
             </Alert>
         </Snackbar>
-        <AdmInfoModal
+        <Modal open={!!detailPid && (detailLoading || !!detailError || !details)} onClose={() => {
+            closePopup(); setRepairModal({ open: false, pid: null, status: null });
+        }}>
+            <Box className="adm-popup-body">
+                {detailError ? <QueryErrorMessage error={detailError} /> : <p>Loading participant details...</p>}
+                <button onClick={() => { closePopup(); setRepairModal({ open: false, pid: null, status: null }); }}>Close</button>
+            </Box>
+        </Modal>
+        {!detailLoading && !detailError && details && <AdmInfoModal
             open={popupInfo.open && (selectedPhase === 'Phase 2' || selectedPhase === 'UK Phase 1')}
             onClose={closePopup}
             pid={popupInfo.pid}
             scenarioId={popupInfo.scenarioId}
-            dataTextResults={dataTextResults}
-            dataSurveyResults={dataSurveyResults}
+            dataTextResults={details}
+            dataSurveyResults={details}
             KDMA_MAP={KDMA_MAP}
             formatLoading={formatLoading}
-        />
-        <RepairAlignmentModal
+        />}
+        {!detailLoading && !detailError && details && <RepairAlignmentModal
             open={repairModal.open}
             pid={repairModal.pid}
             alignmentStatus={repairModal.status}
-            textResults={dataTextResults?.getAllScenarioResults || []}
+            textResults={details.getAllScenarioResults}
             updateScenarioResult={updateScenarioResult}
             onClose={() => setRepairModal({ open: false, pid: null, status: null })}
             onRepairComplete={async () => {
@@ -903,7 +593,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                     severity: 'success'
                 });
             }}
-        />
+        />}
 
     </>);
 }

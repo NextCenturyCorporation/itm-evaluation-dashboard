@@ -1,4 +1,5 @@
 module.exports = {
+    testPathIgnorePatterns: ['/node_modules/', '/performance-tests/'],
     transform: {
         '^.+\\.[t|j]sx?$': 'babel-jest',  // Use babel-jest to transform JS/JSX files
     },
