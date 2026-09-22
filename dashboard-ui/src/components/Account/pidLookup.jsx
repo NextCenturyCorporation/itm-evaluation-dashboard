@@ -3,12 +3,7 @@ import VisibilityIcon from '@material-ui/icons/Visibility';
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import './login.css';
 import bcrypt from 'bcryptjs';
-<<<<<<< Updated upstream
-import gql from "graphql-tag";
-import { useQuery } from 'react-apollo'
-=======
 import { findParticipantByEmail } from '../../services/participantService';
->>>>>>> Stashed changes
 import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
 
 export function PidLookup() {
