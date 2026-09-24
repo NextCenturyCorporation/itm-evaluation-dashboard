@@ -1633,7 +1633,7 @@ function populateDataSetP2(data) {
 
         const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
         // this filters out incomplete surveys from previous evals but eval 15 has no post scenario measure page in the survey
-        if (survey && !survey?.results?.['Post-Scenario Measures'] && survey?.results?.evalNumber !== 15) continue;
+        if (survey && !survey?.results?.['Post-Scenario Measures'] && ![15,18].includes(survey?.results?.evalNumber)) continue;
         const participant = pLog.find((p) => p.ParticipantID === Number(pid));
         if (!participant) continue;
 
