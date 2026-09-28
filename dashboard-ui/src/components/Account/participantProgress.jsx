@@ -380,7 +380,9 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 />
             </div>
         </section>
-        <p className='filteredText'>{progress?.totalCount ?? 0} matching participants of {progress?.phaseCount ?? 0} in this phase</p>
+        <p className='filteredText'>{progress
+            ? `${progress.totalCount} matching participants of ${progress.phaseCount} in this phase`
+            : isRefreshing ? 'Loading participant totals...' : 'Participant totals unavailable.'}</p>
         <section className='tableHeader'>
             <div className="filters">
                 <Autocomplete
@@ -472,27 +474,22 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                 {downloading && <span role="status">Preparing download...</span>}
             </div>
         </section>
-        <div className='resultTableSection'>
+        <div className='participant-progress-table' role="region" aria-label="Participant progress" aria-busy={isRefreshing}>
+          <div className='resultTableSection' aria-hidden={isRefreshing || undefined}>
             <table className='itm-table'>
                 <thead>
                     <tr>
                         {HEADERS.map((val, index) => {
                             return (!columnsToHide.includes(val) && <th key={'header-' + index} className={(val.length < 5 ? 'small-column ' : ' ') + (val === 'Delete' ? 'delete-column' : '')}>
-                                {val} <button className='hide-header' onClick={() => hideColumn(val)}><VisibilityOff size={'small'} /></button>
+                                {val} <button className='hide-header' disabled={isRefreshing} onClick={() => hideColumn(val)}><VisibilityOff size={'small'} /></button>
                             </th>);
                         })}
                     </tr>
                 </thead>
                 <tbody>
                     {isRefreshing ?
-                        <tr className='refreshing-row'>
-                            <td colSpan={HEADERS.filter(h => !columnsToHide.includes(h)).length}>
-                                <div className='refreshing-td'>
-                                    <Spinner animation="border" role="status" variant="dark" className='refresh-spinner' size="large" />
-                                    <span className='refreshing-label'>Fetching Data...</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <tr><td colSpan={HEADERS.length}>&nbsp;</td></tr>
+                        : progressError ? <tr><td colSpan={HEADERS.length}>Unable to load participants. Please retry.</td></tr>
                         : filteredData.length === 0 ? <tr><td colSpan={HEADERS.length}>No participants match these filters.</td></tr>
                         : filteredData.map((dataSet, index) => {
                             return (<tr key={dataSet['Participant ID'] + '-' + index}>
@@ -503,6 +500,10 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
                         })}
                 </tbody>
             </table>
+          </div>
+          {isRefreshing && <div className="participant-progress-loading" role="status" aria-label="Loading participant progress" aria-live="polite">
+              <Spinner animation="border" aria-hidden="true" />
+          </div>}
         </div>
         <TablePagination component="div" count={progress?.totalCount || 0} page={page} rowsPerPage={pageSize}
             rowsPerPageOptions={[25, 50, 100]} onPageChange={(_, nextPage) => setPage(nextPage)}

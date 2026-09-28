@@ -104,3 +104,35 @@ test('participant entry services fetch one match and propagate network errors', 
     await expect(findParticipantByPid('123')).rejects.toThrow('Disconnected');
     expect(apolloClient.query.mock.calls.every(([args]) => !args.query.loc.source.body.includes('getParticipantLog'))).toBe(true);
 });
+
+test('loading feedback sits outside the wide scroll area and clears on success or failure', () => {
+    let response = { loading: true };
+    useQuery.mockImplementation(document => operation(document) === 'GetParticipantProgress'
+        ? response : { loading: false });
+    const { rerender } = render(<ParticipantProgressTable />);
+    const region = screen.getByRole('region', { name: 'Participant progress' });
+    expect(region.getAttribute('aria-busy')).toBe('true');
+    const loading = screen.getByRole('status', { name: 'Loading participant progress' });
+    expect(loading.textContent.trim()).toBe('');
+    expect(loading.closest('.resultTableSection')).toBeNull();
+    expect(region.contains(loading)).toBe(true);
+    expect(screen.queryByText('No participants match these filters.')).toBeNull();
+    expect(screen.queryByText(/0 matching participants/)).toBeNull();
+
+    response = { loading: false, data: { getParticipantProgress: {
+        rows: [record()], totalCount: 1, phaseCount: 1, participantTypes: ['Mil'], evaluations: [{ evalNumber: 17 }]
+    } } };
+    rerender(<ParticipantProgressTable />);
+    expect(region.getAttribute('aria-busy')).toBe('false');
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByText('202600000')).toBeTruthy();
+
+    response = { loading: true, data: response.data };
+    rerender(<ParticipantProgressTable />);
+    expect(screen.getByRole('status')).toBeTruthy();
+    response = { loading: false, error: new Error('Request failed') };
+    rerender(<ParticipantProgressTable />);
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toContain('Request failed');
+    expect(screen.getByText('Unable to load participants. Please retry.')).toBeTruthy();
+});

@@ -1,6 +1,6 @@
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { MongoClient } = require('mongodb');
-const { getParticipantProgress } = require('../../node-graphql/participantProgress');
+const { getParticipantProgress, progressSummaryStages } = require('../../node-graphql/participantProgress');
 const { participantIdFilter, getParticipantByEmail, getNextParticipantId, getParticipantProgressDetails } = require('../../node-graphql/participantQueries');
 const { checkAlignmentStatus } = require('../src/components/Account/progressUtils');
 jest.mock('../src/components/TextBasedScenarios/adeptUtils', () => ({}));
@@ -165,4 +165,48 @@ test('GraphQL exposes the targeted reads and paginated response with real resolv
     expect(result.data.getNextParticipantId).toBe(101);
     expect(result.data.getParticipantProgress.totalCount).toBe(1);
     expect(result.data.getParticipantProgressDetails).toEqual({ getAllScenarioResults: [], getAllSurveyResults: [] });
+});
+
+test('legacy multikey survey indexes stay usable without matching array-valued participant IDs', async () => {
+    const participants = Array.from({ length: 120 }, (_, i) => log(202600000 + i));
+    await db.collection('participantLog').insertMany(participants);
+    await db.collection('surveyResults').insertMany(participants.map(p => ({ results: {
+        pid: String(p.ParticipantID), evalNumber: 17, orderLog: [],
+        'Participant ID Page': { questions: { 'Participant ID': { response: String(p.ParticipantID) } } }
+    } })));
+    // One array response makes the legacy index multikey for the whole collection.
+    // The old exact-equality matching must still exclude this newer survey.
+    await db.collection('surveyResults').insertOne({ results: {
+        evalNumber: 19, orderLog: [],
+        'Participant ID Page': { questions: { 'Participant ID': { response: ['202600000', '202600001'] } } }
+    } });
+    await db.collection('surveyResults').createIndex({ 'results.pid': 1, _id: 1 });
+    await db.collection('surveyResults').createIndex({ 'results.Participant ID Page.questions.Participant ID.response': 1, _id: 1 });
+    const result = await page();
+    expect(result.totalCount).toBe(120);
+    expect(result.rows.every(row => row.evalNumber === 17)).toBe(true);
+    const plan = await db.command({ explain: {
+        aggregate: 'participantLog', pipeline: progressSummaryStages({ evaluationOnly: true }), cursor: {}
+    }, verbosity: 'executionStats' });
+    const surveyJoins = plan.stages.filter(stage => stage.$lookup?.from === 'surveyResults');
+    expect(surveyJoins).toHaveLength(2);
+    for (const join of surveyJoins) {
+        expect(join.indexesUsed.length).toBeGreaterThan(0);
+        expect(join.collectionScans).toBe(0);
+        expect(join.totalDocsExamined).toBeLessThan(360);
+    }
+});
+
+test('latest completed survey wins across both PID fields, including newer incomplete attempts', async () => {
+    await db.collection('participantLog').insertOne(log(100));
+    await db.collection('surveyResults').insertMany([
+        { results: { pid: '100', evalNumber: 16, startTime: '2026-01-01', orderLog: ['Medic A'], 'Medic A': { scenarioIndex: 'old' } } },
+        { results: { evalNumber: 17, startTime: '2026-02-01', orderLog: ['Medic B'], 'Medic B': { scenarioIndex: 'latest' },
+            'Participant ID Page': { questions: { 'Participant ID': { response: '100' } } } } },
+        { results: { pid: '100', evalNumber: 5, startTime: '2026-03-01', orderLog: [] } }
+    ]);
+    for (const filter of [{}, { completionFilters: ['Missing Text'] }]) {
+        const result = await page(filter);
+        expect(result.rows[0]).toMatchObject({ evalNumber: 17, delegationStart: '2026-02-01', delegationScenarios: ['latest'] });
+    }
 });

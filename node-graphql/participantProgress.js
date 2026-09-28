@@ -64,43 +64,74 @@ function alignmentPopulated() {
   ] };
 }
 
-function progressSummaryStages() {
+function surveyLookup(as, pidPath, evaluationOnly) {
+  return { $lookup: {
+    from: 'surveyResults', localField: 'pid', foreignField: pidPath.slice(1),
+    let: { pid: '$pid' }, as, pipeline: [
+      // The equality join can use multikey indexes (legacy surveys can have array
+      // responses). Keep $expr as a residual filter to preserve exact scalar-ID matching.
+      { $match: { $and: [surveyResultFilter, { $expr: { $eq: [pidPath, '$$pid'] } }] } },
+      { $addFields: { complete: { $or: [
+        { $gte: [number('$results.evalNumber'), 15] }, truthy('$results.Post-Scenario Measures')
+      ] } } },
+      ...(evaluationOnly ? [
+        { $match: { complete: true } }, { $sort: { _id: -1 } }, { $limit: 1 }
+      ] : [
+        { $sort: { _id: -1 } },
+        { $group: { _id: '$complete', document: { $first: '$$ROOT' } } },
+        { $replaceRoot: { newRoot: '$document' } }
+      ]),
+      { $project: {
+        _id: 1, complete: 1,
+        evalNumber: { $ifNull: ['$evalNumber', '$results.evalNumber'] },
+        evalName: { $ifNull: ['$evalName', '$results.evalName'] },
+        ...(evaluationOnly ? {} : {
+          start: '$results.startTime', end: '$results.timeComplete', scenarios: delegationScenarios()
+        })
+      } }
+    ]
+  } };
+}
+
+function latestSurvey(completedOnly = false) {
+  return { $reduce: {
+    input: { $concatArrays: ['$surveysByPid', '$surveysByLegacyPid'] }, initialValue: null,
+    in: { $cond: [{ $and: [
+      completedOnly ? '$$this.complete' : true,
+      { $or: [{ $eq: ['$$value', null] }, { $gt: ['$$this._id', '$$value._id'] }] }
+    ] }, '$$this', '$$value'] }
+  } };
+}
+
+function progressSummaryStages({ evaluationOnly = false } = {}) {
   return [
     { $match: { Type: { $exists: true, $nin: [null, '', false, 0] }, ParticipantID: { $exists: true, $ne: null } } },
     { $addFields: { pid: { $toString: '$ParticipantID' } } },
     { $lookup: {
       from: 'humanSimulator', let: { pid: '$pid' }, as: 'sims', pipeline: [
         { $match: { $expr: { $eq: ['$pid', '$$pid'] } } },
-        { $sort: { timestamp: 1, _id: 1 } }, { $limit: 4 },
+        { $sort: { timestamp: 1, _id: 1 } }, { $limit: evaluationOnly ? 1 : 4 },
         { $project: { _id: 0, timestamp: 1, scenario_id: 1, evalNumber: 1, evalName: 1 } }
       ]
     } },
     { $lookup: {
       from: 'userScenarioResults', let: { pid: '$pid' }, as: 'text', pipeline: [
         { $match: { participantID: { $not: /test/i }, $expr: { $eq: ['$participantID', '$$pid'] } } },
-        { $sort: { _id: 1 } },
-        { $group: { _id: null, count: { $sum: 1 }, start: { $first: '$startTime' }, end: { $last: '$timeComplete' }, evalNumber: { $last: '$evalNumber' }, evalName: { $last: '$evalName' } } }
+        ...(evaluationOnly ? [
+          { $sort: { _id: -1 } }, { $limit: 1 },
+          { $project: { _id: 0, evalNumber: 1, evalName: 1 } }
+        ] : [
+          { $sort: { _id: 1 } },
+          { $group: { _id: null, count: { $sum: 1 }, start: { $first: '$startTime' }, end: { $last: '$timeComplete' }, evalNumber: { $last: '$evalNumber' }, evalName: { $last: '$evalName' } } }
+        ])
       ]
     } },
-    { $lookup: {
-      from: 'surveyResults', let: { pid: '$pid' }, as: 'surveys', pipeline: [
-        { $match: { $and: [surveyResultFilter, { $expr: { $or: [
-          { $eq: ['$results.pid', '$$pid'] },
-          { $eq: ['$results.Participant ID Page.questions.Participant ID.response', '$$pid'] }
-        ] } }] } },
-        { $sort: { _id: 1 } },
-        { $project: {
-          _id: 0, start: '$results.startTime', end: '$results.timeComplete',
-          evalNumber: { $ifNull: ['$evalNumber', '$results.evalNumber'] },
-          evalName: { $ifNull: ['$evalName', '$results.evalName'] },
-          complete: { $or: [{ $gte: [number('$results.evalNumber'), 15] }, truthy('$results.Post-Scenario Measures')] },
-          scenarios: delegationScenarios()
-        } },
-        { $group: { _id: null, last: { $last: '$$ROOT' }, completed: { $push: { $cond: ['$complete', '$$ROOT', null] } } } },
-        { $project: { last: 1, completed: { $arrayElemAt: [{ $filter: { input: '$completed', as: 'survey', cond: { $ne: ['$$survey', null] } } }, -1] } } }
-      ]
+    surveyLookup('surveysByPid', '$results.pid', evaluationOnly),
+    surveyLookup('surveysByLegacyPid', '$results.Participant ID Page.questions.Participant ID.response', evaluationOnly),
+    { $addFields: {
+      sim: { $arrayElemAt: ['$sims', 0] }, text: { $arrayElemAt: ['$text', 0] },
+      survey: { last: latestSurvey(), completed: latestSurvey(true) }
     } },
-    { $addFields: { sim: { $arrayElemAt: ['$sims', 0] }, text: { $arrayElemAt: ['$text', 0] }, survey: { $arrayElemAt: ['$surveys', 0] } } },
     { $addFields: { selectedSurvey: { $ifNull: ['$survey.completed', '$survey.last'] } } },
     { $project: {
       pid: 1, participantType: '$Type', createdAt: '$timeCreated', prolificId: 1, contactId: 1,
@@ -153,8 +184,12 @@ async function getParticipantProgress(db, { filter = {}, offset = 0, limit = 50 
   if (!SORT_FIELDS.has(sortField)) throw new Error('Unknown progress sort.');
   const sort = { [sortField === 'textStart' ? 'textStartSort' : sortField]: filter.descending ? -1 : 1, _id: 1 };
   const match = filteredMatch(filter);
+  // PID/simulator-count browsing only needs evaluation inference to select a page.
+  // Counts, dates and delegation scenarios can be calculated for that page alone.
+  // Progress filters and derived sorts still need full summaries before pagination.
+  const deferDetails = !filter.completionFilters?.length && ['pid', 'simCount'].includes(sortField);
   const [result] = await db.collection('participantLog').aggregate([
-    ...progressSummaryStages(),
+    ...progressSummaryStages({ evaluationOnly: deferDetails }),
     { $match: { phase: filter.phase } },
     // Metadata covers the phase; filters/sort are applied BEFORE selecting a page.
     { $facet: {
@@ -163,7 +198,17 @@ async function getParticipantProgress(db, { filter = {}, offset = 0, limit = 50 
       rows: [{ $match: match }, { $sort: sort }, { $skip: offset }, { $limit: limit }, { $project: { textStartSort: 0 } }]
     } }
   ], { allowDiskUse: true }).toArray();
-  const rows = result?.rows || [];
+  let rows = result?.rows || [];
+  if (deferDetails && rows.length) {
+    const summaries = await db.collection('participantLog').aggregate([
+      { $match: { _id: { $in: rows.map(row => row._id) } } },
+      ...progressSummaryStages(),
+      { $project: { textStartSort: 0 } }
+    ], { allowDiskUse: true }).toArray();
+    const byId = new Map(summaries.map(row => [String(row._id), row]));
+    // Preserve the selected order, including tied sort values and mixed PID types.
+    rows = rows.map(row => byId.get(String(row._id))).filter(Boolean);
+  }
   if (rows.length) {
     const details = await db.collection('userScenarioResults').aggregate([
       { $match: { participantID: { $in: rows.map(row => row.pid), $not: /test/i } } },
