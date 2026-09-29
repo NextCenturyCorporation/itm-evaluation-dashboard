@@ -2,12 +2,12 @@ import React from "react";
 import '../../../css/resultsTable.css';
 import { useQuery } from 'react-apollo';
 import gql from "graphql-tag";
-import { Autocomplete, TextField, Modal, FormControlLabel, Switch } from "@mui/material";
+import { Autocomplete, TextField, Modal } from "@mui/material";
 import { isDefined } from "../../AggregateResults/DataFunctions";
 import { DownloadButtons } from "./download-buttons";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
-import owPart2Defs from '../variables/Variable Definitions RQ8_OW_Part2.xlsx';
+import owPart3Defs from '../variables/Variable Definitions RQ8_OW_Part3.xlsx';
 import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import { EVAL_LABEL, valueColLabel } from "./ph2_rq8_ow_part1";
 
@@ -24,9 +24,6 @@ function roundIfNumber(value) {
     if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 1000) / 1000;
     return value;
 }
-function getKdmaParam(parameters, paramName) {
-    return parameters?.find(p => p?.name === paramName)?.value;
-}
 
 function rank(key) {
     return key.startsWith('Desert') ? 1 : key.startsWith('Urban') ? 2 : 0
@@ -37,10 +34,41 @@ function getOWScenario(scenarioId, evalNum) {
     return `${EVAL_LABEL[evalNum]} ${env}`;
 }
 
-export function PH2RQ8OWPart2() {
-    const { loading: loading8, error: error8, data: data8 } = useQuery(getAdmData, { variables: { evalNumber: 8, scenarioIDs: ["June2025-OW_desert2", "June2025-OW_urban2"] } });
-    const { loading: loading15, error: error15, data: data15 } = useQuery(getAdmData, { variables: { evalNumber: 15, scenarioIDs: ["Feb2026-OW_desert2", "Feb2026-OW_urban2"] } });
-    const { loading: loading16, error: error16, data: data16 } = useQuery(getAdmData, { variables: { evalNumber: 16, scenarioIDs: ["April2026-OW_desert2", "April2026-OW_urban2"] } });
+function getPatientOrderNum(key) {
+    const number = key.match(/^Patient(\d+)_order$/)
+
+    if (number !== null) {
+        return Number(number[1])
+    }
+}
+
+function getProbeSortValue(key) {
+    const m = key.match(/Probe_(AF|MF)(\d+)([a-z]*)$/)
+
+    if (m !== null) {
+        const prefixValue = m[1] === 'AF' ? 0 : 1
+        const suffixValue =  m[3] === '' ? 0 : m[3].charCodeAt(0) - 96
+        return prefixValue * 10000 + Number(m[2]) * 100 + suffixValue
+    }
+}
+
+function tier(key) { 
+    if (key.endsWith(" Value")) {return -2}
+    if (getPatientOrderNum(key) != null) { return -1 } 
+    
+    return rank(key) 
+}
+
+function secondaryValue(key) {
+    return getPatientOrderNum(key) ?? getProbeSortValue(key) ?? 0
+}
+
+const sortKey = (key) => tier(key) * 100000 + secondaryValue(key)
+
+export function PH2RQ8OWPart3() {
+    const { loading: loading8, error: error8, data: data8 } = useQuery(getAdmData, { variables: { evalNumber: 8, scenarioIDs: ["June2025-OW_desert3", "June2025-OW_urban3"] } });
+    const { loading: loading15, error: error15, data: data15 } = useQuery(getAdmData, { variables: { evalNumber: 15, scenarioIDs: ["Feb2026-OW_desert3", "Feb2026-OW_urban3"] } });
+    const { loading: loading16, error: error16, data: data16 } = useQuery(getAdmData, { variables: { evalNumber: 16, scenarioIDs: ["April2026-OW_desert3", "April2026-OW_urban3"] } });
 
     const [formattedData, setFormattedData] = React.useState([]);
     const [filteredData, setFilteredData] = React.useState([]);
@@ -50,7 +78,6 @@ export function PH2RQ8OWPart2() {
     const [owScenarioFilters, setOwScenarioFilters] = React.useState([]);
     const [targetFilters, setTargetFilters] = React.useState([]);
     const [admNameFilters, setAdmNameFilters] = React.useState([]);
-    const [includeRegression, setIncludeRegression] = React.useState(false);
 
     React.useEffect(() => {
         if (!data8?.getAllOWData || !data15?.getAllOWData || !data16?.getAllOWData) return;
@@ -96,11 +123,6 @@ export function PH2RQ8OWPart2() {
                         row['__scoringType'] = 'scalar'
                         continue
                     }
-
-                    row[`${short}_intercept`] = roundIfNumber(getKdmaParam(k.parameters, 'intercept'));
-                    row[`${short}_attribute`] = roundIfNumber(getKdmaParam(k.parameters, 'attr_weight'));
-                    row[`${short}_medical`] = roundIfNumber(getKdmaParam(k.parameters, 'medical_weight'));
-                    row['__scoringType'] = 'regression'
                 }
 
                 Object.assign(row, adm.actionAnalysis ?? {})
@@ -152,13 +174,10 @@ export function PH2RQ8OWPart2() {
                 extra.add(key);
             }
         }
-        const kdmaKeys = [...extra]
-            .filter(k => /_(intercept|attribute|medical)$/.test(k))
-            .sort();
         const actionKeys = [...extra]
             .filter(k => !/_(intercept|attribute|medical)$/.test(k))
-            .sort((a, b) => rank(a) - rank(b))
-        return [...LEAD, ...kdmaKeys, ...actionKeys];
+            .sort((a, b) => sortKey(a) - sortKey(b))
+        return [...LEAD, ...actionKeys];
     }, [filteredData]);
 
     React.useEffect(() => {
@@ -166,11 +185,10 @@ export function PH2RQ8OWPart2() {
             setFilteredData(formattedData.filter(x =>
                 (owScenarioFilters.length === 0 || owScenarioFilters.includes(x['OW Scenario'])) &&
                 (targetFilters.length === 0 || targetFilters.includes(x['Target'])) &&
-                (admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name'])) &&
-                (includeRegression || x['__scoringType'] !== 'regression')
+                (admNameFilters.length === 0 || admNameFilters.includes(x['ADM Name']))
             ));
         }
-    }, [formattedData, owScenarioFilters, targetFilters, admNameFilters, includeRegression]);
+    }, [formattedData, owScenarioFilters, targetFilters, admNameFilters]);
 
     const errors = [
             error8,
@@ -212,22 +230,11 @@ export function PH2RQ8OWPart2() {
                         onChange={(_, newVal) => setTargetFilters(newVal)}
                     />
                 </div>
-                <FormControlLabel
-                    className="ms-auto"
-                    control={
-                        <Switch
-                            size="small"
-                            checked={includeRegression}
-                            onChange={(e) => setIncludeRegression(e.target.checked)}
-                        />
-                    }
-                    label="Include regression scoring"
-                />
                 <DownloadButtons
                     formattedData={formattedData}
                     filteredData={filteredData}
                     HEADERS={HEADERS}
-                    fileName={'RQ8_OW_Part2_data'}
+                    fileName={'RQ8_OW_Part3_data'}
                     extraAction={openModal}
                 />
             </section>
@@ -259,8 +266,8 @@ export function PH2RQ8OWPart2() {
                 <div className='modal-body'>
                     <span className='close-icon' onClick={closeModal}><CloseIcon /></span>
                     <RQDefinitionTable
-                        downloadName={`Definitions_RQ8_OW_Part2.xlsx`}
-                        xlFile={owPart2Defs}
+                        downloadName={`Definitions_RQ8_OW_Part3.xlsx`}
+                        xlFile={owPart3Defs}
                     />
                 </div>
             </Modal>

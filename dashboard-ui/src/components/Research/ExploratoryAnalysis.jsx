@@ -13,10 +13,10 @@ import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 export function ExploratoryAnalysis() {
     const noDataList = [8, 9, 10, 11, 12, 14, 15, 16, 17]
-    const evalOptions = getAllEvals();
+    const evalOptions = getAllEvals() ?? [];
     const dispatch = useDispatch()
     const storedEval = useSelector(state => state.configs.selectedResearchEval)  
-    const selectedEval = storedEval ?? evalOptions[0].value;
+    const selectedEval = storedEval ?? evalOptions[0]?.value ?? null;
     const hasData = !noDataList.includes(selectedEval)
     function selectEvaluation(target) {
         dispatch(setSelectedResearchEval(target.value))
@@ -27,9 +27,9 @@ export function ExploratoryAnalysis() {
             <Select
                 onChange={selectEvaluation}
                 options={evalOptions}
-                defaultValue={evalOptions[0]}
+                defaultValue={evalOptions[0] ?? null}
                 placeholder="Select Evaluation"
-                value={evalOptions.find(option => option.value === selectedEval)}
+                value={evalOptions.find(option => option.value === selectedEval) ?? null}
                 styles={{
                     // Fixes the overlapping problem of the component
                     menu: provided => ({ ...provided, zIndex: 9999 })
