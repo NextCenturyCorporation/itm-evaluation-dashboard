@@ -23,8 +23,8 @@ const GET_SHOW_DEMOGRAPHICS = gql`
 `;
 
 const UPDATE_SHOW_DEMOGRAPHICS = gql`
-    mutation UpdateShowDemographics($showDemographics: Boolean!) {
-        updateShowDemographics(showDemographics: $showDemographics)
+    mutation UpdateShowDemographics($caller: JSON!, $showDemographics: Boolean!) {
+        updateShowDemographics(caller: $caller, showDemographics: $showDemographics)
     }
 `;
 
@@ -35,8 +35,8 @@ const GET_PID_BOUNDS = gql`
 `;
 
 const UPDATE_PID_BOUNDS = gql`
-    mutation UpdatePidBounds($lowPid: Int!, $highPid: Int!) {
-        updatePidBounds(lowPid: $lowPid, highPid: $highPid)
+    mutation UpdatePidBounds($caller: JSON!, $lowPid: Int!, $highPid: Int!) {
+        updatePidBounds(caller: $caller, lowPid: $lowPid, highPid: $highPid)
     }
 `;
 
@@ -102,8 +102,8 @@ const GET_TEXT_EVAL_OPTIONS = gql`
 `;
 
 const UPDATE_TEXT_EVAL = gql`
-  mutation updateTextEval($eval: String!) {
-    updateTextEval(eval: $eval)
+  mutation updateTextEval($caller: JSON!, $eval: String!) {
+    updateTextEval(caller: $caller, eval: $eval)
   }
 `;
 
@@ -120,14 +120,14 @@ const GET_CURRENT_UI_STYLE = gql`
 `;
 
 const UPDATE_SURVEY_VERSION = gql`
-    mutation updateSurveyVersion($version: String!) {
-        updateSurveyVersion(version: $version)
+    mutation updateSurveyVersion($caller: JSON!, $version: String!) {
+        updateSurveyVersion(caller: $caller, version: $version)
     }
 `;
 
 const UPDATE_UI_STYLE = gql`
-    mutation updateUIStyle($version: String!) {
-        updateUIStyle(version: $version)
+    mutation updateUIStyle($caller: JSON!, $version: String!) {
+        updateUIStyle(caller: $caller, version: $version)
     }
 `;
 
@@ -458,7 +458,6 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const [confirmedAdmin, setConfirmedAdmin] = useState(false);
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
-    const [sessionId, setSessionId] = useState(null);
     const [errorCount, setErrorCount] = useState(0);
     const [unapproved, setUnapproved] = useState([]);
     const [usePhase1Styling, setUsePhase1Styling] = useState(false);
@@ -474,6 +473,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
     const [showDemographics, setShowDemographics] = useState(false);
     const [showDemographicsConfirmation, setShowDemographicsConfirmation] = useState(false);
     const [pendingDemographicsValue, setPendingDemographicsValue] = useState(null);
+    const [accessToken, setAccessToken] = useState(null);
 
     const { loading: demographicsLoading, error: demographicsError } = useQuery(GET_SHOW_DEMOGRAPHICS, {
         fetchPolicy: 'no-cache',
@@ -498,6 +498,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
             setIsLoading(true);
             await updateShowDemographics({
                 variables: {
+                    caller: { user: { username: currentUser.username }, tokens: { accessToken } },
                     showDemographics: pendingDemographicsValue
                 }
             });
@@ -563,6 +564,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
             setIsLoading(true);
             await updatePidBounds({
                 variables: {
+                    caller: { user: { username: currentUser.username }, tokens: { accessToken } },
                     lowPid: pendingPidBounds.low,
                     highPid: pendingPidBounds.high
                 }
@@ -626,7 +628,9 @@ function AdminPage({ currentUser, updateUserHandler }) {
         try {
             setIsLoading(true);
             const { data } = await updateTextEval({
-                variables: { eval: pendingTextEval }
+                variables: { 
+                    caller: { user: { username: currentUser.username }, tokens: { accessToken } },
+                    eval: pendingTextEval }
             });
             if (data && data.updateTextEval) {
                 setTextEval(pendingTextEval);
@@ -673,12 +677,12 @@ function AdminPage({ currentUser, updateUserHandler }) {
     });
 
     useEffect(() => {
-        if (sessionId && currentUser) {
+        if (accessToken && currentUser) {
             getUsersQuery({
-                variables: { caller: { username: currentUser.username, sessionId } }
+                variables: { caller: { user: { username: currentUser.username }, tokens: { accessToken } }}
             });
         }
-    }, [sessionId, currentUser, getUsersQuery]);
+    }, [accessToken, currentUser, getUsersQuery]);
 
     useEffect(() => {
         if (users)
@@ -750,7 +754,9 @@ function AdminPage({ currentUser, updateUserHandler }) {
             setIsLoading(true);
 
             const { data } = await updateUIStyle({
-                variables: { version: pendingStyleVersion }
+                variables: { 
+                    caller: { user: { username: currentUser.username }, tokens: { accessToken } },
+                    version: pendingStyleVersion }
             });
 
             if (data && data.updateUIStyle !== undefined) {
@@ -779,7 +785,9 @@ function AdminPage({ currentUser, updateUserHandler }) {
         try {
             setIsLoading(true);
             const { data } = await updateSurveyVersion({
-                variables: { version: pendingSurveyVersion }
+                variables: { 
+                    caller: { user: { username: currentUser.username }, tokens: { accessToken } },
+                    version: pendingSurveyVersion }
             });
             if (data && data.updateSurveyVersion) {
                 setLocalSurveyVersion(pendingSurveyVersion);
@@ -827,7 +835,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     username: currentUser.username,
                 }
             });
-            setSessionId(results.sessionId);
+            setAccessToken(results.tokens.accessToken);
             setConfirmedAdmin(true);
         } catch (err) {
             setConfirmedAdmin(false);
@@ -894,7 +902,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
             {confirmedAdmin &&
                 <>
                     <Row className="mb-4">
-                        {unapproved.length > 0 && <ApprovalTable unapproved={unapproved} updateUnapproved={setUnapproved} caller={{ username: currentUser.username, sessionId }} />}
+                        {unapproved.length > 0 && <ApprovalTable unapproved={unapproved} updateUnapproved={setUnapproved} caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} />}
                         <Col md={4}>
                             <Card>
                                 <Card.Header as="h5">Survey Version</Card.Header>
@@ -1039,12 +1047,12 @@ function AdminPage({ currentUser, updateUserHandler }) {
                         onCancel={cancelDemographicsChange}
                         message={`Are you sure you want to ${pendingDemographicsValue ? 'show' : 'hide'} demographics questions? This will affect the text-based scenarios survey.`}
                     />
-                    <EditEvals caller={{ username: currentUser.username, sessionId }} />
+                    <EditEvals caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} />
                     <Query
                         query={GET_USERS}
-                        variables={{ caller: { username: currentUser.username, sessionId } }}
+                        variables={{ caller: { user: { username: currentUser.username }, tokens: { accessToken } } }}
                         fetchPolicy='no-cache'
-                        skip={!sessionId || !currentUser}
+                        skip={!accessToken || !currentUser}
                     >
                         {({ loading, error, data }) => {
                             if (loading) return <div className="loading">Loading ...</div>;
@@ -1090,12 +1098,12 @@ function AdminPage({ currentUser, updateUserHandler }) {
 
                             return (
                                 <>
-                                    <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                    <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                    <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                    <InputBox options={nonSelected['ta3']} selectedOptions={ta3SelectedOptions} mutation={UPDATE_TA3_USER} param={'isTa3User'} header={'TA3'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                    <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
-                                    <InputBox options={nonSelected['externalSimResearcher']} selectedOptions={externalSimResearcherSelectedOptions} mutation={UPDATE_EXTERNAL_SIM_RESEARCHER} param={'isExternalSimResearcher'} header={'External Sim Researcher'} caller={{ username: currentUser.username, sessionId }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['admin']} selectedOptions={adminSelectedOptions} mutation={UPDATE_ADMIN_USER} param={'isAdmin'} header={'Administrators'} caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['evaluators']} selectedOptions={evaluatorSelectedOptions} mutation={UPDATE_EVALUATOR_USER} param={'isEvaluator'} header={'Evaluators'} caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['experimenters']} selectedOptions={experimenterSelectedOptions} mutation={UPDATE_EXPERIMENTER_USER} param={'isExperimenter'} header={'Experimenters'} caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['ta3']} selectedOptions={ta3SelectedOptions} mutation={UPDATE_TA3_USER} param={'isTa3User'} header={'TA3'} caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['adept']} selectedOptions={adeptSelectedOptions} mutation={UPDATE_ADEPT_USER} param={'isAdeptUser'} header={'ADEPT Users'} caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} errorCallback={notAdmin} />
+                                    <InputBox options={nonSelected['externalSimResearcher']} selectedOptions={externalSimResearcherSelectedOptions} mutation={UPDATE_EXTERNAL_SIM_RESEARCHER} param={'isExternalSimResearcher'} header={'External Sim Researcher'} caller={{ user: { username: currentUser.username }, tokens: { accessToken } }} errorCallback={notAdmin} />
                                 </>
                             );
                         }}
