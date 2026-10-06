@@ -32,7 +32,7 @@ export function Header({ currentUser, logout }) {
                 </NavDropdown>
             )}
             
-            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) && (
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User'])) && (
                 <>
                     <NavDropdown title="Human Evaluation Segments">
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
@@ -65,7 +65,7 @@ export function Header({ currentUser, logout }) {
                 </>
             )}
 
-            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
                 <>
                 <NavDropdown title="Data Analysis">
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
