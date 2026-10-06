@@ -32,7 +32,7 @@ export function Header({ currentUser, logout }) {
                 </NavDropdown>
             )}
             
-            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) && (
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User'])) && (
                 <>
                     <NavDropdown title="Human Evaluation Segments">
                         <NavDropdown.Item as={Link} className="dropdown-item" to="/survey-results">
@@ -65,40 +65,40 @@ export function Header({ currentUser, logout }) {
                 </>
             )}
 
-            {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+            {(hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
                 <>
                 <NavDropdown title="Data Analysis">
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq1">
                             RQ1
                             </NavDropdown.Item>
                         )}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq2">
                             RQ2
                             </NavDropdown.Item>
                         )}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/rq3">
                             RQ3
                             </NavDropdown.Item>
                         )}
-                        {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+                        {(hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world">
                             Open World
                             </NavDropdown.Item>
                         )}
-                        {(hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
+                        {(hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User', 'externalSimResearcher'])) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/participant-demographics">
                                 Participant Demographics
                             </NavDropdown.Item>
                         )}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/open-world-adms">
                             Open World ADMs
                             </NavDropdown.Item>
                         )}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                        {hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                             <NavDropdown.Item as={Link} className="dropdown-item" to="/research-results/exploratory-analysis">
                                 Exploratory Analysis
                             </NavDropdown.Item>
@@ -143,7 +143,7 @@ function UserMenu({ currentUser, logout }) {
                         Administrator
                     </Link>
                 )}
-                {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                {hasAccess(currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                     <Link className="dropdown-item" to="/participant-progress-table" onClick={handleToggle}>
                         Progress Table
                     </Link>
@@ -153,7 +153,7 @@ function UserMenu({ currentUser, logout }) {
                         PID Lookup
                     </Link>
                 )}
-                {(hasAccess(currentUser, ['experimenter', 'admin'])) && (
+                {(hasAccess(currentUser, ['admin'])) && (
                     <Link className="dropdown-item" to="/participantTextTester" onClick={handleToggle}>
                         Test Text Scenario
                     </Link>
