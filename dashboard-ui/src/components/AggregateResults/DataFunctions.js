@@ -1633,7 +1633,7 @@ function populateDataSetP2(data) {
 
         const survey = data.getAllSurveyResultsByEval.find((x) => x.results.pid === pid);
         // this filters out incomplete surveys from previous evals but eval 15 has no post scenario measure page in the survey
-        if (survey && !survey?.results?.['Post-Scenario Measures'] && survey?.results?.evalNumber !== 15) continue;
+        if (survey && !survey?.results?.['Post-Scenario Measures'] && ![15,18].includes(survey?.results?.evalNumber)) continue;
         const participant = pLog.find((p) => p.ParticipantID === Number(pid));
         if (!participant) continue;
 
@@ -1763,10 +1763,11 @@ function populateDataSetP2(data) {
             row['Experience-Informed'] = demoMeasures['I could easily draw from an experience / similar situation to imagine myself as the medics in these scenarios'] ?? null;
             row['Env-Practice'] = demoMeasures['Primary practice environment'] ?? null;
             row['MCIExperience'] = demoMeasures['Have you participated in mass casualty events'] ?? null;
-            row['MilBranch'] = demoMeasures['Military Branch'] ?? null;
+            const joinIfArray = (v) => Array.isArray(v) ? v.join('; ') : v;
+            row['MilBranch'] = joinIfArray(demoMeasures['Military Branch']) ?? null;
             row['MilMed'] = demoMeasures['Did you serve in a military medical role'] ?? null;
             row['MOS'] = demoMeasures['What was/is your medical-related MOS or rate'] ?? null;
-            row['Env-Experience'] = demoMeasures['In which environments have you provided medical care during military service'] ?? null;
+            row['Env-Experience'] = joinIfArray(demoMeasures['In which environments have you provided medical care during military service']) ?? null;
             row['TCCCTraining'] = demoMeasures['When did you last complete TCCC training or recertification'] ?? null;
             row['TCCCExpertise'] = demoMeasures['How would you rate your expertise with TCCC procedures'] ?? null;
             row['TCCCExperience'] = demoMeasures['How many real-world casualties have you assessed using TCCC protocols'] ?? null;
