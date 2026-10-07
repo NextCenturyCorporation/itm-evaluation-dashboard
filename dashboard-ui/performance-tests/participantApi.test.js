@@ -4,6 +4,7 @@ const { getParticipantProgress, progressSummaryStages } = require('../../node-gr
 const { participantIdFilter, getParticipantByEmail, getNextParticipantId, getParticipantProgressDetails } = require('../../node-graphql/participantQueries');
 const { checkAlignmentStatus } = require('../src/components/Account/progressUtils');
 jest.mock('../src/components/TextBasedScenarios/adeptUtils', () => ({}));
+jest.mock('../../node-graphql/account-configs', () => ({ TOKEN_SECRET: 'participant-tests-only' }), { virtual: true });
 
 let mongo, client, db;
 const page = (filter = {}, offset = 0, limit = 50) => getParticipantProgress(db, { filter: { phase: 'Phase 2', ...filter }, offset, limit });

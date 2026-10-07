@@ -24,8 +24,8 @@ const DELETE_PID_DATA = gql`
 `;
 
 const UPDATE_SCENARIO_RESULT = gql`
-    mutation updateScenarioResult($id: String!, $updates: JSON!) {
-        updateScenarioResult(id: $id, updates: $updates)
+    mutation updateScenarioResult($caller: JSON!, $id: String!, $updates: JSON!) {
+        updateScenarioResult(caller: $caller, id: $id, updates: $updates)
     }
 `;
 
@@ -242,6 +242,12 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
     const confirmDeletion = async (toDelete) => {
         setRowToDelete(toDelete);
         setDeleteConfirmationOpen(true);
+    };
+
+    const updateScenarioResultWithCaller = async (options) => {
+        const tokens = await accountsClient.getTokens()
+        const auth_user = {...options, variables: { ...options.variables, caller:  { user: currentUser, tokens: tokens } } }
+        return updateScenarioResult(auth_user)
     };
 
     const formatCell = (header, dataSet) => {
@@ -583,7 +589,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             pid={repairModal.pid}
             alignmentStatus={repairModal.status}
             textResults={details.getAllScenarioResults}
-            updateScenarioResult={updateScenarioResult}
+            updateScenarioResult={updateScenarioResultWithCaller}
             onClose={() => setRepairModal({ open: false, pid: null, status: null })}
             onRepairComplete={async () => {
                 setRepairModal({ open: false, pid: null, status: null });

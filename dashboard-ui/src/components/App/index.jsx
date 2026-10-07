@@ -318,7 +318,7 @@ export function App() {
             logout();
             return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
         }
-        if (testerLogin && (currentUser === null || (!currentUser.admin && !currentUser.experimenter))) {
+        if (testerLogin && (currentUser === null || !currentUser.admin)) {
             return <Redirect push to="/participantText" />;
         }
         else if (participantTextLogin) {
@@ -425,7 +425,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) {
+            if (hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User'])) {
                 return <ParticipantProgressTable canViewProlific={currentUser.adeptUser || currentUser.admin} isAdmin={currentUser.admin} currentUser={currentUser} />
             } else {
                 return <Redirect push to="/" />;
@@ -513,35 +513,35 @@ export function App() {
                         <Route path="/remote-text-survey" component={StartOnline} />
                         <Route path="/text-based" component={TextBasedScenariosPageWrapper} />
                         <Route path="/myaccount" component={MyAccount} />
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
                             <AggregateResults type="HumanSimParticipant" />
                         </Route>}
-                        {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
+                        {(hasAccess(currentUser, ['admin'])) && <Route path="/participantTextTester">
                             <Login participantTextLogin={true} testerLogin={true} />
                         </Route>}
                         {hasAccess(currentUser, ['admin']) && <Route path="/admin" component={Admin} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/pid-lookup" component={PidLookupPage} />}
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey" component={Survey} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
                             <AggregateResults type="HumanProbeData" />
                         </Route>}
 
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
                         {hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
                         {/* Redirection logic: If user is not logged in, send to /login. 
                             If user is not approved, send to /awaitingApproval.

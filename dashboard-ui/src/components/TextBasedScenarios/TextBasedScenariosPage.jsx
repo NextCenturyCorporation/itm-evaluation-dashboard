@@ -131,7 +131,7 @@ class TextBasedScenariosPage extends Component {
             demographicsStartTime: null,
             adeptGroupState: {},
             showConsentForm: false,
-            consentGiven: false,
+            consentGiven: true,
             eval16CombinedSessionId: null,
             eval16Scenarios: [],
             eval16Groups: {

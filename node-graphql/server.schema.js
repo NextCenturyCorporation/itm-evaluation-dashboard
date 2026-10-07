@@ -4,6 +4,7 @@ const { GraphQLScalarType, Kind, GraphQLError } = require("graphql");
 const jwt = require('jsonwebtoken');
 const { participantIdFilter, getParticipantByEmail, getNextParticipantId, getParticipantProgressDetails } = require('./participantQueries');
 const { getParticipantProgress } = require('./participantProgress');
+const { TOKEN_SECRET } = require('./account-configs');
 
 const typeDefs = gql`
   scalar JSON
@@ -120,15 +121,15 @@ const typeDefs = gql`
     uploadDemographics(surveyId: String, results: JSON): JSON,
     uploadScenarioResults(results: [JSON]): JSON,
     addNewParticipantToLog(participantData: JSON): JSON,
-    updateSurveyVersion(version: String!): String,
-    updateUIStyle(version: String!): String,
+    updateSurveyVersion(caller: JSON, version: String!): String,
+    updateUIStyle(caller: JSON, version: String!): String,
     updateParticipantLog(pid: String, updates: JSON): JSON,
     getServerTimestamp: String,
-    updateTextEval(eval: String!): String
-    updatePidBounds(lowPid: Int!, highPid: Int!): JSON,
-    updateShowDemographics(showDemographics: Boolean!): JSON,
+    updateTextEval(caller: JSON, eval: String!): String
+    updatePidBounds(caller: JSON, lowPid: Int!, highPid: Int!): JSON,
+    updateShowDemographics(caller: JSON, showDemographics: Boolean!): JSON,
     deleteDataByPID(caller: JSON, pid: String): JSON,
-    updateScenarioResult(id: String!, updates: JSON!): JSON,
+    updateScenarioResult(caller: JSON, id: String!, updates: JSON!): JSON,
     upsertScenarioResult(result: JSON): JSON,
   }
 
@@ -146,6 +147,40 @@ const generateServerTimestamp = () => {
   return date.toString().replace(/GMT-0[45]00 \(Eastern (Daylight|Standard) Time\)/,
     isDST ? 'GMT-0400 (Eastern Daylight Time)' : 'GMT-0500 (Eastern Standard Time)');
 };
+
+// Verifies the caller holds a valid, signed admin session before privileged
+// actions run. Does not trust client side.
+async function requireAdmin(context, caller) {
+    const accessToken = caller?.tokens?.accessToken;
+    const username = caller?.user?.username ?? caller?.username;
+
+    if (!accessToken) {
+        throw new GraphQLError('Invalid Access Token.', { extensions: { code: '401' } });
+    }
+
+    let sessionToken;
+    try {
+        sessionToken = jwt.verify(accessToken, TOKEN_SECRET)?.data?.token;
+    } catch (err) {
+        throw new GraphQLError('Invalid Access Token.', { extensions: { code: '401' } });
+    }
+    if (!sessionToken) {
+        throw new GraphQLError('Invalid Access Token.', { extensions: { code: '401' } });
+    }
+
+    const session = await context.db.collection('sessions')
+        .findOne({ token: sessionToken }, { projection: { userId: 1, valid: 1 } });
+    const user = await context.db.collection('users')
+        .findOne({ username }, { projection: { _id: 1, username: 1, admin: 1 } });
+
+    if (!(session?.valid && String(session.userId) === String(user?._id) && user?.admin)) {
+        throw new GraphQLError('Users outside of the admin group cannot perform this action.', {
+            extensions: { code: '403' }
+        });
+    }
+
+    return user;
+}
 
 // Fields the ADM history queries return. Shared by getAllHistoryByEvalNumber and getAllHistoryByEvalArray 
 const ADM_HISTORY_PROJECTION = {
@@ -182,10 +217,13 @@ const backfillProbeIds = (doc) => {
 const resolvers = {
   Query: {
     checkUserExists: async (obj, args, context, infow) => {
+      // Escape regex metacharacters so untrusted input can't inject a pattern
+      const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const username = escapeRegex(args.username.toLowerCase().trim());
       const userByEmail = await context.db.collection('users').findOne({
         $or: [
           { "emails.address": args.email.toLowerCase().trim() },
-          { "username": { $regex: `^${args.username.toLowerCase().trim()}$`, $options: 'i' } }
+          { "username": { $regex: `^${username}$`, $options: 'i' } }
         ]
       });
       return !!userByEmail;
@@ -633,29 +671,12 @@ const resolvers = {
         .then(result => { return result; });
     },
     getUsers: async (obj, args, context, infow) => {
-      const session = await context.db.collection('sessions')
-        .find({ "_id": new ObjectId(args['caller']?.['sessionId']) })
-        ?.project({ "userId": 1, "valid": 1 })
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users')
+        .find()
+        .project({ "services": 0, "createdAt": 0, "updatedAt": 0 })
         .toArray()
-        .then(result => { return result[0] });
-
-      const user = await context.db.collection('users')
-        .find({ "username": args['caller']?.['username'] })
-        ?.project({ "_id": 1, "username": 1, "admin": 1 })
-        .toArray()
-        .then(result => { return result[0] });
-
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users')
-          .find()
-          .project({ "services": 0, "createdAt": 0, "updatedAt": 0 })
-          .toArray()
-          .then(result => { return result });
-      } else {
-        throw new GraphQLError('Users outside of the admin group cannot access user data.', {
-          extensions: { code: '404' }
-        });
-      }
+        .then(result => { return result });
     },
     getAllSurveyConfigs: async (obj, args, context, inflow) => {
       return await context.db.collection('delegationConfig').find().toArray().then(result => { return result; });
@@ -809,190 +830,110 @@ const resolvers = {
   },
   Mutation: {
     updateAdminUser: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users').update(
-          { "username": args["username"] },
-          { $set: { "admin": args["isAdmin"] } }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot update administrator status.', {
-          extensions: { code: '404' }
-        });
-      }
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "admin": args["isAdmin"] } }
+      );
     },
     updateEvaluatorUser: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users').update(
-          { "username": args["username"] },
-          { $set: { "evaluator": args["isEvaluator"] } }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot update evaluator status.', {
-          extensions: { code: '404' }
-        });
-      }
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "evaluator": args["isEvaluator"] } }
+      );
     },
     updateExperimenterUser: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users').update(
-          { "username": args["username"] },
-          { $set: { "experimenter": args["isExperimenter"] } }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot update experimenter status.', {
-          extensions: { code: '404' }
-        });
-      }
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "experimenter": args["isExperimenter"] } }
+      );
     },
     updateAdeptUser: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users').update(
-          { "username": args["username"] },
-          { $set: { "adeptUser": args["isAdeptUser"] } }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot update ADEPT user status.', {
-          extensions: { code: '404' }
-        });
-      }
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "adeptUser": args["isAdeptUser"] } }
+      );
     },
     updateTa3User: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users').update(
-          { "username": args["username"] },
-          { $set: { "ta3User": args["isTa3User"] } }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot update TA3 user status.', {
-          extensions: { code: '404' }
-        });
-      }
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "ta3User": args["isTa3User"] } }
+      );
     },
     updateExternalSimResearcher: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users').update(
-          { "username": args["username"] },
-          { $set: { "externalSimResearcher": args["isExternalSimResearcher"] } }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot update External Sim Researcher status.', {
-          extensions: { code: '404' }
-        });
-      }
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users').update(
+        { "username": args["username"] },
+        { $set: { "externalSimResearcher": args["isExternalSimResearcher"] } }
+      );
     },
     updateUserApproval: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        return await context.db.collection('users').update(
-          { "username": args["username"] },
-          {
-            $set: {
-              "approved": args["isApproved"],
-              "rejected": args["isRejected"],
-              "adeptUser": args["isAdeptUser"],
-              "experimenter": args["isExperimenter"],
-              "evaluator": args["isEvaluator"],
-              "ta3User": args["isTa3User"],
-              "externalSimResearcher": args["isExternalSimResearcher"],
-              "admin": args["isAdmin"]
-            }
+      await requireAdmin(context, args.caller)
+      return await context.db.collection('users').update(
+        { "username": args["username"] },
+        {
+          $set: {
+            "approved": args["isApproved"],
+            "rejected": args["isRejected"],
+            "adeptUser": args["isAdeptUser"],
+            "experimenter": args["isExperimenter"],
+            "evaluator": args["isEvaluator"],
+            "ta3User": args["isTa3User"],
+            "externalSimResearcher": args["isExternalSimResearcher"],
+            "admin": args["isAdmin"]
           }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot approve new users.', {
-          extensions: { code: '404' }
-        });
-      }
+        }
+      );
     },
     updateEvalData: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        const data = args['dataToUpdate'];
-        return await context.db.collection('evalData').update(
-          { "_id": new ObjectId(data["_id"]) },
-          {
-            $set: {
-              "evalNumber": data['evalNumber'],
-              "evalName": data['evalName'],
-              "pages": {
-                "rq1": data['pages']['rq1'],
-                "rq2": data['pages']['rq2'],
-                "rq3": data['pages']['rq3'],
-                "exploratoryAnalysis": data['pages']['exploratoryAnalysis'],
-                "admProbeResponses": data['pages']['admProbeResponses'],
-                "admAlignment": data['pages']['admAlignment'],
-                "admResults": data['pages']['admResults'],
-                "humanSimPlayByPlay": data['pages']['humanSimPlayByPlay'],
-                "humanSimProbes": data['pages']['humanSimProbes'],
-                "participantLevelData": data['pages']['participantLevelData'],
-                "textResults": data['pages']['textResults'],
-                "programQuestions": data['pages']['programQuestions']
-              }
+      await requireAdmin(context, args.caller)
+      const data = args['dataToUpdate'];
+      return await context.db.collection('evalData').update(
+        { "_id": new ObjectId(data["_id"]) },
+        {
+          $set: {
+            "evalNumber": data['evalNumber'],
+            "evalName": data['evalName'],
+            "pages": {
+              "rq1": data['pages']['rq1'],
+              "rq2": data['pages']['rq2'],
+              "rq3": data['pages']['rq3'],
+              "exploratoryAnalysis": data['pages']['exploratoryAnalysis'],
+              "admProbeResponses": data['pages']['admProbeResponses'],
+              "admAlignment": data['pages']['admAlignment'],
+              "admResults": data['pages']['admResults'],
+              "humanSimPlayByPlay": data['pages']['humanSimPlayByPlay'],
+              "humanSimProbes": data['pages']['humanSimProbes'],
+              "participantLevelData": data['pages']['participantLevelData'],
+              "textResults": data['pages']['textResults'],
+              "programQuestions": data['pages']['programQuestions']
             }
           }
-        );
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot update evals.', {
-          extensions: { code: '404' }
-        });
-      }
+        }
+      );
     },
     addNewEval: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        try {
-          const result = await context.db.collection('evalData').insertOne(args.newEval);
-          return result;
-        } catch (error) {
-          console.error(`INSERT ERROR:`, error);
-          throw error;
-        }
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot add evals.', {
-          extensions: { code: '404' }
-        });
+      await requireAdmin(context, args.caller)
+      try {
+        const result = await context.db.collection('evalData').insertOne(args.newEval);
+        return result;
+      } catch (error) {
+        console.error(`INSERT ERROR:`, error);
+        throw error;
       }
     },
     deleteEval: async (obj, args, context, inflow) => {
-      const session = await context.db.collection('sessions').find({ "_id": new ObjectId(args['caller']?.['sessionId']) })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        try {
-          const result = await context.db.collection('evalData').deleteOne({ '_id': ObjectId(args['evalId']) });
-          return result;
-        } catch (error) {
-          console.error(`DELETE ERROR:`, error);
-          throw error;
-        }
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot delete evals.', {
-          extensions: { code: '404' }
-        });
+      await requireAdmin(context, args.caller)
+      try {
+        const result = await context.db.collection('evalData').deleteOne({ '_id': ObjectId(args['evalId']) });
+        return result;
+      } catch (error) {
+        console.error(`DELETE ERROR:`, error);
+        throw error;
       }
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {
@@ -1027,6 +968,7 @@ const resolvers = {
       );
     },
     updatePidBounds: async (obj, args, context, info) => {
+      await requireAdmin(context, args.caller)
       const res = await context.db.collection('surveyVersion').findOneAndUpdate(
         {},
         {
@@ -1041,6 +983,7 @@ const resolvers = {
       return res.value
     },
     updateShowDemographics: async (obj, args, context, info) => {
+      await requireAdmin(context, args.caller)
       const res = await context.db.collection('surveyVersion').findOneAndUpdate(
         {},
         {
@@ -1125,6 +1068,7 @@ const resolvers = {
       }
     },
     updateSurveyVersion: async (obj, args, context, inflow) => {
+      await requireAdmin(context, args.caller)
       const result = await context.db.collection('surveyVersion').findOneAndUpdate(
         {},
         { $set: { version: args['version'] } },
@@ -1133,6 +1077,7 @@ const resolvers = {
       return result.value.version;
     },
     updateUIStyle: async (obj, args, context, inflow) => {
+      await requireAdmin(context, args.caller)
       const result = await context.db.collection('uiStyle').findOneAndUpdate(
         {},
         { $set: { version: args['version'] } },
@@ -1150,6 +1095,7 @@ const resolvers = {
       return generateServerTimestamp();
     },
     updateTextEval: async (obj, args, context, info) => {
+      await requireAdmin(context, args.caller)
       const result = await context.db.collection('surveyVersion').findOneAndUpdate(
         {},
         { $set: { textScenarios: args.eval } },
@@ -1158,96 +1104,77 @@ const resolvers = {
       return result.value.textScenarios;
     },
     deleteDataByPID: async (obj, args, context, inflow) => {
-      const accessToken = args['caller']?.['tokens']?.['accessToken'];
-      if (!accessToken) {
-        throw new GraphQLError('Invalid Access Token.', {
+      await requireAdmin(context, args.caller)
+      const foundPlog = await context.db.collection('participantLog').find({ 'ParticipantID': Number(args['pid']) }).toArray();
+      const foundText = await context.db.collection('userScenarioResults').find({ 'participantID': args['pid'] }).toArray();
+      const foundSurvey = await context.db.collection('surveyResults').find({ 'results.Participant ID Page.questions.Participant ID.response': args['pid'] }).toArray();
+      const oldEnough = (milliseconds) => {
+        if (isNaN(milliseconds)) {
+          return true;
+        }
+        return (milliseconds / (1000 * 60 * 60)) >= 24;
+      };
+      const now = new Date();
+      let allOldEnough = true;
+
+      // check that pid was created at least 24 hours ago
+      for (const doc of foundPlog) {
+        if (!doc['timeCreated']) {
+          continue;
+        }
+        const plogDate = new Date(doc['timeCreated']);
+        const timeSincePID = now - plogDate;
+        if (!oldEnough(timeSincePID)) {
+          allOldEnough = false;
+          break;
+        }
+      }
+
+      // check that text ended 24 hours ago OR if incomplete, was started 24 hours ago
+      for (const doc of foundText) {
+        let timeToCheck = doc.timeComplete;
+        if (!timeToCheck) {
+          timeToCheck = doc.startTime;
+        }
+        const timeSinceText = now - Date(timeToCheck);
+        if (!oldEnough(timeSinceText)) {
+          allOldEnough = false;
+          break;
+        }
+      }
+
+      // check that survey ended 24 hours ago OR if incomplete, was started 24 hours ago
+      for (const doc of foundSurvey) {
+        if (!doc.results) {
+          continue;
+        }
+        let timeToCheck = doc.results.timeComplete;
+        if (!timeToCheck) {
+          timeToCheck = doc.results.startTime;
+        }
+        const timeSinceText = now - Date(timeToCheck);
+        if (!oldEnough(timeSinceText)) {
+          allOldEnough = false;
+          break;
+        }
+      }
+
+
+      if (!allOldEnough) {
+        throw new GraphQLError('Data is not yet 24 hours old. Please wait to delete.', {
           extensions: { code: '400' }
         });
       }
-      const sessionToken = jwt.decode(accessToken)?.data?.token;
-      if (!sessionToken) {
-        throw new GraphQLError('Invalid Access Token.', {
-          extensions: { code: '400' }
-        });
-      }
-      const session = await context.db.collection('sessions').find({ "token": sessionToken })?.project({ "userId": 1, "valid": 1 }).toArray().then(result => { return result[0] });
-      const user = await context.db.collection('users').find({ "username": args['caller']?.['user']?.['username'] })?.project({ "_id": 1, "username": 1, "admin": 1 }).toArray().then(result => { return result[0] });
-      if (session?.valid && (session?.userId == user?._id) && user?.admin) {
-        const foundPlog = await context.db.collection('participantLog').find({ 'ParticipantID': Number(args['pid']) }).toArray();
-        const foundText = await context.db.collection('userScenarioResults').find({ 'participantID': args['pid'] }).toArray();
-        const foundSurvey = await context.db.collection('surveyResults').find({ 'results.Participant ID Page.questions.Participant ID.response': args['pid'] }).toArray();
-        const oldEnough = (milliseconds) => {
-          if (isNaN(milliseconds)) {
-            return true;
-          }
-          return (milliseconds / (1000 * 60 * 60)) >= 24;
-        };
-        const now = new Date();
-        let allOldEnough = true;
 
-        // check that pid was created at least 24 hours ago
-        for (const doc of foundPlog) {
-          if (!doc['timeCreated']) {
-            continue;
-          }
-          const plogDate = new Date(doc['timeCreated']);
-          const timeSincePID = now - plogDate;
-          if (!oldEnough(timeSincePID)) {
-            allOldEnough = false;
-            break;
-          }
-        }
-
-        // check that text ended 24 hours ago OR if incomplete, was started 24 hours ago
-        for (const doc of foundText) {
-          let timeToCheck = doc.timeComplete;
-          if (!timeToCheck) {
-            timeToCheck = doc.startTime;
-          }
-          const timeSinceText = now - Date(timeToCheck);
-          if (!oldEnough(timeSinceText)) {
-            allOldEnough = false;
-            break;
-          }
-        }
-
-        // check that survey ended 24 hours ago OR if incomplete, was started 24 hours ago
-        for (const doc of foundSurvey) {
-          if (!doc.results) {
-            continue;
-          }
-          let timeToCheck = doc.results.timeComplete;
-          if (!timeToCheck) {
-            timeToCheck = doc.results.startTime;
-          }
-          const timeSinceText = now - Date(timeToCheck);
-          if (!oldEnough(timeSinceText)) {
-            allOldEnough = false;
-            break;
-          }
-        }
-
-
-        if (!allOldEnough) {
-          throw new GraphQLError('Data is not yet 24 hours old. Please wait to delete.', {
-            extensions: { code: '400' }
-          });
-        }
-
-        const plogRes = await context.db.collection('participantLog').deleteMany({ 'ParticipantID': Number(args['pid']) });
-        const textRes = await context.db.collection('userScenarioResults').deleteMany({ 'participantID': args['pid'] });
-        const surveyRes = await context.db.collection('surveyResults').deleteMany({ 'results.Participant ID Page.questions.Participant ID.response': args['pid'] });
-        const rawSimRes = await context.db.collection('humanSimulatorRaw').deleteMany({ 'pid': args['pid'] });
-        const analyzedSimRes = await context.db.collection('humanSimulator').deleteMany({ 'pid': args['pid'] });
-        return { plogRes, textRes, surveyRes, rawSimRes, analyzedSimRes };
-      }
-      else {
-        throw new GraphQLError('Users outside of the admin group cannot delete participant data.', {
-          extensions: { code: '404' }
-        });
-      }
+      const plogRes = await context.db.collection('participantLog').deleteMany({ 'ParticipantID': Number(args['pid']) });
+      const textRes = await context.db.collection('userScenarioResults').deleteMany({ 'participantID': args['pid'] });
+      const surveyRes = await context.db.collection('surveyResults').deleteMany({ 'results.Participant ID Page.questions.Participant ID.response': args['pid'] });
+      const rawSimRes = await context.db.collection('humanSimulatorRaw').deleteMany({ 'pid': args['pid'] });
+      const analyzedSimRes = await context.db.collection('humanSimulator').deleteMany({ 'pid': args['pid'] });
+      return { plogRes, textRes, surveyRes, rawSimRes, analyzedSimRes };
     },
     updateScenarioResult: async (obj, args, context, inflow) => {
+      await requireAdmin(context, args.caller)
       const result = await context.db.collection('userScenarioResults').updateOne(
         { _id: new ObjectId(args.id) },
         { $set: args.updates }

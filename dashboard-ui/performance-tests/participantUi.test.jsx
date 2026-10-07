@@ -1,21 +1,22 @@
 /** @jest-environment jsdom */
 import React from 'react';
 import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
-import { useQuery } from 'react-apollo';
+import { useMutation, useQuery } from 'react-apollo';
 import { formatProgressRows, fetchProgressExport } from '../src/components/Account/participantProgressData';
 import { useParticipantProgress } from '../src/components/Account/useParticipantProgress';
 import { ParticipantProgressTable } from '../src/components/Account/participantProgress';
 import { findParticipantByEmail, findParticipantByPid, getNextParticipantId } from '../src/services/participantService';
-import { apolloClient } from '../src/services/accountsService';
+import { accountsClient, apolloClient } from '../src/services/accountsService';
+import RepairAlignmentModal from '../src/components/Account/repairAlignmentModal';
 
-jest.mock('react-apollo', () => ({ useQuery: jest.fn(), useMutation: () => [jest.fn()] }));
+jest.mock('react-apollo', () => ({ useQuery: jest.fn(), useMutation: jest.fn(() => [jest.fn()]) }));
 jest.mock('../src/components/TextBasedScenarios/adeptUtils', () => ({}));
 jest.mock('../src/components/OnlineOnly/config', () => ({ evalNameToNumber: { 'Phase 2 June': 17, 'Phase 2 April': 16 } }));
-jest.mock('../src/services/accountsService', () => ({ apolloClient: { query: jest.fn() }, accountsClient: {} }));
+jest.mock('../src/services/accountsService', () => ({ apolloClient: { query: jest.fn() }, accountsClient: { getTokens: jest.fn() } }));
 jest.mock('../src/components/Research/utils', () => ({ exportToExcel: jest.fn() }));
 jest.mock('../src/components/AggregateResults/DataFunctions', () => ({ isDefined: value => value != null }));
 jest.mock('../src/components/Account/admInfoModal', () => () => null);
-jest.mock('../src/components/Account/repairAlignmentModal', () => () => null);
+jest.mock('../src/components/Account/repairAlignmentModal', () => jest.fn(() => null));
 
 const record = (i = 0) => ({
     pid: String(202600000 + i), participantType: 'Mil', evalNumber: 17, simCount: 0,
@@ -103,6 +104,33 @@ test('participant entry services fetch one match and propagate network errors', 
     apolloClient.query.mockRejectedValueOnce(new Error('Disconnected'));
     await expect(findParticipantByPid('123')).rejects.toThrow('Disconnected');
     expect(apolloClient.query.mock.calls.every(([args]) => !args.query.loc.source.body.includes('getParticipantLog'))).toBe(true);
+});
+
+test('alignment repairs keep PID-scoped details and include the current caller credentials', async () => {
+    const currentUser = { username: 'admin', admin: true };
+    const tokens = { accessToken: 'test-token' };
+    const textResults = [{ _id: 'scenario-result', participantID: '202600000', answers: ['full result'] }];
+    const updateScenarioResult = jest.fn().mockResolvedValue({ data: { updateScenarioResult: true } });
+    accountsClient.getTokens.mockResolvedValue(tokens);
+    useMutation.mockImplementation(document => [operation(document) === 'updateScenarioResult' ? updateScenarioResult : jest.fn()]);
+    useQuery.mockImplementation((document, { skip }) => {
+        if (operation(document) === 'GetParticipantProgressDetails') return {
+            loading: false, data: skip ? undefined : { getParticipantProgressDetails: { getAllScenarioResults: textResults, getAllSurveyResults: [] } }
+        };
+        return { loading: false, refetch: jest.fn(), data: { getParticipantProgress: {
+            rows: [record()], totalCount: 1, phaseCount: 1, participantTypes: ['Mil'], evaluations: [{ evalNumber: 17 }]
+        } } };
+    });
+    render(<ParticipantProgressTable isAdmin currentUser={currentUser} />);
+    expect(RepairAlignmentModal).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTitle('Re-run alignment'));
+    const props = RepairAlignmentModal.mock.calls.at(-1)[0];
+    expect(props).toMatchObject({ open: true, pid: '202600000', textResults });
+    const updates = { mostLeastAligned: [{ response: [] }] };
+    await props.updateScenarioResult({ variables: { id: 'scenario-result', updates } });
+    expect(updateScenarioResult).toHaveBeenCalledWith({ variables: {
+        id: 'scenario-result', updates, caller: { user: currentUser, tokens }
+    } });
 });
 
 test('loading feedback sits outside the wide scroll area and clears on success or failure', () => {
