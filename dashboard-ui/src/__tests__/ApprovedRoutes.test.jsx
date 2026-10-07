@@ -27,6 +27,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         '/myaccount',
         '/participant-progress-table',
     ];
+    const allRestrictedRoutes = allowedRoutes.filter((x) => !['/', '/myaccount', '/survey'].includes(x));
     let unallowedRoutes = [
         '/random-link',
         '/text-based'
@@ -36,9 +37,9 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         allowedRoutes.push(...['/admin', '/pid-lookup', '/participantTextTester']);
     }
     else if (isExperimenter) {
-        // experimenters can access /pid-lookup and /participantTextTester, but not /admin
-        allowedRoutes.push(...['/pid-lookup', '/participantTextTester']);
-        unallowedRoutes.push('/admin');
+        // experimenters can only access home, /myaccount, /survey, and /pid-lookup
+        allowedRoutes = ['/', '/myaccount', '/survey', '/pid-lookup'];
+        unallowedRoutes.push(...allRestrictedRoutes, '/admin', '/participantTextTester');
     }
     else if (isEvaluator || isAdeptUser) {
         // evaluators and AdeptUsers cannot access /admin, /pid-lookup, or /participantTextTester
@@ -131,29 +132,6 @@ describe('Route Redirection and Access Control Tests for experimenters', () => {
     });
 
     runAllowedRoutesTests(false, false, true);
-    it('Experimenters should not see extra headers on progress table', async () => {
-        await page.goto(`${process.env.REACT_APP_TEST_URL}/participant-progress-table`, {
-            timeout: TEST_WAIT_TIMEOUT,
-            waitUntil: 'domcontentloaded'
-        });
-        await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
-        await page.waitForSelector('text/Participant Progress', { timeout: TEST_WAIT_TIMEOUT });
-        await page.waitForSelector('text/Participant ID', { timeout: TEST_WAIT_TIMEOUT });
-        const prolificIdExists = await page.evaluate(() => {
-            return document.body.innerText.includes('Prolific ID');
-        });
-        expect(prolificIdExists).toBe(false);
-
-        const contactIdExists = await page.evaluate(() => {
-            return document.body.innerText.includes('Contact ID');
-        });
-        expect(contactIdExists).toBe(false);
-
-        const surveyLinkExists = await page.evaluate(() => {
-            return document.body.innerText.includes('Survey Link');
-        });
-        expect(surveyLinkExists).toBe(false);
-    });
 });
 
 describe('Route Redirection and Access Control Tests for adeptUsers', () => {
