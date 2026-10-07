@@ -3,6 +3,7 @@ import XLSX from 'xlsx-js-style';
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { admOrderMapping, getDelEnvMapping, ADM_ORDER_BY_EVAL } from '../Survey/delegationMappings';
 import { formatTargetWithDecimal, adjustScenarioNumber } from '../Survey/surveyUtils';
+import { SCENARIO_HEADERS } from '../Account/progressUtils';
 import store from '../../store/store';
 
 
@@ -112,7 +113,6 @@ export const exportToExcel = async (filename, formattedData, headers, participan
 
     if (participantData) {
         // apply conditional formatting to participant data
-        const lightGreenIfNotNull = ['Sim-1', 'Sim-2', 'Sim-3', 'Sim-4', 'IO1', 'MJ1', 'MJ2', 'MJ4', 'MJ5', 'QOL1', 'QOL2', 'QOL3', 'QOL4', 'VOL1', 'VOL2', 'VOL3', 'VOL4', 'AF1', 'AF2', 'AF3', 'MF1', 'MF2', 'MF3', 'PS1', 'PS2', 'PS3', 'SS1', 'SS2', 'SS3'];
         const isPhase2 = selectedPhase === 'Phase 2';
         const isUKPhase1 = selectedPhase === 'UK Phase 1';
 
@@ -139,7 +139,7 @@ export const exportToExcel = async (filename, formattedData, headers, participan
                     const val = cell.v;
                     const headerName = columnHeaders[col];
 
-                    if (lightGreenIfNotNull.includes(headerName) && isDefined(val)) {
+                    if (SCENARIO_HEADERS.includes(headerName) && isDefined(val) && val !== '') {
                         cell.s = {
                             fill: {
                                 fgColor: { rgb: 'c2ecc2' }  // Light green color
