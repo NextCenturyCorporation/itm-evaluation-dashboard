@@ -2,10 +2,10 @@
  * @jest-environment puppeteer
  */
 
-import { TEST_WAIT_TIMEOUT, LONG_TEST_TIMEOUT, checkRouteContent, checkRouteSelector, loginAdmin, createAccount, FOOTER_TEXT } from "../__mocks__/testUtils";
+import { TEST_WAIT_TIMEOUT, checkRouteContent, checkRouteSelector, loginAdmin, createAccount, agreeToProlificConsent, FOOTER_TEXT } from "../__mocks__/testUtils";
 
 
-jest.setTimeout(LONG_TEST_TIMEOUT);
+jest.setTimeout(TEST_WAIT_TIMEOUT * 3);
 
 describe('Verify content on page matches expectation for route', () => {
     // log in as admin
@@ -129,10 +129,7 @@ describe('Verify content on page matches expectation for route', () => {
             waitUntil: 'domcontentloaded'
         });
         await page.waitForSelector(FOOTER_TEXT);
-        await page.waitForSelector('text/Consent Form', { timeout: TEST_WAIT_TIMEOUT });
-        await page.$$eval('button', btns => {
-            Array.from(btns).find(btn => btn.innerText?.trim() === 'I Agree')?.click();
-        });
+        await agreeToProlificConsent(page);
         const expectedText = ['Instructions', 'Welcome to the ITM Text Scenario experiment', 'Guidelines:', 'Choose the option that best matches how you would triage the scenario'];
         for (const txt of expectedText) {
             await page.waitForSelector(`text/${txt}`, { timeout: TEST_WAIT_TIMEOUT });

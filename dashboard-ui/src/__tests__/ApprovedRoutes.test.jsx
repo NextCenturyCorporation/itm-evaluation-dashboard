@@ -1,9 +1,9 @@
 /**
  * @jest-environment puppeteer
  */
-import { TEST_WAIT_TIMEOUT, LONG_TEST_TIMEOUT, FOOTER_TEXT, loginAdeptUser, loginAdmin, loginBasicApprovedUser, loginEvaluator, loginExperimenter, testRouteRedirection } from "../__mocks__/testUtils";
+import { TEST_WAIT_TIMEOUT, FOOTER_TEXT, loginAdeptUser, loginAdmin, loginBasicApprovedUser, loginEvaluator, loginExperimenter, testRouteRedirection } from "../__mocks__/testUtils";
 
-jest.setTimeout(LONG_TEST_TIMEOUT);
+jest.setTimeout(TEST_WAIT_TIMEOUT * 3);
 
 
 function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimenter = false, isAdeptUser = false) {
