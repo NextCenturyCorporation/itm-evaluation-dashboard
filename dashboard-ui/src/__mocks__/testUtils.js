@@ -147,20 +147,18 @@ export async function logout(page) {
     await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 
     await page.waitForFunction(
-        waitingText => {
-            const bodyText = document.body?.innerText || '';
+        () => {
             return document.querySelector('#basic-nav-dropdown') !== null ||
                 document.querySelector('input[placeholder="Email / Username"]') !== null ||
-                bodyText.includes(waitingText);
+                document.querySelector('.return-btn') !== null;
         },
-        { timeout: TEST_WAIT_TIMEOUT },
-        WAITING_TEXT
+        { timeout: TEST_WAIT_TIMEOUT }
     );
 
-    const bodyText = await page.evaluate(() => document.body?.innerText || '');
+    const returnToLogin = await page.$('.return-btn');
     const menu = await page.$('#basic-nav-dropdown');
 
-    if (bodyText.includes(WAITING_TEXT)) {
+    if (returnToLogin) {
         await clickElementByText(page, 'button', 'Return to Login');
     }
     else if (menu) {
@@ -218,7 +216,7 @@ export async function loginEvaluator(page) {
 export async function loginExperimenter(page) {
     await logout(page);
     await login(page, 'exp', 'secretExperimenterPassword123', true);
-    await page.waitForSelector(HOME_TEXT, { timeout: TEST_WAIT_TIMEOUT });
+    await page.waitForSelector('text/Welcome to the ITM Program!', { timeout: TEST_WAIT_TIMEOUT });
 }
 
 export async function loginAdeptUser(page) {
