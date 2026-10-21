@@ -29,7 +29,9 @@ const EVAL_MAP = {
     13: 'PH2 October',
     15: 'PH2 February',
     16: 'PH2 April 2026',
-    17: 'PH2 June 2026'
+    17: 'PH2 June 2026',
+    18: 'PH2 Canada 2026',
+    19: 'PH2 UK 2026'
 }
 
 const TRUST_MAP = {
@@ -184,7 +186,25 @@ const TruncatedCell = ({ text, maxLength = 100 }) => {
     );
 }
 
-const DEFAULT_EVAL_NUMBERS = [8, 9, 10, 12, 13, 15, 16, 17].map((v) => ({
+const FilterChips = ({ title, items, onChange, getLabel = (item) => item }) => {
+    if (items.length === 0) return null;
+
+    return (
+        <Box className="status-bar">
+            <Typography>{title}:</Typography>
+            {items.map((item) =>
+                <Chip
+                    key={getLabel(item)}
+                    label={getLabel(item)}
+                    size="small"
+                    onDelete={() => onChange(items.filter((other) => getLabel(other) !== getLabel(item)))}
+                />
+            )}
+        </Box>
+    );
+}
+
+const DEFAULT_EVAL_NUMBERS = [8, 9, 10, 12, 13, 15, 16, 17, 18, 19].map((v) => ({
     value: String(v),
     label: `${v} - ${EVAL_MAP[v]}`
 }));
@@ -202,7 +222,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     const [versionFilters, setVersionFilters] = React.useState([]);
     const [origHeaderSet, setOrigHeaderSet] = React.useState([]);
     const [showLegacy, setShowLegacy] = React.useState(false);
-    const [showPh2, setShowPh2] = React.useState(evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false);
+    const [showPh2, setShowPh2] = React.useState(evalNumbers.some((x) => Number(x.value) >= 8));
     const [showDefinitions, setShowDefinitions] = React.useState(false);
     const [dataType, setDataType] = React.useState('PH2');
     const [isLoading, setIsLoading] = React.useState(true);
@@ -273,20 +293,6 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 for (let subhead of subheaders) {
                     updatedHeaders.push(`B${block}_DM${dm}_${subhead}`);
                 }
-            }
-            const nonExploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain'];
-            if (showPh2) {
-                nonExploratoryCompHeaders.splice(8, 0, 'Compare_FC2_Alignment');
-                nonExploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
-                nonExploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
-                nonExploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain');
-            }
-            const exploratoryCompHeaders = ['Compare_DM1', 'Compare_DM2', 'Compare_DM3', 'Compare_Time', 'Compare_Time (mm:ss)', 'Compare_FC1', 'Compare_FC1_Conf', 'Compare_FC1_Explain', ...(!showPh2 ? ['FC1_DRE_Align_Diff', 'FC1_P1E_Align_Diff'] : ['FC1_Align_Diff']), 'Compare_FC2', 'Compare_FC2_Conf', 'Compare_FC2_Explain', ...(!showPh2 ? ['FC2_DRE_Align_Diff', 'FC2_P1E_Align_Diff'] : ['FC2_Align_Diff'])];
-            if (showPh2) {
-                exploratoryCompHeaders.splice(9, 0, 'Compare_FC2_Alignment');
-                exploratoryCompHeaders.splice(5, 0, 'Compare_FC1_Alignment');
-                exploratoryCompHeaders.splice(3, 0, 'Compare_DM4');
-                exploratoryCompHeaders.push('Compare_FC3_Alignment', 'Compare_FC3', 'Compare_FC3_Conf', 'Compare_FC3_Explain', 'FC3_Align_Diff');
             }
 
             if (showPh2) {
@@ -591,39 +597,20 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                                     key.endsWith(': Forced Choice') || key.endsWith(': Percent Delegation')
                                 );
 
-                                if (forcedChoiceKeys.length > 1) {
-                                    const forcedChoicePairs = forcedChoiceKeys
+                                // multi-pair pages carry one set of questions per pair; otherwise the page name is the pair
+                                const forcedChoicePairs = forcedChoiceKeys.length > 1
+                                    ? forcedChoiceKeys
                                         .filter(key => key.endsWith(': Forced Choice'))
-                                        .map(key => key.replace(': Forced Choice', ''));
+                                        .map(key => key.replace(': Forced Choice', ''))
+                                    : [pageName];
 
-                                    for (const pair of forcedChoicePairs) {
-                                        const response = page.questions[`${pair}: Forced Choice`]?.response;
-                                        const confidence = page.questions[`${pair}: Rate your confidence about the delegation decision indicated in the previous question`]?.response;
-                                        const explanation = page.questions[`${pair}: Explain your response to the delegation preference question`]?.response;
-                                        const percentDelegation = page.questions[`${pair}: Percent Delegation`]?.response;
+                                for (const pair of forcedChoicePairs) {
+                                    const response = page.questions[`${pair}: Forced Choice`]?.response;
+                                    const confidence = page.questions[`${pair}: Rate your confidence about the delegation decision indicated in the previous question`]?.response;
+                                    const explanation = page.questions[`${pair}: Explain your response to the delegation preference question`]?.response;
+                                    const percentDelegation = page.questions[`${pair}: Percent Delegation`]?.response;
 
-                                        const medicNames = pair.split(' vs ').map(name => name.trim());
-                                        const alignments = medicNames.map(name => {
-                                            const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
-                                            return MULTI_KDMA_MAP[alignment] || alignment;
-                                        });
-
-                                        obj[`B${block}_Compare_FC${fcIndex}_Alignment`] = alignments.join(' vs ');
-                                        obj[`B${block}_Compare_FC${fcIndex}`] = response;
-                                        obj[`B${block}_Compare_FC${fcIndex}_Conf`] = CONFIDENCE_MAP[confidence];
-                                        obj[`B${block}_Compare_FC${fcIndex}_Explain`] = explanation;
-                                        if (percentDelegation) {
-                                            obj[`B${block}_Compare_FC${fcIndex}_Percent`] = percentDelegation;
-                                        }
-                                        fcIndex++;
-                                    }
-                                } else {
-                                    const response = page.questions[`${pageName}: Forced Choice`]?.response;
-                                    const confidence = page.questions[`${pageName}: Rate your confidence about the delegation decision indicated in the previous question`]?.response;
-                                    const explanation = page.questions[`${pageName}: Explain your response to the delegation preference question`]?.response;
-                                    const percentDelegation = page.questions[`${pageName}: Percent Delegation`]?.response;
-
-                                    const medicNames = pageName.split(' vs ').map(name => name.trim());
+                                    const medicNames = pair.split(' vs ').map(name => name.trim());
                                     const alignments = medicNames.map(name => {
                                         const alignment = entry[name]?.admAlignment || entry[name]?.admTarget || 'unknown';
                                         return MULTI_KDMA_MAP[alignment] || alignment;
@@ -685,7 +672,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         if (data) {
             formatData(data);
         }
-    }, [data, pLog, showLegacy, showPh2, formatData]);
+    }, [data, formatData]);
 
     React.useEffect(() => {
         if (filteredData.length > 0 && origHeaderSet.length > 0) {
@@ -696,7 +683,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
     React.useEffect(() => {
         if (exploratory) {
             setEvalFilters(evalNumbers);
-            setShowPh2((evalNumbers.filter((x) => x.value >= '8').length > 0 ? true : false));
+            setShowPh2(evalNumbers.some((x) => Number(x.value) >= 8));
         }
     }, [evalNumbers, exploratory]);
 
@@ -732,11 +719,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         if (newDataType !== null) {
             setShowLegacy(newDataType === 'Legacy');
             setShowPh2(newDataType === 'PH2');
-            setEvalFilters([]);
-            setMilFilters(null);
-            setRoleFilters([]);
-            setStatusFilters(null);
-            setVersionFilters([]);
+            clearFilters();
             setDataType(newDataType);
         }
     };
@@ -915,54 +898,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                 sx={{ mb: 2, px: 1.5 }}
             >
                 <Box className="status-bar">
-                    {versionFilters.length > 0 && (
-                        <Box className="status-bar">
-                            <Typography>Version:</Typography>
-                            {versionFilters.map((e) =>
-                                <Chip
-                                    key={e}
-                                    label={e}
-                                    size="small"
-                                    onDelete={() => {
-                                        const updated = versionFilters.filter(item => item !== e)
-                                        setVersionFilters(updated)
-                                    }}
-                                />
-                            )}
-                        </Box>
-                    )}
-                    {evalFilters.length > 0 && (
-                        <Box className="status-bar">
-                            <Typography>Evals:</Typography>
-                            {evalFilters.map((e) =>
-                                <Chip
-                                    key={e.label}
-                                    label={e.label}
-                                    size="small"
-                                    onDelete={() => {
-                                        const updated = evalFilters.filter(item => item.label !== e.label)
-                                        setEvalFilters(updated)
-                                    }}
-                                />
-                            )}
-                        </Box>
-                    )}
-                    {roleFilters.length > 0 && (
-                        <Box className="status-bar">
-                            <Typography>Roles:</Typography>
-                            {roleFilters.map((e) =>
-                                <Chip
-                                    key={e}
-                                    label={e}
-                                    size="small"
-                                    onDelete={() => {
-                                        const updated = roleFilters.filter(item => item !== e)
-                                        setRoleFilters(updated)
-                                    }}
-                                />
-                            )}
-                        </Box>
-                    )}
+                    <FilterChips title="Version" items={versionFilters} onChange={setVersionFilters} />
+                    <FilterChips title="Evals" items={evalFilters} onChange={setEvalFilters} getLabel={(e) => e.label} />
+                    <FilterChips title="Roles" items={roleFilters} onChange={setRoleFilters} />
                 </Box>
                 <Typography onClick={clearFilters} className="clear-btn">
                     Clear
@@ -971,7 +909,9 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
         )}
 
         <div className='resultTableSection' ref={tableContainerRef} style={{ overflowY: 'auto', maxHeight: '75vh' }}>
-            {isLoading ? (
+            {!isLoading && filteredData.length === 0 ? (
+                <Alert severity="info">No data available</Alert>
+            ) : (
                 <table className='itm-table'>
                     <thead>
                         <tr>
@@ -980,28 +920,16 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             ))}
                         </tr>
                     </thead>
-                    <tbody>
-                        <TableRow>
-                            <TableCell colSpan={headers.length}>
-                                Loading survey results...
-                                <LinearProgress />
-                            </TableCell>
-                        </TableRow>
-                    </tbody>
-                </table>
-            ) : filteredData.length === 0 ? (
-                <Alert severity="info">No data available</Alert>
-            ) : (
-                <table className='itm-table'>
-                    <thead>
-                        <tr>
-                            {headers.map((val, index) => (
-                                <th key={'header-' + index}>
-                                    {val}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
+                    {isLoading ? (
+                        <tbody>
+                            <TableRow>
+                                <TableCell colSpan={headers.length}>
+                                    Loading survey results...
+                                    <LinearProgress />
+                                </TableCell>
+                            </TableRow>
+                        </tbody>
+                    ) : (
                     <tbody>
                         {(rowVirtualizer.getVirtualItems()[0]?.start ?? 0) > 0 && (
                             <tr style={{ height: rowVirtualizer.getVirtualItems()[0].start }}>
@@ -1037,6 +965,7 @@ export function ResultsTable({ data, pLog, exploratory = false, comparisonData =
                             return paddingBottom > 0 ? <tr style={{ height: paddingBottom }}><td /></tr> : null;
                         })()}
                     </tbody>
+                    )}
                 </table>
             )}
         </div>
