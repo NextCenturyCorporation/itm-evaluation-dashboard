@@ -5,6 +5,7 @@ import CloseIcon from "@material-ui/icons/Close";
 import { Modal } from "@mui/material";
 import ph2LegacyDefinitionXLFile from "../variables/Variable Definitions RQ8_PH2.xlsx";
 import ph2Feb26DefinitionXLFile from "../variables/Variable Definitions RQ8_PH2_FEB26.xlsx";
+import ph2Canada26DefinitionXLFile from "../variables/Variable Definitions RQ8_PH2_CANADA26.xlsx";
 import * as XLSX from "xlsx-js-style";
 import { useQuery } from "react-apollo";
 import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
@@ -31,7 +32,7 @@ const GET_PARTICIPANT_LOG = gql`
 
 // This is for referencing the proper variable defs
 // Update the variable name and eval numbers as necessary
-const FEB26_EVALS = [15];
+const FEB26_EVALS = [15, 18];
 
 // Legacy PH2 behavior grouped these together
 const LEGACY_COMBINED_EVALS = [8, 9, 10];
@@ -60,8 +61,9 @@ export function PH2RQ8({ evalNum }) {
     }, [evalNum]);
 
     const definitionFile = React.useMemo(() => {
+        if (evalNum === 18) return ph2Canada26DefinitionXLFile;
         return mode === "feb26" ? ph2Feb26DefinitionXLFile : ph2LegacyDefinitionXLFile;
-    }, [mode]);
+    }, [evalNum, mode]);
 
     const evalsToUse = React.useMemo(() => {
         if (mode === "legacy" && LEGACY_COMBINED_EVALS.includes(evalNum)) {
@@ -116,7 +118,8 @@ export function PH2RQ8({ evalNum }) {
     }, []);
 
     const buildProbeFieldsFromEntry = React.useCallback((entry, envLabel, currentMode) => {
-        if (!entry?.data?.data || !entry?.actionAnalysis) return;
+        const actionAnalysis = { ...entry?.actionAnalysis };
+        if (!entry?.data?.data || !entry?.actionAnalysis) return actionAnalysis;
 
         const fieldPrefix = `${envLabel} Probe`;
         const scenes = entry.data.data;
@@ -130,7 +133,13 @@ export function PH2RQ8({ evalNum }) {
             const probeId = scene.probe_id || "";
             let fieldName = fieldPrefix;
 
-            if (/[a-zA-Z]/.test(probeId.slice(-1))) {
+            if (currentMode === "feb26") {
+                const probe = probeId.match(/-(AF|MF)-.*\.Probe\s+(\d+)([ab])?$/);
+                if (!probe) continue;
+                fieldName += probe[3]
+                    ? `_AFMF${Number(probe[2]) - 3}`
+                    : `_${probe[1]}${probe[2]}`;
+            } else if (/[a-zA-Z]/.test(probeId.slice(-1))) {
                 fieldName += `_AFMF${afmfCount}`;
                 afmfCount += 1;
             } else {
@@ -143,34 +152,35 @@ export function PH2RQ8({ evalNum }) {
                 }
             }
 
-            entry.actionAnalysis[fieldName] = `Patient ${scene?.response?.slice(-1)}`;
+            actionAnalysis[fieldName] = `Patient ${scene?.response?.slice(-1)}`;
         }
 
         if (currentMode === "legacy") {
-            entry.actionAnalysis[`${fieldPrefix}_PS1`] =
-                entry.actionAnalysis[`${fieldPrefix}_PS1`] ??
-                entry.actionAnalysis[`${envLabel} Personal_safety`];
+            actionAnalysis[`${fieldPrefix}_PS1`] =
+                actionAnalysis[`${fieldPrefix}_PS1`] ??
+                actionAnalysis[`${envLabel} Personal_safety`];
         }
 
         if (currentMode === "legacy") {
-            entry.actionAnalysis[`${fieldPrefix}_SS1`] =
-                entry.actionAnalysis[`${envLabel} Search1`];
-            entry.actionAnalysis[`${fieldPrefix}_SS2`] =
-                entry.actionAnalysis[`${envLabel} Search2`];
+            actionAnalysis[`${fieldPrefix}_SS1`] =
+                actionAnalysis[`${envLabel} Search1`];
+            actionAnalysis[`${fieldPrefix}_SS2`] =
+                actionAnalysis[`${envLabel} Search2`];
         }
 
         if (currentMode === "feb26") {
-            entry.actionAnalysis[`${fieldPrefix}_PS2`] =
-                entry.actionAnalysis[`${fieldPrefix}_PS2`] ??
-                entry.actionAnalysis[`${envLabel} Personal_safety2`] ??
+            actionAnalysis[`${fieldPrefix}_PS2`] =
+                actionAnalysis[`${fieldPrefix}_PS2`] ??
+                actionAnalysis[`${envLabel} Personal_safety2`] ??
                 "";
 
-            entry.actionAnalysis[`${fieldPrefix}_PS1_Actions`] =
-                entry.actionAnalysis[`${fieldPrefix}_PS1_Actions`] ?? "";
+            actionAnalysis[`${fieldPrefix}_PS1_Actions`] =
+                actionAnalysis[`${fieldPrefix}_PS1_Actions`] ?? "";
 
-            entry.actionAnalysis[`${fieldPrefix}_PS2_Actions`] =
-                entry.actionAnalysis[`${fieldPrefix}_PS2_Actions`] ?? "";
+            actionAnalysis[`${fieldPrefix}_PS2_Actions`] =
+                actionAnalysis[`${fieldPrefix}_PS2_Actions`] ?? "";
         }
+        return actionAnalysis;
     }, []);
 
     const ensureBaseFields = React.useCallback((fields) => {
@@ -248,7 +258,9 @@ export function PH2RQ8({ evalNum }) {
                 if (pids.includes(pid)) continue;
                 if (res?.scenario_id?.includes("PS-AF")) continue;
 
-                const simEntries = simData.filter((x) => x?.pid === pid);
+                const simEntries = simData.filter((x) =>
+                    x?.pid === pid && (mode === "legacy" || x?.evalNumber === currentEvalNum)
+                );
                 const openWorld = simEntries.find(
                     (x) => x?.openWorld === true || x?.evalNumber >= 8
                 );
@@ -266,8 +278,8 @@ export function PH2RQ8({ evalNum }) {
                     x?.scenario_id?.toLowerCase().includes("urban")
                 );
 
-                buildProbeFieldsFromEntry(desertEntry, "Desert", mode);
-                buildProbeFieldsFromEntry(urbanEntry, "Urban", mode);
+                const desertAnalysis = buildProbeFieldsFromEntry(desertEntry, "Desert", mode);
+                const urbanAnalysis = buildProbeFieldsFromEntry(urbanEntry, "Urban", mode);
 
                 const valueMap = {};
                 const textKdmas = res?.kdmas;
@@ -276,7 +288,8 @@ export function PH2RQ8({ evalNum }) {
                 const textKdmaFields = openWorld?.text_kdmas || {};
 
                 valueMap["Participant_ID"] = pid;
-                valueMap["Probe Set Assessment"] = openWorld?.evalName?.includes("June")
+                valueMap["Probe Set Assessment"] =
+                    openWorld?.evalName?.includes("June") || res?.scenario_id?.startsWith("June2026-")
                     ? "Various"
                     : logData["AF-text-scenario"];
 
@@ -334,15 +347,19 @@ export function PH2RQ8({ evalNum }) {
                     valueMap["MF_medical_Urban"] = getKdmaParam(urbanKdmas, "merit", "medical_weight");
                     valueMap["MF_attribute_Urban"] = getKdmaParam(urbanKdmas, "merit", "attr_weight");
 
+                    valueMap["AF Alignment_Desert"] = desertEntry?.alignment_scores?.["AF Alignment_Desert"];
+                    valueMap["MF Alignment_Desert"] = desertEntry?.alignment_scores?.["MF Alignment_Desert"];
+                    valueMap["AF Alignment_Urban"] = urbanEntry?.alignment_scores?.["AF Alignment_Urban"];
+                    valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
                 }
 
                 for (const field of definitionFields) {
                     if (field === "Participant_ID" || field === "Probe Set Assessment") continue;
                     if (valueMap[field] !== undefined) continue;
 
-                    let value = desertEntry?.actionAnalysis?.[field];
+                    let value = desertAnalysis[field] ?? desertEntry?.eventTotals?.[field];
                     if (value === undefined) {
-                        value = urbanEntry?.actionAnalysis?.[field];
+                        value = urbanAnalysis[field] ?? urbanEntry?.eventTotals?.[field];
                     }
 
                     valueMap[field] = roundIfNumber(normalizeBlank(value));
@@ -387,6 +404,7 @@ export function PH2RQ8({ evalNum }) {
         dataSim,
         dataTextResults,
         dataParticipantLog,
+        evalNum,
         evalsToUse,
         definitionFields,
         mode,
