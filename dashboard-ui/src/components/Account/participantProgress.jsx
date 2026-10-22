@@ -26,8 +26,6 @@ const DELETE_PID_DATA = gql`
 const UPDATE_SCENARIO_RESULT = gql`
     mutation updateScenarioResult($caller: JSON!, $id: String!, $updates: JSON!) {
         updateScenarioResult(caller: $caller, id: $id, updates: $updates)
-    mutation updateScenarioResult($caller: JSON!, $id: String!, $updates: JSON!) {
-        updateScenarioResult(caller: $caller, id: $id, updates: $updates)
     }
 `;
 
