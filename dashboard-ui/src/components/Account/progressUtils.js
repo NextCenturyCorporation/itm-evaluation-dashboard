@@ -62,6 +62,8 @@ const isPopulatedMLA = (mla) => {
 
 // has mostLeastAligned (and populated) or not
 const hasMLA = (scenarioResult) => {
+    // Progress pages receive a server-computed flag; repair dialogs still use full records.
+    if (typeof scenarioResult?.alignmentPopulated === 'boolean') return scenarioResult.alignmentPopulated;
     if (scenarioResult?.scenario_id === 'April2026-subpopulation') {
         return !!scenarioResult?.subPopResult;
     }

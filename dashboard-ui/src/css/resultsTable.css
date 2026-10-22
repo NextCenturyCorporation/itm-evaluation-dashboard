@@ -7,6 +7,34 @@
     position: relative;
 }
 
+/* Keep loading feedback inside the viewport, independent of the wide table. */
+.participant-progress-table {
+    position: relative;
+    margin: 12px;
+}
+
+.participant-progress-table > .resultTableSection {
+    margin: 0;
+}
+
+.participant-progress-table[aria-busy="true"] > .resultTableSection {
+    min-height: 280px;
+    max-height: 360px;
+    overflow: hidden;
+}
+
+.participant-progress-loading {
+    position: absolute;
+    inset: 2px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: rgba(242, 242, 246, 0.72);
+    color: rgb(88, 88, 115);
+}
+
 .itm-table {
     width: 100%;
     height: 100%;

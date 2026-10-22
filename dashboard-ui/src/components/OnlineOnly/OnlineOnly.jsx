@@ -1,15 +1,11 @@
 import React from "react";
-import { useMutation, useQuery } from '@apollo/react-hooks';
+import { useMutation } from '@apollo/react-hooks';
 import gql from "graphql-tag";
 import { useHistory, useLocation } from 'react-router-dom';
 import { useSelector } from "react-redux";
+import { findParticipantByPid, getNextParticipantId } from '../../services/participantService';
 import '../../css/scenario-page.css';
 import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData, canadaParticipantData } from "./config";
-
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }`;
 
 const ADD_PARTICIPANT = gql`
     mutation addNewParticipantToLog($participantData: JSON!) {
@@ -18,9 +14,8 @@ const ADD_PARTICIPANT = gql`
 
 export default function StartOnline() {
     const currentTextEval = useSelector(state => state.configs.currentTextEval)
-    const pidBounds = useSelector(state => state.configs.pidBounds);
-    const { refetch } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const [addParticipant] = useMutation(ADD_PARTICIPANT);
+    const [error, setError] = React.useState(null);
     const history = useHistory();
     const location = useLocation();
 
@@ -30,22 +25,19 @@ export default function StartOnline() {
         const caciProlific = queryParams.get('caciProlific');
 
         if (adeptQualtrix === 'true' || caciProlific === 'true') {
-            createParticipantAndRedirect();
+            createParticipantAndRedirect().catch(error => setError(error.message));
         } else {
             history.push('/login');
         }
     }, [history]);
 
     const createParticipantAndRedirect = async () => {
-        const result = await refetch();
         const currentSearchParams = new URLSearchParams(location.search);
         const existingPid = currentSearchParams.get('pid');
 
         // reached using survey link from progress table
         if (existingPid) {
-            const matchedLog = result.data.getParticipantLog.find(
-                log => String(log['ParticipantID']) === existingPid
-            );
+            const matchedLog = await findParticipantByPid(existingPid);
             if (matchedLog) {
                 currentSearchParams.set('class', 'Online');
                 history.push({
@@ -56,15 +48,11 @@ export default function StartOnline() {
             }
         }
         const evalNumber = evalNameToNumber[currentTextEval]
+        if (!Number.isFinite(evalNumber)) {
+            throw new Error('The current evaluation is not configured');
+        }
 
-        const lowPid = pidBounds.lowPid;
-        const highPid = pidBounds.highPid;
-
-        // calculate new pid
-        let newPid = Math.max(...result.data.getParticipantLog.filter((x) =>
-            !["202409113A", "202409113B"].includes(x['ParticipantID']) &&
-            x.ParticipantID >= lowPid && x.ParticipantID <= highPid
-        ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
+        let newPid = await getNextParticipantId();
         
         const participantDataFunctions = {
             19: canadaParticipantData,
@@ -99,7 +87,8 @@ export default function StartOnline() {
 
     return (
         <div style={{ textAlign: 'center', padding: '50px' }}>
-            <p>Setting up your session...</p>
+            {error ? <p role="alert">Unable to set up your session: {error}. Please reload to try again.</p>
+                : <p>Setting up your session...</p>}
         </div>
     );
 }

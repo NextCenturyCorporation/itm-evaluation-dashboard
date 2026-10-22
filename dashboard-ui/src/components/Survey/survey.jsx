@@ -15,6 +15,7 @@ import { Spinner } from 'react-bootstrap';
 import { useHistory } from 'react-router-dom';
 import { isDefined } from "../AggregateResults/DataFunctions";
 import { ComparisonPhase2 } from "./comparisonPhase2";
+import { GET_PARTICIPANT_BY_PID } from '../../services/participantService';
 
 const GET_SERVER_TIMESTAMP = gql`
   mutation GetServerTimestamp {
@@ -189,7 +190,6 @@ class SurveyPage extends Component {
             const finalPages = [...introPages, ...blocks.flatMap(getPages)];
             if (postScenarioPage) finalPages.push(postScenarioPage);
             this.surveyConfigClone.pages = finalPages;
-            console.log(this.surveyConfigClone.pages)
             this.setState({ orderLog: finalPages.map(page => page.name) });
         };
 
@@ -554,7 +554,18 @@ class SurveyPage extends Component {
 }
 
 export const SurveyPageWrapper = (props) => {
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
+    const queryParams = new URLSearchParams(window.location.search);
+    const onlineOnly = queryParams.has('adeptQualtrix') || queryParams.has('caciProlific');
+    const pid = onlineOnly ? queryParams.get('pid') : null;
+    const participantQuery = useQuery(GET_PARTICIPANT_BY_PID, {
+        variables: { pid }, skip: !pid, fetchPolicy: 'no-cache'
+    });
+    // In-person surveys allow experimenters to change the participant in the form.
+    const participantLogQuery = useQuery(GET_PARTICIPANT_LOG, { skip: !!pid, fetchPolicy: 'no-cache' });
+    const { loading: loadingParticipantLog, error: errorParticipantLog } = pid ? participantQuery : participantLogQuery;
+    const dataParticipantLog = pid
+        ? { getParticipantLog: participantQuery.data?.getParticipantByPid ? [participantQuery.data.getParticipantByPid] : [] }
+        : participantLogQuery.data;
     const currentSurveyVersion = useSelector(state => state?.configs?.currentSurveyVersion);
     const surveyConfigs = useSelector(state => state?.configs?.surveyConfigs)
     const evalNumber = SURVEY_VERSION_DATA[currentSurveyVersion]?.evalNumber;

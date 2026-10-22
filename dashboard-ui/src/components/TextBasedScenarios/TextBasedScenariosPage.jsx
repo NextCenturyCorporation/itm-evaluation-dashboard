@@ -22,6 +22,7 @@ import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
 import ScenarioProgress from './scenarioProgress';
+import { GET_PARTICIPANT_BY_PID } from '../../services/participantService';
 
 const UPSERT_SCENARIO_RESULT = gql`
     mutation upsertScenarioResult($result: JSON) {
@@ -44,11 +45,6 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`;
 
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }`;
-
 const UPDATE_PARTICIPANT_LOG = gql`
     mutation updateParticipantLog($pid: String!, $updates: JSON!) {
         updateParticipantLog(pid: $pid, updates: $updates) 
@@ -63,11 +59,10 @@ export function TextBasedScenariosPageWrapper(props) {
     const currentTextEval = useSelector(state => state.configs.currentTextEval)
     const showDemographics = useSelector(state => state.configs.showDemographics)
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
-        { fetchPolicy: 'no-cache' });
-    
     // finding participant data if this is resuming a partial run
     const pid = new URLSearchParams(window.location.search).get('pid');
+    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_BY_PID,
+        { variables: { pid }, skip: !pid, fetchPolicy: 'no-cache' });
     const { data: completedData } = useQuery(GET_COMPLETED_SCENARIOS, {
         variables: { pid },
         skip: !pid,
@@ -98,7 +93,7 @@ export function TextBasedScenariosPageWrapper(props) {
         {...props}
         textBasedConfigs={textBasedConfigs}
         currentTextEval={currentTextEval}
-        participantLogs={participantLogData}
+        participantLogs={{ getParticipantLog: participantLogData?.getParticipantByPid ? [participantLogData.getParticipantByPid] : [] }}
         getServerTimestamp={getServerTimestamp}
         showDemographics={showDemographics}
         completedScenarioIds={completedData?.getCompletedTextScenarios || []}
