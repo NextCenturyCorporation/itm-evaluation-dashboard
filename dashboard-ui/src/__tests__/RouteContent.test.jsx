@@ -28,7 +28,7 @@ describe('Verify content on page matches expectation for route', () => {
 
     it('Check /survey route content', async () => {
         await checkRouteContent(page, '/survey', ['Enter Participant ID']);
-        page = await browser.newPage();
+        await jestPuppeteer.resetPage();
         await page.goto(`${process.env.REACT_APP_TEST_URL}/`, { timeout: TEST_WAIT_TIMEOUT });
         await page.waitForSelector(FOOTER_TEXT);
     });

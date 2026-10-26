@@ -9,7 +9,7 @@ let firstPid = 0;
 
 describe('Test email-entry text scenarios', () => {
     beforeEach(async () => {
-        page = await browser.newPage();
+        await jestPuppeteer.resetPage();
     }, 30000)
     
     it('/participantText should only have email-entry option', async () => {

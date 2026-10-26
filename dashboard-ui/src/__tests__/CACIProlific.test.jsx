@@ -34,7 +34,7 @@ jest.setTimeout(TEST_WAIT_TIMEOUT * 3);
 
 describe('Test CACI Prolific entry method', () => {
     beforeEach(async () => {
-        page = await browser.newPage();
+        await jestPuppeteer.resetPage();
         await blockExternalRequests(page);
     });
 

@@ -55,7 +55,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         it(`${route} should not redirect`, async () => {
             await testRouteRedirection(route, route);
             if (route == '/survey') {
-                page = await browser.newPage();
+                await jestPuppeteer.resetPage();
             }
             // /survey-results can take a long time to load because of multiple queries
         });
@@ -64,7 +64,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
             await testRouteRedirection(route, '/');
             if (route == '/text-based') {
-                page = await browser.newPage();
+                await jestPuppeteer.resetPage();
             }
         });
     });
