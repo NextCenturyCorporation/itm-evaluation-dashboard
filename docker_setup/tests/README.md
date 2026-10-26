@@ -31,9 +31,19 @@ The bind-mounted checkout retains npm, Jest, and webpack caches in `node_modules
 This cache reuses the installed dependency tree; committed lockfiles would still
 be needed to make fresh checkouts resolve exactly the same dependency versions.
 
-The log includes Node, Chromium, and test-library versions, plus the start/end of
-each browser/database cleanup step. Chromium stderr is forwarded in Docker. A
-cleanup step has a 30-second limit and fails the suite if it cannot complete.
+Normal Jenkins output shows setup/version information, one result per test suite,
+and the final summary. Complete container output, including routine database and
+cleanup messages, is retained in both log files and displayed if the run fails or
+times out. A cleanup step has a 30-second limit and fails the suite if it cannot
+complete.
+
+To stream every log line and individual test result, set `TEST_VERBOSE=true`.
+Chromium's low-level diagnostics are off by default; enable them separately with
+`JEST_BROWSER_LOGS=true`. For a fully verbose diagnostic run:
+
+```bash
+TEST_VERBOSE=true JEST_BROWSER_LOGS=true ./docker_setup/tests/run-jenkins-tests.sh
+```
 
 If a previous run was disconnected by Jenkins before cleanup, check for leftover
 containers before retrying. For the old `dashboard-ci-manual` project only, once

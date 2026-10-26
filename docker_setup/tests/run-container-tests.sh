@@ -35,4 +35,7 @@ else
 fi
 
 node -e "for (const name of ['jest', 'jest-puppeteer', 'puppeteer']) console.log('[test setup] ' + name + ' ' + require('./dashboard-ui/node_modules/' + name + '/package.json').version)"
+if [[ "${TEST_VERBOSE:-false}" != true ]]; then
+    exec npm --prefix ./dashboard-ui run test -- --verbose=false "$@"
+fi
 exec npm --prefix ./dashboard-ui run test -- "$@"

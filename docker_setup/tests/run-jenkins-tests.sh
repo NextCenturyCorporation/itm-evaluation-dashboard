@@ -32,6 +32,28 @@ else
 fi
 COMPOSE+=(-p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}")
 
+stream_test_output() {
+    if [[ "${TEST_VERBOSE:-false}" == true ]]; then
+        cat
+        return
+    fi
+    # Keep the complete stream in the log files; show concise progress in Jenkins.
+    awk '
+        {
+            gsub(/\033\[[0-9;]*[[:alpha:]]/, "")
+            sub(/^[^|]*\|[[:space:]]?/, "")
+            sub(/^[[:space:]]+/, "")
+            if ($0 ~ /^\[test setup\]/ || $0 ~ /^Chromium [0-9]/ ||
+                $0 ~ /^(PASS|FAIL) / || $0 ~ /^\[TEST DEBUG\]/ ||
+                $0 ~ /^\[test cleanup\].*failed:/ ||
+                $0 ~ /^(Jest did not exit|Error:|FATAL ERROR:)/) {
+                print
+                fflush()
+            }
+        }
+    '
+}
+
 cleanup() {
     cd "${REPO_DIR}" || return
 
@@ -56,11 +78,11 @@ timeout --signal=TERM --kill-after=30s "${TEST_RUN_TIMEOUT}" \
     --abort-on-container-exit \
     --exit-code-from tests \
     --no-build \
-    2>&1 | tee "${LOG_FILE}" "${RUN_LOG_FILE}"
+    2>&1 | tee "${LOG_FILE}" "${RUN_LOG_FILE}" | stream_test_output
 
 PIPELINE_STATUS=("${PIPESTATUS[@]}")
 TEST_EXIT_CODE=${PIPELINE_STATUS[0]}
-if [[ "${PIPELINE_STATUS[1]}" -ne 0 && "${TEST_EXIT_CODE}" -eq 0 ]]; then
+if [[ ( "${PIPELINE_STATUS[1]}" -ne 0 || "${PIPELINE_STATUS[2]}" -ne 0 ) && "${TEST_EXIT_CODE}" -eq 0 ]]; then
     TEST_EXIT_CODE=1
 fi
 echo "[test runner] Finished after $((SECONDS - START_SECONDS)) seconds (exit ${TEST_EXIT_CODE})"
@@ -71,23 +93,21 @@ echo "================ TEST SUMMARY ================"
 grep -E "Test Suites:|Tests:|Snapshots:|Time:|Ran all test suites" \
     "${LOG_FILE}" \
     | tail -n 5 \
+    | sed -E 's/^[^|]*\|[[:space:]]?//' \
     || true
 
 echo
-echo "Failed suites:"
-
-grep -E "tests-1[[:space:]]+\| FAIL " "${LOG_FILE}" \
-    | sed 's/^.*| //' \
-    || true
-
-echo
-
 if [[ "${TEST_EXIT_CODE}" -eq 124 || "${TEST_EXIT_CODE}" -eq 137 ]]; then
     echo "RESULT: DASHBOARD TEST RUN EXCEEDED ${TEST_RUN_TIMEOUT}; cleaning up containers"
 elif [ "${TEST_EXIT_CODE}" -eq 0 ]; then
     echo "RESULT: ALL DASHBOARD TESTS PASSED"
 else
     echo "RESULT: DASHBOARD TESTS FAILED"
+fi
+
+if [[ "${TEST_EXIT_CODE}" -ne 0 && "${TEST_VERBOSE:-false}" != true ]]; then
+    echo "Full output from the unsuccessful run (${RUN_LOG_FILE}):"
+    cat "${RUN_LOG_FILE}"
 fi
 
 exit "${TEST_EXIT_CODE}"

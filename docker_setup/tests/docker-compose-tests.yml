@@ -24,7 +24,8 @@ services:
       NODE_OPTIONS: --max-old-space-size=8192
       JEST_TEST_TIMEOUT: "30000"
       JEST_CLEANUP_TIMEOUT: "30000"
-      JEST_BROWSER_LOGS: "true"
+      JEST_BROWSER_LOGS: "${JEST_BROWSER_LOGS:-false}"
+      TEST_VERBOSE: "${TEST_VERBOSE:-false}"
       FAST_REFRESH: "false"
       NPM_CONFIG_AUDIT: "false"
       NPM_CONFIG_FUND: "false"
