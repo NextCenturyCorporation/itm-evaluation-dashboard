@@ -5,7 +5,7 @@ set -uo pipefail
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)" || exit 1
 COMPOSE_FILE="docker_setup/tests/docker-compose-tests.yml"
 RUN_ID="${BUILD_NUMBER:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
-COMPOSE_PROJECT="dashboard-ci-${RUN_ID}"
+COMPOSE_PROJECT="dashboard-ci-${RUN_ID,,}"
 LOG_FILE="${REPO_DIR}/dashboard-test-run.log"
 RUN_LOG_FILE="${REPO_DIR}/dashboard-test-${RUN_ID}.log"
 TEST_RUN_TIMEOUT="${TEST_RUN_TIMEOUT:-20m}"
