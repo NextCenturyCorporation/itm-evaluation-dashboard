@@ -23,6 +23,13 @@ services:
       TEST_MONGO_URL: mongodb://mongo:27017
       NODE_OPTIONS: --max-old-space-size=8192
       JEST_TEST_TIMEOUT: "30000"
+      JEST_CLEANUP_TIMEOUT: "30000"
+      JEST_BROWSER_LOGS: "true"
+      FAST_REFRESH: "false"
+      NPM_CONFIG_AUDIT: "false"
+      NPM_CONFIG_FUND: "false"
+      NPM_CONFIG_CACHE: /workspace/node_modules/.cache/npm
+      TEST_REINSTALL_DEPS: "${TEST_REINSTALL_DEPS:-0}"
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
       CHROME_BIN: /usr/bin/chromium
     volumes:
@@ -31,4 +38,4 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
-    command: ["bash", "-lc", "npm run setup-tests && npm run test"]
+    command: ["bash", "docker_setup/tests/run-container-tests.sh"]
