@@ -144,7 +144,9 @@ class TextBasedScenariosPage extends Component {
 
         this.surveyData = {};
         this.survey = null;
-        this.pageStartTimes = {};
+        // page currently being timed and when it was first shown
+        this.activePageName = null;
+        this.activePageStart = null;
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefDemographics = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
@@ -380,6 +382,11 @@ class TextBasedScenariosPage extends Component {
 
     uploadResults = async (survey) => {
         this.timerHelper();
+        // snapshot here is a bugfix to race condition where surveyData was being wiped AFTER the upload (next scenario was started)
+        const pageTimes = this.surveyData;
+        this.surveyData = {};
+        this.activePageName = null;
+        this.activePageStart = null;
 
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
         const endStamp = await this.props.getServerTimestamp();
@@ -397,7 +404,7 @@ class TextBasedScenariosPage extends Component {
         currentPages.forEach(page => {
             const pageName = page.name;
             scenarioData[pageName] = {
-                timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage || 0,
+                timeSpentOnPage: pageTimes[pageName]?.timeSpentOnPage || 0,
                 pageName: page.name,
                 questions: {}
             };
@@ -430,8 +437,6 @@ class TextBasedScenariosPage extends Component {
             isUploadButtonEnabled: true
         });
 
-        this.surveyData = {};
-        this.pageStartTimes = {};
         this.shouldBlockNavigation = false;
     }
 
@@ -847,32 +852,23 @@ class TextBasedScenariosPage extends Component {
 
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
-        const currentTime = new Date();
+        // re-render of the page already being timed, keep its original start time
+        if (pageName === this.activePageName) return;
 
-        if (this.survey.currentPageNo > 0) {
-            const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
-            const startTime = this.pageStartTimes[previousPageName];
-            if (startTime) {
-                const timeSpentInSeconds = (currentTime - startTime) / 1000;
-                this.surveyData[previousPageName] = this.surveyData[previousPageName] || {};
-                this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
-            }
-        }
-
-        this.pageStartTimes[pageName] = currentTime;
+        this.timerHelper();
+        this.activePageName = pageName;
+        this.activePageStart = new Date();
     }
 
     timerHelper = () => {
-        const currentPageName = this.survey.currentPage.name;
-        const startTime = this.pageStartTimes[currentPageName];
-        if (startTime) {
-            const endTime = new Date();
-            const timeSpentInSeconds = (endTime - startTime) / 1000;
+        if (!this.activePageName || !this.activePageStart) return;
+        const timeSpentInSeconds = (new Date() - this.activePageStart) / 1000;
 
-            // update time spent for the current page
-            this.surveyData[currentPageName] = this.surveyData[currentPageName] || {};
-            this.surveyData[currentPageName].timeSpentOnPage = timeSpentInSeconds;
-        }
+        // accumulate so revisiting a page adds to its time instead of overwriting it
+        this.surveyData[this.activePageName] = this.surveyData[this.activePageName] || {};
+        this.surveyData[this.activePageName].timeSpentOnPage = (this.surveyData[this.activePageName].timeSpentOnPage || 0) + timeSpentInSeconds;
+        this.activePageName = null;
+        this.activePageStart = null;
     }
 
     render() {
