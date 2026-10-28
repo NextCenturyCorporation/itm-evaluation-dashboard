@@ -53,6 +53,35 @@ async function createUniqueIndex() {
 
 createUniqueIndex().catch(console.error);
 
+
+async function createAdmTargetRunsIndex() {
+    try {
+        await dashboardDB.db.collection('admTargetRuns').createIndex(
+            { "evalNumber": 1 }
+        );
+    } catch (error) {
+        if (error.code !== 85) { // Index already exists
+            console.error("Error creating index (evalNumber):", error);
+        }
+    }
+}
+
+createAdmTargetRunsIndex().catch(console.error);
+
+// Support the participant-scoped joins and detail reads used by progress pages.
+async function createParticipantReadIndexes() {
+    const indexes = [
+        ['userScenarioResults', { participantID: 1, _id: 1 }],
+        ['humanSimulator', { pid: 1, timestamp: 1, _id: 1 }],
+        ['surveyResults', { 'results.pid': 1, _id: 1 }],
+        ['surveyResults', { 'results.Participant ID Page.questions.Participant ID.response': 1, _id: 1 }]
+    ];
+    for (const [collection, keys] of indexes) {
+        await dashboardDB.db.collection(collection).createIndex(keys);
+    }
+}
+createParticipantReadIndexes().catch(error => console.error('Error creating participant read indexes:', error));
+
 // Merge our schema and the accounts-js schema
 const schema = makeExecutableSchema({
     typeDefs: mergeTypeDefs([typeDefs, accountsGraphQL.typeDefs]),

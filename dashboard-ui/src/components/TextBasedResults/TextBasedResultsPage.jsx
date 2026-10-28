@@ -451,10 +451,10 @@ export default function TextBasedResultsPage() {
     const [responsesByScenario, setByScenario] = React.useState(null);
     const [questionAnswerSets, setResults] = React.useState(null);
     const [participantBased, setParticipantBased] = React.useState(null);
-    const evalOptions = getAllEvals()
+    const evalOptions = getAllEvals() ?? []
     const dispatch = useDispatch();
     const storedEval = useSelector(state => state.configs.selectedResearchEval);
-    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0].value);
+    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0]?.value ?? null);
     const [scenarioOptions, setScenarioOptions] = React.useState([]);
     const { data: allTextBasedConfigsData, loading: configsLoading } = useQuery(GET_ALL_TEXT_BASED_CONFIGS, {
         fetchPolicy: 'cache-first'
@@ -493,7 +493,7 @@ export default function TextBasedResultsPage() {
         // only pulls from network, never cached
         fetchPolicy: 'network-only',
         variables: { "evalNumber": selectedEval },
-        skip: !selectedEval
+        skip: selectedEval === null
     });
 
     React.useEffect(() => {
@@ -714,7 +714,7 @@ export default function TextBasedResultsPage() {
                 }}
                 options={evalOptions}
                 onChange={selectEvaluation}
-                value={evalOptions.find(option => option.value === selectedEval)}
+                value={evalOptions.find(option => option.value === selectedEval) ?? null}
                 label="Single select"
             />
             {selectedEval && scenarioOptions.length > 0 && (

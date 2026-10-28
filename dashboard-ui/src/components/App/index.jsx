@@ -16,7 +16,7 @@ import StartOnline from '../OnlineOnly/OnlineOnly';
 import { ParticipantProgressTable } from '../Account/participantProgress';
 import { WaitingPage } from '../Account/waitingPage';
 import { Header } from './Header';
-import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData } from '../OnlineOnly/config';
+import { phase1ParticipantData, juneJulyParticipantData, evalNameToNumber, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData, canadaParticipantData } from '../OnlineOnly/config';
 import { useSelector } from 'react-redux';
 import { computeTextThreshold } from '../Account/participantProgress';
 import '../../css/app.css';
@@ -32,6 +32,7 @@ import 'react-dual-listbox/lib/react-dual-listbox.css';
 import '../../css/surveyResults.css';
 import store from '../../store/store';
 import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
+import { findParticipantByEmail, getNextParticipantId } from '../../services/participantService';
 
 // Lazy load components that are very expensive or only reachable via admin accounts.
 // React.lazy requires a module with a default export, so named exports are remapped below.
@@ -87,11 +88,6 @@ const GET_CURRENT_STYLE = gql`
   }
 `;
 
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }`;
-
 const ADD_PARTICIPANT = gql`
     mutation addNewParticipantToLog($participantData: JSON!) {
         addNewParticipantToLog(participantData: $participantData) 
@@ -131,7 +127,6 @@ export function hasAccess(currentUser, allowedRoles) {
 
 export function App() {
     const [currentUser, setCurrentUser] = React.useState(null);
-    const { refetch: fetchParticipantLog } = useQuery(GET_PARTICIPANT_LOG, { fetchPolicy: 'no-cache' });
     const { data: versionData, loading: versionLoading, error: versionError } = useQuery(GET_SURVEY_VERSION, { fetchPolicy: 'no-cache' });
     // Get current text eval name from Redux
     const currentTextEvalName = useSelector((state) => state.configs.currentTextEval);
@@ -323,7 +318,7 @@ export function App() {
             logout();
             return <LoginApp userLoginHandler={userLoginHandler} participantLoginHandler={participantLoginHandler} />;
         }
-        if (testerLogin && (currentUser === null || (!currentUser.admin && !currentUser.experimenter))) {
+        if (testerLogin && (currentUser === null || !currentUser.admin)) {
             return <Redirect push to="/participantText" />;
         }
         else if (participantTextLogin) {
@@ -338,14 +333,15 @@ export function App() {
     }
 
     const participantLoginHandler = async (hashedEmail, isTester) => {
-        const dbPLog = await fetchParticipantLog();
-
         if (!textEvalData?.getCurrentTextEval) {
             console.error("Text eval data not loaded yet");
             return;
         }
 
         const evalNum = evalNameToNumber[store.getState().configs.currentTextEval]
+        if (!Number.isFinite(evalNum)) {
+            throw new Error('The current evaluation is not configured. Please reload and try again.');
+        }
 
         const pidBounds = store.getState().configs.pidBounds;
 
@@ -355,10 +351,7 @@ export function App() {
             return;
         }
 
-        const lowPid = pidBounds.lowPid;
-        const highPid = pidBounds.highPid;
-
-        const foundParticipant = dbPLog.data.getParticipantLog.find((x) => x.hashedEmail === hashedEmail && x.evalNum == evalNum);
+        const foundParticipant = await findParticipantByEmail(hashedEmail, evalNum);
 
         if (foundParticipant) {
             const participantId = foundParticipant['ParticipantID'];
@@ -372,11 +365,11 @@ export function App() {
             }
             return;
         } else {
-            let newPid = Math.max(...dbPLog.data.getParticipantLog.filter((x) =>
-                x.ParticipantID >= lowPid && x.ParticipantID <= highPid
-            ).map((x) => Number(x['ParticipantID'])), lowPid - 1) + 1;
+            let newPid = await getNextParticipantId();
 
             const participantDataFunctions = {
+                19: canadaParticipantData,
+                18: canadaParticipantData,
                 17: juneParticipantData,
                 16: aprilParticipantData,
                 15: febParticipantData,
@@ -432,7 +425,7 @@ export function App() {
         if (currentUser === null) {
             return <Redirect push to="/login" />;
         } else {
-            if (hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User'])) {
+            if (hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User'])) {
                 return <ParticipantProgressTable canViewProlific={currentUser.adeptUser || currentUser.admin} isAdmin={currentUser.admin} currentUser={currentUser} />
             } else {
                 return <Redirect push to="/" />;
@@ -519,45 +512,46 @@ export function App() {
                         <Route path="/remote-text-survey" component={StartOnline} />
                         <Route path="/text-based" component={TextBasedScenariosPageWrapper} />
                         <Route path="/myaccount" component={MyAccount} />
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/results" component={ResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/adm-results" component={ADMChartPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/adm-probe-responses" component={ADMProbeResponses} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/humanSimParticipant">
                             <AggregateResults type="HumanSimParticipant" />
                         </Route>}
-                        {(hasAccess(currentUser, ['admin', 'experimenter'])) && <Route path="/participantTextTester">
+                        {(hasAccess(currentUser, ['admin'])) && <Route path="/participantTextTester">
                             <Login participantTextLogin={true} testerLogin={true} />
                         </Route>}
                         {hasAccess(currentUser, ['admin']) && <Route path="/admin" component={Admin} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/participant-progress-table" component={ProgressTable} />}
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/pid-lookup" component={PidLookupPage} />}
                         {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey" component={Survey} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
-                        {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/survey-results" component={SurveyResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/review-text-based" component={ReviewTextBased} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/review-delegation" component={ReviewDelegation} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/text-based-results" component={TextBasedResultsPage} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route path="/humanProbeData">
                             <AggregateResults type="HumanProbeData" />
                         </Route>}
 
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
-                            {hasAccess(currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
-                            {hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
-                            {/* Redirection logic: If user is not logged in, send to /login. 
-                                If user is not approved, send to /awaitingApproval.
-                                Otherwise, send to homepage */}
-                            {currentUser ?
-                                (currentUser?.approved ?
-                                    <Route path="*" render={() => <Redirect to="/" />} />
-                                    : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
-                                : <Route path="*" render={() => <Redirect to="/login" />} />
-                            }
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/human-results" component={HumanResults} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq1" component={RQ1} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq2" component={RQ2} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/rq3" component={RQ3} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/open-world" component={OpenWorld} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/participant-demographics" component={ParticipantDemographics} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/open-world-adms" component={OpenWorldADMs} />}
+                        {hasAccess(currentUser, ['admin', 'evaluator',  'adeptUser', 'ta3User']) && <Route exact path="/research-results/exploratory-analysis" component={ExploratoryAnalysis} />}
+                        {hasAccess(currentUser, ['admin', 'ta3User', 'externalSimResearcher']) && <Route exact path="/research-results/tccc" component={TcccAnalysis} />}
+                        {/* Redirection logic: If user is not logged in, send to /login. 
+                            If user is not approved, send to /awaitingApproval.
+                            Otherwise, send to homepage */}
+                        {currentUser ?
+                            (currentUser?.approved ?
+                                <Route path="*" render={() => <Redirect to="/" />} />
+                                : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
+                            : <Route path="*" render={() => <Redirect to="/login" />} />
+                        }
+
 
                     </Switch>
                     </React.Suspense>

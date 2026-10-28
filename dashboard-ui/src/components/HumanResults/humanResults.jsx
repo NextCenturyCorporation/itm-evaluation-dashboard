@@ -80,14 +80,15 @@ const USE_OPEN_WORLD = Object.entries(EVAL_CONFIG)
     .map(([n]) => Number(n));
 
 export default function HumanResults() {
-    const evalOptions = getAllEvals();
+    const evalOptions = getAllEvals() ?? [];
     const dispatch = useDispatch();
     const storedEval = useSelector(state => state.configs.selectedResearchEval);
-    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0].value);
+    const [selectedEval, setSelectedEval] = React.useState(storedEval ?? evalOptions[0]?.value ?? null);
 
 
     const { data } = useQuery(GET_HUMAN_RESULTS, {
         variables: { evalNumber: selectedEval },
+        skip: selectedEval === null
     });
     const [dataByScene, setDataByScene] = React.useState(null);
     const [selectedScene, setSelectedScene] = React.useState(null);
@@ -226,8 +227,8 @@ export default function HumanResults() {
                         onChange={selectEvaluation}
                         options={evalOptions}
                         placeholder="Select Evaluation"
-                        defaultValue={evalOptions[0]}
-                        value={evalOptions.find(option => option.value === selectedEval)}
+                        defaultValue={evalOptions[0] ?? null}
+                        value={evalOptions.find(option => option.value === selectedEval) ?? null}
                     />
                 </div>}
             {evalConfig?.type === 'MRE' && dataByScene &&

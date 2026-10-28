@@ -15,8 +15,8 @@ import { DownloadButtons } from "./download-buttons";
 import { getEval17Attribute } from "../utils";
 
 const getAdmData = gql`
-    query getAllHistoryByEvalNumber($evalNumber: Float!){
-        getAllHistoryByEvalNumber(evalNumber: $evalNumber)
+    query getRQ2HistoryByEvalNumber($evalNumber: Float!){
+        getRQ2HistoryByEvalNumber(evalNumber: $evalNumber)
     }`;
 
 
@@ -147,8 +147,8 @@ export function PH2RQ2223({ evalNum }) {
     }, [evalNum])
 
     React.useEffect(() => {
-        if (data?.getAllHistoryByEvalNumber) {
-            const admData = data.getAllHistoryByEvalNumber;
+        if (data?.getRQ2HistoryByEvalNumber) {
+            const admData = data.getRQ2HistoryByEvalNumber;
             const organized_adms = {};
             const allObjs = [];
             const allAttributes = [];
@@ -491,7 +491,7 @@ export function PH2RQ2223({ evalNum }) {
         overscan: 10,
     });
 
-    if (loading || (dataRef.current !== evalNum && data?.getAllHistoryByEvalNumber?.length > 0)) return <p>Loading...</p>;
+    if (loading || (dataRef.current !== evalNum && data?.getRQ2HistoryByEvalNumber?.length > 0)) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
 
     return (

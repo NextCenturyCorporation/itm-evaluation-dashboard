@@ -10,7 +10,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 export function OpenWorld() {
-    const evalAllowList = [4, 5, 6, 8, 9, 10, 12, 15, 16, 17]
+    const evalAllowList = [4, 5, 6, 8, 9, 10, 12, 15, 16, 17, 18]
     const evalOptions = getAllEvals();
     const dispatch = useDispatch()
     const storedEval = useSelector(state => state.configs.selectedResearchEval)

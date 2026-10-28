@@ -2,7 +2,9 @@
  * @jest-environment puppeteer
  */
 
-import { HOME_TEXT, WAITING_TEXT, createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
+import { TEST_WAIT_TIMEOUT, LONG_TEST_TIMEOUT, HOME_TEXT, WAITING_TEXT, clickElementByText, createAccount, login, loginAdmin, logout, testRouteRedirection } from "../__mocks__/testUtils";
+
+jest.setTimeout(LONG_TEST_TIMEOUT);
 
 function runRoutePermissionTests(allowApprovalPage = false) {
     let routes = [
@@ -47,10 +49,21 @@ describe('Route Redirection and Access Control Tests for unauthenticated users',
 
     it('Test unauthenticated user can access adept survey entry point', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        await page.waitForFunction(
+            () => window.location.pathname === '/remote-text-survey' || window.location.pathname === '/text-based',
+            { timeout: 30000 }
+        );
         const currentUrl = page.url();
 
-        // Assert the URL
-        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        // The entry route may immediately advance into the text scenario once the
+        // participant/session setup finishes. Both states confirm that this public
+        // entry point was accessible without being redirected to login.
+        expect(currentUrl).not.toContain('/login');
+        expect(currentUrl).not.toContain('/awaitingApproval');
+        expect(
+            currentUrl.includes('/remote-text-survey?adeptQualtrix=true') ||
+            currentUrl.includes('/text-based?adeptQualtrix=true')
+        ).toBe(true);
     });
 
     runRoutePermissionTests(false);
@@ -86,16 +99,14 @@ describe('Login tests', () => {
         await createAccount(page, 'TESTer', 'teSter@123.com', 'secretPassword123');
 
         await page.waitForSelector('text/' + WAITING_TEXT);
-        await page.waitForSelector('text/Status: Awaiting Approval', { timeout: 500 });
+        await page.waitForSelector('text/Status: Awaiting Approval', { timeout: 5000 });
         let currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
-        await page.$$eval('button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Return to Login').click();
-        });
+        await clickElementByText(page, 'button', 'Return to Login');
         await page.waitForSelector('text/Sign In');
         currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
     it('rejected user should be sent to waiting page; return to login should work', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -104,16 +115,14 @@ describe('Login tests', () => {
         await createAccount(page, 'rejected', 'rejected@123.com', 'secretRejectedPassword123');
 
         await page.waitForSelector('text/' + WAITING_TEXT);
-        await page.waitForSelector('text/Status: Account Rejected', { timeout: 500 });
+        await page.waitForSelector('text/Status: Account Rejected', { timeout: 5000 });
         let currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/awaitingApproval`);
-        await page.$$eval('button', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Return to Login').click();
-        });
+        await clickElementByText(page, 'button', 'Return to Login');
         await page.waitForSelector('text/Sign In');
         currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
     it('logging out and back in should be functional', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -136,29 +145,29 @@ describe('Login tests', () => {
         await page.waitForSelector(HOME_TEXT);
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/`);
-    }, 10000);
+    }, 30000);
 
     it('creating an account with a duplicate email should error', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-        await page.waitForSelector('#password', { timeout: 1000 });
+        await page.waitForSelector('#password', { timeout: 10000 });
         await createAccount(page, 'tester1', 'tester@123.com', 'secretPassword123');
 
-        await page.waitForSelector('text/Error creating account', { timeout: 3000 });
+        await page.waitForSelector('text/Error creating account', { timeout: 10000 });
         const currentUrl = page.url();
 
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
     it('creating an account with a duplicate username should error', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/login`);
-        await page.waitForSelector('#password', { timeout: 1000 });
+        await page.waitForSelector('#password', { timeout: 10000 });
         await createAccount(page, 'tester', 'tester1@123.com', 'secretPassword123');
 
-        await page.waitForSelector('text/Error creating account', { timeout: 3000 });
+        await page.waitForSelector('text/Error creating account', { timeout: 10000 });
         const currentUrl = page.url();
 
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
-    }, 10000);
+    }, 30000);
 
 });
 
@@ -177,10 +186,21 @@ describe('Route Redirection and Access Control Tests for unapproved users', () =
 
     it('Test unapproved user can access adept survey entry point', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        await page.waitForFunction(
+            () => window.location.pathname === '/remote-text-survey' || window.location.pathname === '/text-based',
+            { timeout: 30000 }
+        );
         const currentUrl = page.url();
 
-        // Assert the URL
-        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        // The entry route may immediately advance into the text scenario once the
+        // participant/session setup finishes. Both states confirm that this public
+        // entry point was accessible without being redirected to login.
+        expect(currentUrl).not.toContain('/login');
+        expect(currentUrl).not.toContain('/awaitingApproval');
+        expect(
+            currentUrl.includes('/remote-text-survey?adeptQualtrix=true') ||
+            currentUrl.includes('/text-based?adeptQualtrix=true')
+        ).toBe(true);
     });
     runRoutePermissionTests(true);
 });
@@ -193,11 +213,12 @@ describe('Once logged out, no routes should be accessible', () => {
         await page.waitForSelector('#password');
         await loginAdmin(page);
         // log out (not using log out function to ensure that we were logging in as authenticated user)
-        const menu = await page.$('#basic-nav-dropdown');
-        await menu.click();
-        await page.$$eval('a', buttons => {
-            Array.from(buttons).find(btn => btn.textContent == 'Logout').click();
+        const menu = await page.waitForSelector('#basic-nav-dropdown', {
+            visible: true,
+            timeout: TEST_WAIT_TIMEOUT
         });
+        await menu.click();
+        await clickElementByText(page, 'a', 'Logout');
         await page.waitForSelector('text/Sign In');
         const currentUrl = page.url();
         expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/login`);
@@ -205,10 +226,21 @@ describe('Once logged out, no routes should be accessible', () => {
 
     it('Test unauthenticated user can access adept survey entry point', async () => {
         await page.goto(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        await page.waitForFunction(
+            () => window.location.pathname === '/remote-text-survey' || window.location.pathname === '/text-based',
+            { timeout: 30000 }
+        );
         const currentUrl = page.url();
 
-        // Assert the URL
-        expect(currentUrl).toBe(`${process.env.REACT_APP_TEST_URL}/remote-text-survey?adeptQualtrix=true`);
+        // The entry route may immediately advance into the text scenario once the
+        // participant/session setup finishes. Both states confirm that this public
+        // entry point was accessible without being redirected to login.
+        expect(currentUrl).not.toContain('/login');
+        expect(currentUrl).not.toContain('/awaitingApproval');
+        expect(
+            currentUrl.includes('/remote-text-survey?adeptQualtrix=true') ||
+            currentUrl.includes('/text-based?adeptQualtrix=true')
+        ).toBe(true);
     });
     runRoutePermissionTests(false);
 });

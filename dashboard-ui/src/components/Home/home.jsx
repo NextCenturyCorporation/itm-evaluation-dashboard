@@ -10,7 +10,7 @@ class HomePage extends React.Component {
     render() {
         return (
             <>
-                {hasAccess(this.props.currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                {hasAccess(this.props.currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                     <div className="home-container">
                         <div className="home-navigation-container">
                             <div className="evaluation-selector-container">
@@ -20,7 +20,7 @@ class HomePage extends React.Component {
                         <AggregateResults type="Program" />
                     </div>
                 )}
-                {!hasAccess(this.props.currentUser, ['admin', 'evaluator', 'experimenter', 'adeptUser', 'ta3User']) && (
+                {!hasAccess(this.props.currentUser, ['admin', 'evaluator', 'adeptUser', 'ta3User']) && (
                     <div className="home-container">
                         <div className="home-navigation-container">
                             <div className="evaluation-selector-container">

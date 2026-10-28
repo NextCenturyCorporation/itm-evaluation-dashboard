@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import { submitResponses as sharedSubmitResponses, getMostLeastAligned, getKdmaProfile, getAdeptUrl as sharedGetAdeptUrl, getSubPop, createAdeptSession } from './adeptUtils';
+import { submitResponses as sharedSubmitResponses, getMostLeastAligned, getKdmaProfile, getAdeptUrl as sharedGetAdeptUrl, getSubPop, createAdeptSessionSafe as createAdeptSession } from './adeptUtils';
 import 'survey-core/defaultV2.min.css';
 import { Model } from 'survey-core';
 import { Survey, ReactQuestionFactory } from "survey-react-ui";
 import surveyTheme from './surveyTheme.json';
 import gql from "graphql-tag";
 import { Mutation } from '@apollo/react-components';
-import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/react-hooks';
 import { Card, Container, Row, Col, Spinner, Button, Modal } from 'react-bootstrap';
@@ -22,6 +21,7 @@ import '../../css/scenario-page.css';
 import { Phase2Text } from './phase2Text';
 import { useHistory } from 'react-router-dom';
 import ScenarioProgress from './scenarioProgress';
+import { GET_PARTICIPANT_BY_PID } from '../../services/participantService';
 
 const UPSERT_SCENARIO_RESULT = gql`
     mutation upsertScenarioResult($result: JSON) {
@@ -44,11 +44,6 @@ const UPLOAD_SCENARIO_RESULTS = gql`
         uploadScenarioResults(results: $results)
     }`;
 
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }`;
-
 const UPDATE_PARTICIPANT_LOG = gql`
     mutation updateParticipantLog($pid: String!, $updates: JSON!) {
         updateParticipantLog(pid: $pid, updates: $updates) 
@@ -63,11 +58,10 @@ export function TextBasedScenariosPageWrapper(props) {
     const currentTextEval = useSelector(state => state.configs.currentTextEval)
     const showDemographics = useSelector(state => state.configs.showDemographics)
     const textBasedConfigs = useSelector(state => state.configs.textBasedConfigs);
-    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_LOG,
-        { fetchPolicy: 'no-cache' });
-    
     // finding participant data if this is resuming a partial run
     const pid = new URLSearchParams(window.location.search).get('pid');
+    const { loading: participantLogLoading, error: participantLogError, data: participantLogData } = useQuery(GET_PARTICIPANT_BY_PID,
+        { variables: { pid }, skip: !pid, fetchPolicy: 'no-cache' });
     const { data: completedData } = useQuery(GET_COMPLETED_SCENARIOS, {
         variables: { pid },
         skip: !pid,
@@ -96,7 +90,7 @@ export function TextBasedScenariosPageWrapper(props) {
         {...props}
         textBasedConfigs={textBasedConfigs}
         currentTextEval={currentTextEval}
-        participantLogs={participantLogData}
+        participantLogs={{ getParticipantLog: participantLogData?.getParticipantByPid ? [participantLogData.getParticipantByPid] : [] }}
         getServerTimestamp={getServerTimestamp}
         showDemographics={showDemographics}
         completedScenarioIds={completedData?.getCompletedTextScenarios || []}
@@ -134,7 +128,7 @@ class TextBasedScenariosPage extends Component {
             demographicsStartTime: null,
             adeptGroupState: {},
             showConsentForm: false,
-            consentGiven: false,
+            consentGiven: true,
             eval16CombinedSessionId: null,
             eval16Scenarios: [],
             eval16Groups: {
@@ -147,7 +141,9 @@ class TextBasedScenariosPage extends Component {
 
         this.surveyData = {};
         this.survey = null;
-        this.pageStartTimes = {};
+        // page currently being timed and when it was first shown
+        this.activePageName = null;
+        this.activePageStart = null;
         this.uploadButtonRef = React.createRef();
         this.uploadButtonRefDemographics = React.createRef();
         this.uploadButtonRefPLog = React.createRef();
@@ -383,6 +379,11 @@ class TextBasedScenariosPage extends Component {
 
     uploadResults = async (survey) => {
         this.timerHelper();
+        // snapshot here is a bugfix to race condition where surveyData was being wiped AFTER the upload (next scenario was started)
+        const pageTimes = this.surveyData;
+        this.surveyData = {};
+        this.activePageName = null;
+        this.activePageStart = null;
 
         const currentScenario = this.state.scenarios[this.state.currentScenarioIndex];
         const endStamp = await this.props.getServerTimestamp();
@@ -400,7 +401,7 @@ class TextBasedScenariosPage extends Component {
         currentPages.forEach(page => {
             const pageName = page.name;
             scenarioData[pageName] = {
-                timeSpentOnPage: this.surveyData[pageName]?.timeSpentOnPage || 0,
+                timeSpentOnPage: pageTimes[pageName]?.timeSpentOnPage || 0,
                 pageName: page.name,
                 questions: {}
             };
@@ -418,7 +419,13 @@ class TextBasedScenariosPage extends Component {
         scenarioData.scenarioOrder = this.state.scenarios.map(scenario => scenario.scenario_id)
         scenarioData.evalNumber = evalNameToNumber[this.props.currentTextEval]
         scenarioData.evalName = (this.props.currentTextEval).replace(/Phase 2\s*/g, '')
-        await this.getAlignmentScore(scenarioData)
+        // even if this fails, data still recorded
+        try {
+            await this.getAlignmentScore(scenarioData)
+        } catch (e) {
+            console.error('Error scoring alignment, uploading responses without it:', e);
+            scenarioData.alignmentScoringError = e.message;
+        }
         const sanitizedData = this.sanitizeKeys(scenarioData);
 
         this.setState({
@@ -427,8 +434,6 @@ class TextBasedScenariosPage extends Component {
             isUploadButtonEnabled: true
         });
 
-        this.surveyData = {};
-        this.pageStartTimes = {};
         this.shouldBlockNavigation = false;
     }
 
@@ -441,24 +446,56 @@ class TextBasedScenariosPage extends Component {
             return;
         }
 
+        const eval18Processor = async () => {
+            const url = this.getAdeptUrl();
+            const id = scenario.scenario_id;
+            const pairKey = (id.includes('AF') || id.includes('PS')) ? 'AF-PS' : 'MF-SS';
+            const current = this.state.adeptGroupState[pairKey] || { scenarios: [], sessionId: null, sessionFailed: false };
+            const sessionId = current.sessionId || await createAdeptSession(url);
+            // makes sure neither were failed (prevents scoring incorrectly if one worked and the other didnt)
+            const sessionFailed = current.sessionFailed || !sessionId;
+            await this.submitResponses(scenario, id, url, sessionId);
+            const updated = [...current.scenarios, scenario];
+            await new Promise(resolve => this.setState(prevState => ({
+                adeptGroupState: { ...prevState.adeptGroupState, [pairKey]: { scenarios: updated, sessionId, sessionFailed } }
+            }), resolve));
+            if (updated.length === 2) {
+                const mla = sessionFailed ? null : await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
+                const kdmas = sessionFailed ? null : await this.attachKdmaValue(sessionId, url);
+                for (const s of updated) {
+                    s[`${pairKey}_sessionId`] = sessionFailed ? null : sessionId;
+                    s[`${pairKey}_mostLeastAligned`] = mla;
+                    s[`${pairKey}_kdmas`] = kdmas;
+                }
+            }
+            // all four documents scored together on one combined session
+            await this.processGroupedAdeptScenario(scenario, {
+                getGroupKey: () => 'all',
+                getGroupSize: () => 4,
+            });
+        };
+
         const evalProcessors = {
+            19: eval18Processor,
+            18: eval18Processor,
             17: async () => {
                 // doing the AF-SS group inline since it doesn't fit into my generic logic
                 const id = scenario.scenario_id;
                 if (!id.includes('trinary') && (id.includes('AF') || id.includes('SS'))) {
                     const url = this.getAdeptUrl();
-                    const current = this.state.adeptGroupState['AF-SS-multi'] || { scenarios: [], sessionId: null };
+                    const current = this.state.adeptGroupState['AF-SS-multi'] || { scenarios: [], sessionId: null, sessionFailed: false };
                     const sessionId = current.sessionId || await createAdeptSession(url);
+                    const sessionFailed = current.sessionFailed || !sessionId;
                     await this.submitResponses(scenario, id, url, sessionId);
                     const updated = [...current.scenarios, scenario];
                     await new Promise(resolve => this.setState(prevState => ({
-                        adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId } }
+                        adeptGroupState: { ...prevState.adeptGroupState, 'AF-SS-multi': { scenarios: updated, sessionId, sessionFailed } }
                     }), resolve));
                     if (updated.length === 2) {
-                        const mla = await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
-                        const kdmas = await this.attachKdmaValue(sessionId, url);
+                        const mla = sessionFailed ? null : await this.mostLeastAligned(sessionId, url, updated[0], true, false, true);
+                        const kdmas = sessionFailed ? null : await this.attachKdmaValue(sessionId, url);
                         for (const s of updated) {
-                            s['AF-SS_sessionId'] = sessionId;
+                            s['AF-SS_sessionId'] = sessionFailed ? null : sessionId;
                             s['AF-SS_mostLeastAligned'] = mla;
                             s['AF-SS_kdmas'] = kdmas;
                         }
@@ -519,25 +556,23 @@ class TextBasedScenariosPage extends Component {
     }
 
     processIsolatedAdeptScenario = async (scenario) => {
-        const sessionEndpoint = '/api/v1/new_session';
         const url = this.getAdeptUrl();
+        // sessionId is null when ADEPT is unreachable - scoring calls no-op and we still upload
+        const sessionId = await createAdeptSession(url);
         try {
-            const session = await axios.post(`${url}${sessionEndpoint}`);
-            if (session.status === 200) {
-                const sessionId = session.data;
-
-                await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
-                const mostLeastAligned = await this.mostLeastAligned(sessionId, url, scenario);
-
-                scenario.combinedSessionId = sessionId;
-                scenario.mostLeastAligned = mostLeastAligned;
-                scenario.kdmas = await this.attachKdmaValue(sessionId, url);
-                // can upload without waiting for the others
-                await this.uploadSingleScenario(scenario);
-            }
+            await this.submitResponses(scenario, scenario.scenario_id, url, sessionId);
+            scenario.combinedSessionId = sessionId;
+            scenario.mostLeastAligned = await this.mostLeastAligned(sessionId, url, scenario);
+            scenario.kdmas = await this.attachKdmaValue(sessionId, url);
         } catch (e) {
-            console.error('Error creating isolated session:', e);
+            console.error('Error scoring isolated scenario:', e);
+            scenario.combinedSessionId = sessionId;
+            scenario.mostLeastAligned = null;
+            scenario.kdmas = null;
+            scenario.combinedScoringError = e.message;
         }
+        // can upload without waiting for the others
+        await this.uploadSingleScenario(scenario);
     }
 
     // refactored a lot of similar logic into generic group session id handling
@@ -567,12 +602,14 @@ class TextBasedScenariosPage extends Component {
             }
         }
 
-        const currentGroup = this.state.adeptGroupState[groupKey] || { scenarios: [], sessionId: null };
+        const currentGroup = this.state.adeptGroupState[groupKey] || { scenarios: [], sessionId: null, sessionFailed: false };
         let sessionId = currentGroup.sessionId;
 
         if (!sessionId) {
             sessionId = await createAdeptSession(url);
         }
+
+        const sessionFailed = currentGroup.sessionFailed || !sessionId;
 
         await this.submitResponses(scenario, scenarioId, url, sessionId);
 
@@ -580,17 +617,17 @@ class TextBasedScenariosPage extends Component {
         await new Promise(resolve => this.setState(prevState => ({
             adeptGroupState: {
                 ...prevState.adeptGroupState,
-                [groupKey]: { scenarios: updatedScenarios, sessionId }
+                [groupKey]: { scenarios: updatedScenarios, sessionId, sessionFailed }
             }
         }), resolve));
 
         if (updatedScenarios.length === getGroupSize(groupKey)) {
             try {
-                const combinedMostLeastAligned = await this.mostLeastAligned(sessionId, url, updatedScenarios[0], true);
-                const combinedKdmas = await this.attachKdmaValue(sessionId, url);
+                const combinedMostLeastAligned = sessionFailed ? null : await this.mostLeastAligned(sessionId, url, updatedScenarios[0], true);
+                const combinedKdmas = sessionFailed ? null : await this.attachKdmaValue(sessionId, url);
 
                 for (const s of updatedScenarios) {
-                    s.combinedSessionId = sessionId;
+                    s.combinedSessionId = sessionFailed ? null : sessionId;
                     s.combinedMostLeastAligned = combinedMostLeastAligned;
                     s.combinedKdmas = combinedKdmas;
                     await this.uploadSingleScenario(s);
@@ -614,21 +651,20 @@ class TextBasedScenariosPage extends Component {
 
         // subpop - create combined session, get subpop result, upload immediately
         if (scenarioId === 'April2026-subpopulation') {
+            const combinedSessionId = await createAdeptSession(url);
+            this.setState({ eval16CombinedSessionId: combinedSessionId });
+            let subPopResult = null;
             try {
-                const combinedSessionId = await createAdeptSession(url);
-                this.setState({ eval16CombinedSessionId: combinedSessionId });
-
                 await this.submitResponses(scenario, scenarioId, url, combinedSessionId);
-
-                const subPopResult = await getSubPop(combinedSessionId, url);
-                this.setState({ eval16SubPopResult: subPopResult });
-
-                scenario.combinedSessionId = combinedSessionId;
-                scenario.subPopResult = subPopResult;
-                await this.uploadSingleScenario(scenario, this.state.resumedSubpop);
+                subPopResult = await getSubPop(combinedSessionId, url);
             } catch (e) {
                 console.error('Error processing eval 16 subpopulation:', e);
+                scenario.subPopError = e.message;
             }
+            this.setState({ eval16SubPopResult: subPopResult });
+            scenario.combinedSessionId = combinedSessionId;
+            scenario.subPopResult = subPopResult;
+            await this.uploadSingleScenario(scenario, this.state.resumedSubpop);
             return;
         }
 
@@ -720,18 +756,10 @@ class TextBasedScenariosPage extends Component {
 
     beginRunningSession = async (scenario) => {
         const url = this.getAdeptUrl();
-        const sessionEndpoint = '/api/v1/new_session';
+        const sessionId = await createAdeptSession(url);
 
-        try {
-            const session = await axios.post(`${url}${sessionEndpoint}`);
-            if (session.status === 200) {
-                this.setState({ combinedSessionId: session.data }, async () => {
-                    await this.submitResponses(scenario, scenario.scenario_id, url, this.state.combinedSessionId)
-                })
-            }
-        } catch (e) {
-            console.error(e)
-        }
+        await new Promise(resolve => this.setState({ combinedSessionId: sessionId }, resolve));
+        await this.submitResponses(scenario, scenario.scenario_id, url, sessionId)
     }
 
     continueRunningSession = async (scenario) => {
@@ -821,32 +849,23 @@ class TextBasedScenariosPage extends Component {
 
     onAfterRenderPage = (sender, options) => {
         const pageName = options.page.name;
-        const currentTime = new Date();
+        // re-render of the page already being timed, keep its original start time
+        if (pageName === this.activePageName) return;
 
-        if (this.survey.currentPageNo > 0) {
-            const previousPageName = this.survey.pages[this.survey.currentPageNo - 1].name;
-            const startTime = this.pageStartTimes[previousPageName];
-            if (startTime) {
-                const timeSpentInSeconds = (currentTime - startTime) / 1000;
-                this.surveyData[previousPageName] = this.surveyData[previousPageName] || {};
-                this.surveyData[previousPageName].timeSpentOnPage = timeSpentInSeconds;
-            }
-        }
-
-        this.pageStartTimes[pageName] = currentTime;
+        this.timerHelper();
+        this.activePageName = pageName;
+        this.activePageStart = new Date();
     }
 
     timerHelper = () => {
-        const currentPageName = this.survey.currentPage.name;
-        const startTime = this.pageStartTimes[currentPageName];
-        if (startTime) {
-            const endTime = new Date();
-            const timeSpentInSeconds = (endTime - startTime) / 1000;
+        if (!this.activePageName || !this.activePageStart) return;
+        const timeSpentInSeconds = (new Date() - this.activePageStart) / 1000;
 
-            // update time spent for the current page
-            this.surveyData[currentPageName] = this.surveyData[currentPageName] || {};
-            this.surveyData[currentPageName].timeSpentOnPage = timeSpentInSeconds;
-        }
+        // accumulate so revisiting a page adds to its time instead of overwriting it
+        this.surveyData[this.activePageName] = this.surveyData[this.activePageName] || {};
+        this.surveyData[this.activePageName].timeSpentOnPage = (this.surveyData[this.activePageName].timeSpentOnPage || 0) + timeSpentInSeconds;
+        this.activePageName = null;
+        this.activePageStart = null;
     }
 
     render() {

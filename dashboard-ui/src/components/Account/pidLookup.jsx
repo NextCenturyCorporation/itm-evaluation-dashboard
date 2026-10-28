@@ -6,11 +6,9 @@ import bcrypt from 'bcryptjs';
 import gql from "graphql-tag";
 import { useQuery } from 'react-apollo'
 import { simNameMappings } from "../TextBasedScenarios/TextBasedScenariosPage";
+import { findParticipantByEmail } from '../../services/participantService';
+import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
 
-const GET_PARTICIPANT_LOG = gql`
-    query GetParticipantLog {
-        getParticipantLog
-    }`;
 
 export function PidLookup() {
 
@@ -18,16 +16,17 @@ export function PidLookup() {
     const [email, setEmail] = React.useState("");
     const [pid, setPid] = React.useState("");
     const [notFound, setNotFound] = React.useState(false);
-    const { loading: loadingParticipantLog, error: errorParticipantLog, data: dataParticipantLog } = useQuery(GET_PARTICIPANT_LOG);
+    const [loadingParticipantLog, setLoading] = React.useState(false);
+    const [errorParticipantLog, setError] = React.useState(null);
 
-    const getPID = (e) => {
+    const getPID = async (e) => {
         e.preventDefault();
-        if (dataParticipantLog?.getParticipantLog) {
+        setLoading(true);
+        setError(null);
+        try {
             const trimmedEmail = email.trim().toLowerCase();
             const hashedEmail = bcrypt.hashSync(trimmedEmail, "$2a$10$" + process.env.REACT_APP_EMAIL_SALT);
-            const matchingParticipant = dataParticipantLog.getParticipantLog.find(
-                (x) => x.hashedEmail === hashedEmail
-            );
+            const matchingParticipant = await findParticipantByEmail(hashedEmail);
 
             if (matchingParticipant) {
                 setPid(matchingParticipant.ParticipantID); 
@@ -36,6 +35,10 @@ export function PidLookup() {
                 setPid("");
                 setNotFound(true);
             }
+        } catch (error) {
+            setError(error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -52,7 +55,6 @@ export function PidLookup() {
         throw errorParticipantLog;
     }
 
-    if (loadingParticipantLog) return <p>Loading Participant Log...</p>;
 
 
     return (<div className="row justify-content-center align-items-center h-100 center-container">
@@ -74,7 +76,7 @@ export function PidLookup() {
                         </div>
                     </div>
                     <div className="form-group">
-                        <button className="action-btn sd-btn sd-navigation__next-btn" type="submit">Find PID</button>
+                        <button className="action-btn sd-btn sd-navigation__next-btn" type="submit" disabled={loadingParticipantLog}>{loadingParticipantLog ? 'Finding PID...' : 'Find PID'}</button>
                     </div>
                     {pid &&
                         <>
