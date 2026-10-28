@@ -438,7 +438,7 @@ export function App() {
             return <Redirect push to="/login" />;
         } else {
             if (hasAccess(currentUser, ['admin', 'experimenter'])) {
-                return <PidLookup/> 
+                return <PidLookup />
             } else {
                 return <Redirect push to="/" />;
             }
@@ -481,7 +481,7 @@ export function App() {
 
     // show error message if any error type occurs
     if (versionError) {
-       throw versionError;
+        throw versionError;
     }
     
     if (versionLoading) {
@@ -551,7 +551,6 @@ export function App() {
                                 : <Route path="*" render={() => <Redirect to="/awaitingApproval" />} />)
                             : <Route path="*" render={() => <Redirect to="/login" />} />
                         }
-
 
                     </Switch>
                     </React.Suspense>

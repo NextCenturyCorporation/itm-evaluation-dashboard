@@ -116,7 +116,7 @@ export function RQ21({ evalNum }) {
                 const { textResultsForPID, } = getAlignments(evalNum, textResults, pid);
                 for (const entry of textResultsForPID) {
                     // ignore training scenarios
-                    if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                    if (entry['scenario_id']?.includes('MJ1') || entry['scenario_id']?.includes('IO1')) {
                         continue;
                     }
                     // don't include duplicate entries
@@ -193,7 +193,6 @@ export function RQ21({ evalNum }) {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
         throw errors;
     }
 

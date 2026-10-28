@@ -574,7 +574,6 @@ export function RQ134({ evalNum, tableTitle }) {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
         throw errors;
     }
 

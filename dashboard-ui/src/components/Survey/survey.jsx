@@ -583,7 +583,6 @@ export const SurveyPageWrapper = (props) => {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
         throw errors;
     }
 

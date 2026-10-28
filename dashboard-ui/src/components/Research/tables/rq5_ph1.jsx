@@ -279,7 +279,6 @@ export function RQ5_PH1({ evalNum }) {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
         throw errors;
     }
 

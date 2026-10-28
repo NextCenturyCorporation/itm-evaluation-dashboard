@@ -288,7 +288,6 @@ export function RQ5({ evalNum }) {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
         throw errors;
     }
 

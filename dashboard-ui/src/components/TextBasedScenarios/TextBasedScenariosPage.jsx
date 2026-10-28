@@ -73,7 +73,6 @@ export function TextBasedScenariosPageWrapper(props) {
 
     // show error message if an participantLogError occurs
     if (participantLogError) {
-        console.log(participantLogError); 
         throw participantLogError;
     }
 

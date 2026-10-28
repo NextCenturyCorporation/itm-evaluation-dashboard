@@ -196,7 +196,6 @@ export function RQ2223({ evalNum }) {
 
     // show error message if an error occurs
     if (error) {
-        console.log(error);
         throw error;
     }
 

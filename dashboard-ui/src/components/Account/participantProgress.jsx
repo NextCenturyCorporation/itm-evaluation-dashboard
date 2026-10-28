@@ -8,6 +8,7 @@ import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { exportToExcel } from "../Research/utils";
 import { isDefined } from "../AggregateResults/DataFunctions";
+import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 import { Spinner } from 'react-bootstrap';
 import { SCENARIO_HEADERS } from "./progressUtils";
 import { accountsClient, apolloClient } from "../../services/accountsService";
@@ -362,20 +363,6 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
         setSearchPid(event.target.value);
     };
 
-    // catch any errors that return true and save in an array to display in the AppErrorMessage component
-    const errors = [
-        errorParticipantLog,
-        errorSurveyResults,
-        errorTextResults,
-        errorSim,
-    ].filter(Boolean);
-
-    if (errors.length > 0) {
-        throw errors;
-    }
-
-    if (loadingParticipantLog || loadingSurveyResults || loadingTextResults || loadingSim) return <p>Loading...</p>;
-
     return (<>
         <h2 className='progress-header'>Participant Progress</h2>
         {(progressError || actionError) && <Alert severity="error" action={<button onClick={refreshData}>Retry</button>}>
@@ -583,7 +570,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             closePopup(); setRepairModal({ open: false, pid: null, status: null });
         }}>
             <Box className="adm-popup-body">
-                {detailError ? <QueryErrorMessage error={detailError} /> : <p>Loading participant details...</p>}
+                {detailError ? <AppErrorMessage error={detailError} /> : <p>Loading participant details...</p>}
                 <button onClick={() => { closePopup(); setRepairModal({ open: false, pid: null, status: null }); }}>Close</button>
             </Box>
         </Modal>

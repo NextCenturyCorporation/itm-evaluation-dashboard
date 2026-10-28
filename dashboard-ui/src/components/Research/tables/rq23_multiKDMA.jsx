@@ -145,7 +145,6 @@ export function MultiKDMA_RQ23({ evalNum = 7 }) {
 
     // show error message if an error occurs
     if (hasError) {
-        console.log(hasError);
         throw hasError;
     }
 

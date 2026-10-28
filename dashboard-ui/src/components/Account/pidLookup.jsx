@@ -3,12 +3,8 @@ import VisibilityIcon from '@material-ui/icons/Visibility';
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import './login.css';
 import bcrypt from 'bcryptjs';
-import gql from "graphql-tag";
-import { useQuery } from 'react-apollo'
-import { simNameMappings } from "../TextBasedScenarios/TextBasedScenariosPage";
 import { findParticipantByEmail } from '../../services/participantService';
-import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
-
+import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 
 export function PidLookup() {
 
@@ -50,9 +46,9 @@ export function PidLookup() {
         setEmail(target.value);
     };
 
-    // throw error 
+    // lookup errors come from an async handler, so show them inline rather than via the error boundary
     if (errorParticipantLog) {
-        throw errorParticipantLog;
+        return <AppErrorMessage error={errorParticipantLog} />;
     }
 
 

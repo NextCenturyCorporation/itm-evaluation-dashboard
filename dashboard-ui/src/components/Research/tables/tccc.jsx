@@ -130,7 +130,6 @@ export function TCCC({ evalDate }) {
 
     // show error message if an error occurs
     if (errorallTcccData) {
-        console.log(errorallTcccData);
         throw errorallTcccData;
     }
 
