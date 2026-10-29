@@ -6,7 +6,7 @@ import { countElementsWithText } from "../__mocks__/testUtils";
 
 describe('Test render', () => {
     beforeEach(async () => {
-        page = await browser.newPage();
+        await jestPuppeteer.resetPage();
     }, 30000);
 
     it('app should render successfully', async () => {

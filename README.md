@@ -42,18 +42,18 @@ docker network connect dashboard-net itm-server 2>/dev/null || true
 
 To rebuild only the dashboard UI after making edits in that directory, run the appropriate Compose command from `docker_setup`.
 
-For production:
-
-```bash
-cd docker_setup
-docker compose -f docker-compose.yml up -d --build --force-recreate dashboard-ui
-```
-
 For development:
 
 ```bash
 cd docker_setup
 docker compose -f docker-compose-dev.yml up -d --build --force-recreate dashboard-ui
+```
+
+For production:
+
+```bash
+cd docker_setup
+docker compose -f docker-compose.yml up -d --build --force-recreate dashboard-ui
 ```
 
 # Helpful Commands to Rebuild GraphQL and UI

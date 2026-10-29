@@ -21,6 +21,29 @@ jest.setTimeout(
         : 30000
 );
 
+const configuredCleanupTimeout = Number(process.env.JEST_CLEANUP_TIMEOUT);
+const cleanupTimeout = Number.isFinite(configuredCleanupTimeout) && configuredCleanupTimeout > 0
+    ? configuredCleanupTimeout
+    : 30000;
+
+async function cleanupStep(label, action) {
+    const suite = expect.getState().testPath.split(/[\\/]/).pop();
+    const started = Date.now();
+    console.log(`[test cleanup] ${suite}: ${label} started`);
+    let timer;
+    try {
+        await Promise.race([
+            Promise.resolve().then(action),
+            new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error(`${label} exceeded ${cleanupTimeout} ms`)), cleanupTimeout);
+            })
+        ]);
+        console.log(`[test cleanup] ${suite}: ${label} finished (${Date.now() - started} ms)`);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 let mongoServer;
 let graphqlServer;
 let mongoUri;
@@ -109,7 +132,7 @@ beforeAll(async () => {
         const sessionConfig = new SessionConfig({
             _id: new ObjectId("67991d239acd0b5980ffbf69"),
             userId: "67991d239acd0b1b94ffbf64",
-            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM",
+            token: "test-session-token",
             valid: true
         });
         await sessionConfig.save();
@@ -143,6 +166,11 @@ beforeAll(async () => {
 
         jest.mock('@accounts/graphql-api', () => {
             const { testUsers, usernamesToIgnoreWarnings } = require('./__mocks__/mockUsers.js');
+            const jwt = require('../../node-graphql/node_modules/jsonwebtoken');
+            const { TOKEN_SECRET } = require('../../node-graphql/account-configs');
+            if (!TOKEN_SECRET) {
+                throw new Error('Test authentication requires TOKEN_SECRET in node-graphql/account-configs.js.');
+            }
             let lastAuthenticatedUser = null;
             return {
                 AccountsModule: {
@@ -223,8 +251,8 @@ beforeAll(async () => {
                                     return {
                                         "sessionId": "67991d239acd0b5980ffbf69",
                                         "tokens": {
-                                            "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODY5MjUxNX0.CNOtRGTcSSSOxMkEGKS5gRUosdzm2XjHdmBEnrcMwAM",
-                                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRva2VuIjoiYTljMTBkYjJhOTMxN2RmZDA1NjM5MDIwYTc2N2Y5ZDYyNWJjZmFmM2Q3NjhmYTk0NGEzMmM1N2YxYWI5MjNmZGU0ZGNkZTM1NTlmMmVkMDczMzYyYTEiLCJpc0ltcGVyc29uYXRlZCI6ZmFsc2UsInVzZXJJZCI6IjY3OTkxZDIzOWFjZDBiMWI5NGZmYmY2NCJ9LCJpYXQiOjE3MzgwODc3MTUsImV4cCI6MTczODA5MzExNX0.w1x-lWGwqW2hVRNwTl3sQyaxqeyZsJJirn_qkT04ljo",
+                                            "refreshToken": jwt.sign({}, TOKEN_SECRET, { expiresIn: '7d' }),
+                                            "accessToken": jwt.sign({ data: { token: "test-session-token" } }, TOKEN_SECRET, { expiresIn: '1h' }),
                                         },
                                         "user": {
                                             "id": "67991d239acd0b1b94ffbf64",
@@ -234,7 +262,7 @@ beforeAll(async () => {
                                                     "verified": false,
                                                 }
                                             ],
-                                            "username": "tester1",
+                                            "username": foundUser.username,
                                             "admin": foundUser.admin,
                                             "evaluator": foundUser.evaluator,
                                             "experimenter": foundUser.experimenter,
@@ -349,23 +377,38 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-    try {
-        if (graphqlServer) {
-            await graphqlServer.stop();
+    const errors = [];
+    const cleanup = async (label, action) => {
+        try {
+            await cleanupStep(label, action);
+        } catch (error) {
+            console.error(`[test cleanup] ${label} failed: ${error.message}`);
+            errors.push(error);
         }
+    };
 
-        if (mongoose.connection.readyState !== 0) {
-            if (process.env.TEST_MONGO_URL && mongoose.connection.db) {
-                await mongoose.connection.db.dropDatabase();
-            }
-
-            await mongoose.disconnect();
-        }
-
-        if (mongoServer) {
-            await mongoServer.stop();
-        }
-    } catch (error) {
-        console.error("Error in afterAll:", error);
+    if (global.context) {
+        const testContext = global.context;
+        // Closing the context closes all its pages without Page.close's
+        // separate, unbounded wait for Chromium's target-closed event.
+        // Clear the managed references so the environment won't close them twice.
+        global.page = undefined;
+        global.context = undefined;
+        await cleanup('browser context close', () => testContext.close());
     }
-});
+    if (graphqlServer) {
+        await cleanup('GraphQL server stop', () => graphqlServer.stop());
+    }
+    if (mongoose.connection.readyState !== 0) {
+        if (process.env.TEST_MONGO_URL && mongoose.connection.db) {
+            await cleanup('test database drop', () => mongoose.connection.db.dropDatabase());
+        }
+        await cleanup('MongoDB disconnect', () => mongoose.disconnect());
+    }
+    if (mongoServer) {
+        await cleanup('MongoMemoryServer stop', () => mongoServer.stop());
+    }
+    if (errors.length) {
+        throw new Error(`Test cleanup failed: ${errors.map(error => error.message).join('; ')}`);
+    }
+}, cleanupTimeout * 5 + 5000);

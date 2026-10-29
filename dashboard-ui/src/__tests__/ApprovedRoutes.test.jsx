@@ -1,9 +1,9 @@
 /**
  * @jest-environment puppeteer
  */
-import { TEST_WAIT_TIMEOUT, LONG_TEST_TIMEOUT, FOOTER_TEXT, loginAdeptUser, loginAdmin, loginBasicApprovedUser, loginEvaluator, loginExperimenter, testRouteRedirection } from "../__mocks__/testUtils";
+import { TEST_WAIT_TIMEOUT, FOOTER_TEXT, loginAdeptUser, loginAdmin, loginBasicApprovedUser, loginEvaluator, loginExperimenter, testRouteRedirection } from "../__mocks__/testUtils";
 
-jest.setTimeout(LONG_TEST_TIMEOUT);
+jest.setTimeout(TEST_WAIT_TIMEOUT * 3);
 
 
 function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimenter = false, isAdeptUser = false) {
@@ -55,7 +55,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         it(`${route} should not redirect`, async () => {
             await testRouteRedirection(route, route);
             if (route == '/survey') {
-                page = await browser.newPage();
+                await jestPuppeteer.resetPage();
             }
             // /survey-results can take a long time to load because of multiple queries
         });
@@ -64,7 +64,7 @@ function runAllowedRoutesTests(isAdmin = false, isEvaluator = false, isExperimen
         it(`redirects ${route} to home when user permissions are not elevated`, async () => {
             await testRouteRedirection(route, '/');
             if (route == '/text-based') {
-                page = await browser.newPage();
+                await jestPuppeteer.resetPage();
             }
         });
     });

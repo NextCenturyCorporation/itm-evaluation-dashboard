@@ -1297,9 +1297,9 @@ export function getEvalOptionsForPage(page) {
     return dropdownOptions;
 }
 
-export function getAllEvals() {
+export function getAllEvals(evals = store.getState()?.configs?.evals) {
     const dropdownOptions = [];
-    for (const evalData of store.getState()?.configs?.evals) {
+    for (const evalData of evals) {
         dropdownOptions.push({ value: evalData.evalNumber, label: evalData.evalName });
     }
     dropdownOptions.reverse();

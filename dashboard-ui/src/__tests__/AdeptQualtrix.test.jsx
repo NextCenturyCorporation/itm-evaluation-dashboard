@@ -9,7 +9,7 @@ jest.setTimeout(SURVEY_STEP_TIMEOUT + 30000);
 
 describe('Test adept qualtrix entry method', () => {
     beforeEach(async () => {
-        page = await browser.newPage();
+        await jestPuppeteer.resetPage();
     });
 
     it('/remote-text-survey?adeptQualtrix=true should generate online PID', async () => {
@@ -23,7 +23,7 @@ describe('Test adept qualtrix entry method', () => {
 
     it('Each login to /remote-text-survey?adeptQualtrix=true should generate a valid PID', async () => {
         for (let i = 0; i < 2; i++) {
-            page = await browser.newPage();
+            await jestPuppeteer.resetPage();
             await startAdeptQualtrixSurvey(page);
             const currentUrl = page.url();
             const pid = currentUrl.split('pid=').slice(-1)[0].split('&')[0];
