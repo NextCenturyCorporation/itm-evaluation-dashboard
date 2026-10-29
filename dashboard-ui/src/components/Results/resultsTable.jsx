@@ -520,7 +520,7 @@ class ResultsTable extends React.Component {
                     {
                       ({ loading, error, data }) => {
                         if (loading) return <div>Loading ...</div>
-                        if (error) return <div>Error</div>
+                        if (error) throw error;
 
                         const scenarioNameOptions = data[getScenarioNamesQueryName];
                         let scenariosArray = [];
@@ -560,7 +560,7 @@ class ResultsTable extends React.Component {
                     {
                       ({ loading, error, data }) => {
                         if (loading) return <div>Loading ...</div>
-                        if (error) return <div>Error</div>
+                        if (error) throw error;
 
                         const performerADMOptions = data[getPerformerADMByScenarioName];
                         let performerADMArray = [];
@@ -600,7 +600,7 @@ class ResultsTable extends React.Component {
                     {
                       ({ loading, error, data }) => {
                         if (loading) return <div>Loading ...</div>
-                        if (error) return <div>Error</div>
+                        if (error) throw error;
 
                         const alignmentTargets = (data[getAlignmentTargetsPerScenario] || [])
                           .map(el => ({ value: el, name: el }))
@@ -638,7 +638,7 @@ class ResultsTable extends React.Component {
                 {
                   ({ loading, error, data }) => {
                     if (loading) return <div>Loading ...</div>
-                    if (error) return <div>Error</div>
+                    if (error) throw error;
                     const testData = data[getTestByADMandScenarioName];
                     return (
                       <>

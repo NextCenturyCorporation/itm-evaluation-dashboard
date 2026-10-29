@@ -8,7 +8,6 @@ import { DownloadButtons } from "./download-buttons";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import owPart3Defs from '../variables/Variable Definitions RQ8_OW_Part3.xlsx';
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import { EVAL_LABEL, valueColLabel } from "./ph2_rq8_ow_part1";
 
 const getAdmData = gql`
@@ -191,14 +190,14 @@ export function PH2RQ8OWPart3() {
     }, [formattedData, owScenarioFilters, targetFilters, admNameFilters]);
 
     const errors = [
-            error8,
-            error15,
-            error16
-        ].filter(Boolean);
-    
-        if (errors.length > 0) {
-            return <QueryErrorMessage errors={errors} />;
-        }
+        error8,
+        error15,
+        error16
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        throw errors;
+    }
 
     if (loading8 || loading15 || loading16) return <p>Loading...</p>;
 

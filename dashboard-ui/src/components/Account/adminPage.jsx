@@ -856,9 +856,22 @@ function AdminPage({ currentUser, updateUserHandler }) {
         }
     };
 
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
+    const errors = [
+        surveyVersionError,
+        uiStyleError,
+        textEvalError,
+        textEvalOptionsError,
+        demographicsError,
+        pidError,
+        allVersionsError,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        throw errors;
+    }
+
     if (surveyVersionLoading || uiStyleLoading || textEvalLoading || textEvalOptionsLoading || demographicsLoading) return <div className="loading">Loading data...</div>;
-    if (surveyVersionError) return <div className="error">Error loading survey version: {surveyVersionError.message}</div>;
-    if (uiStyleError) return <div className="error">Error loading UI style: {uiStyleError.message}</div>;
 
     return (
         <Container className="admin-page">
@@ -1056,7 +1069,7 @@ function AdminPage({ currentUser, updateUserHandler }) {
                     >
                         {({ loading, error, data }) => {
                             if (loading) return <div className="loading">Loading ...</div>;
-                            if (error) return <div className="error">Error: {error.message}</div>;
+                            if (error) throw error;
 
                             const nonSelected = { 'admin': [], 'evaluators': [], 'experimenters': [], 'adept': [], 'ta3': [], 'externalSimResearcher': [] };
 

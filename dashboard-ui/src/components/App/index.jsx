@@ -1,5 +1,5 @@
 import React from 'react';
-import { Router, Switch, Route, Redirect } from 'react-router-dom';
+import { Router, Switch, Route, Redirect, useLocation } from 'react-router-dom';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import history from './history';
 import gql from "graphql-tag";
@@ -7,7 +7,7 @@ import { useMutation, useQuery } from '@apollo/react-hooks';
 import { setupConfigWithImages, setupTextBasedConfig, setSurveyVersion, setCurrentUIStyle, setTextEval, setPidBoundsInStore, setShowDemographicsInStore, setEvalDataInStore } from './setupUtils';
 import { isDefined } from '../AggregateResults/DataFunctions';
 import HomePage from '../Home/home';
-import { QueryErrorMessage } from '../ErrorHandling/QueryErrorMessage';
+import { ErrorBoundary } from '../ErrorHandling/ErrorBoundaries';
 import { TextBasedScenariosPageWrapper } from '../TextBasedScenarios/TextBasedScenariosPage';
 import LoginApp from '../Account/login';
 import ResetPassPage from '../Account/resetPassword';
@@ -123,6 +123,13 @@ export function hasAccess(currentUser, allowedRoles) {
     if (!currentUser) return false;
 
     return allowedRoles.some(role => currentUser[role] === true); // true if user has any required role flag enabled
+}
+
+// error boundary for page content that resets on navigation, so an error on one page doesn't block the others.
+// it is the only boundary that catches uncaught event handler/async errors, so the header stays usable when they occur
+function RouteErrorBoundary({ children }) {
+    const location = useLocation();
+    return <ErrorBoundary resetKeys={[location.pathname]} catchUncaughtErrors>{children}</ErrorBoundary>;
 }
 
 export function App() {
@@ -479,11 +486,9 @@ export function App() {
         }
     };
 
-    // show error message if an participantLog Error occurs
+    // show error message if any error type occurs
     if (versionError) {
-        return(
-            <QueryErrorMessage error={versionError}></QueryErrorMessage>
-        );
+        throw versionError;
     }
     
     if (versionLoading) {
@@ -497,6 +502,7 @@ export function App() {
                     <Header currentUser={currentUser} logout={logout} />
                 }
                 <div className="main-content">
+                    <RouteErrorBoundary>
                     <React.Suspense fallback={<div>Loading...</div>}>
                     <Switch>
                         <Route exact path="/" component={Home} />
@@ -555,6 +561,7 @@ export function App() {
 
                     </Switch>
                     </React.Suspense>
+                    </RouteErrorBoundary>
                 </div>
                 <AlreadyCompleteModal
                     open={alreadyComplete.open}

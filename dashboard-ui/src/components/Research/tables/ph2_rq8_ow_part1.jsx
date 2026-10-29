@@ -8,7 +8,6 @@ import { DownloadButtons } from "./download-buttons";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import owPart1Defs from '../variables/Variable Definitions RQ8_OW_Part1.xlsx';
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 
 const getAdmData = gql`
     query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
@@ -217,7 +216,7 @@ export function PH2RQ8OWPart1() {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        return <QueryErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loading8 || loading15 || loading16) return <p>Loading...</p>;

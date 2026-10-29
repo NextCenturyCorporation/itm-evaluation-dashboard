@@ -628,7 +628,7 @@ export const ADMProbeResponses = (props) => {
                                     >
                                         {({ loading, error, data }) => {
                                             if (loading) return <div>Loading...</div>;
-                                            if (error) return <div>Error loading test data</div>;
+                                            if (error) throw error;
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
 
