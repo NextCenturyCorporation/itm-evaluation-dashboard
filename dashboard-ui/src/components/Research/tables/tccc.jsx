@@ -128,9 +128,14 @@ export function TCCC({ evalDate }) {
         }
     }, [filteredTcccData, allTcccData]);
 
-    // show error message if an error occurs
-    if (errorallTcccData) {
-        throw errorallTcccData;
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
+    const errors = [
+        errorfilteredTcccData,
+        errorallTcccData,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        throw errors;
     }
 
     if (loadingallTcccData) return <p>Loading...</p>;

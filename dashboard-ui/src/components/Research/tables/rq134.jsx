@@ -569,6 +569,7 @@ export function RQ134({ evalNum, tableTitle }) {
         errorTextResults,
         errorADMs,
         errorMedics,
+        errorDemo,
         errorComparisonData,
         errorSim,
     ].filter(Boolean);
