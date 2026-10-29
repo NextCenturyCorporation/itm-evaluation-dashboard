@@ -492,7 +492,7 @@ export function PH2RQ2223({ evalNum }) {
     });
 
     if (loading || (dataRef.current !== evalNum && data?.getRQ2HistoryByEvalNumber?.length > 0)) return <p>Loading...</p>;
-    if (error) return <p>Error: {error.message}</p>;
+    if (error) throw error;
 
     return (
         <>

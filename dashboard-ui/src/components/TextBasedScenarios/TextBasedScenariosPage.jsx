@@ -78,7 +78,6 @@ export function TextBasedScenariosPageWrapper(props) {
 
     // show loading screen
     if (participantLogLoading) return <p>Loading...</p>;
-    if (participantLogError) return <p>Error</p>;
     
     // configs gql query hasn't finished yet
     if (!textBasedConfigs || Object.keys(textBasedConfigs).length === 0) {
