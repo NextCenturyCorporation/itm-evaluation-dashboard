@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, Button, Collapse } from 'react-bootstrap';
 
-export function AppErrorMessage({error, errors=[]}) {
+export function AppErrorMessage({error, errors=[], onReload, onGoHome}) {
     // instantiate all necessary variables
     // an array to hold one or more Apollo Error objects
     const allErrors = [...(error ? [error] : []),
@@ -104,8 +104,25 @@ export function AppErrorMessage({error, errors=[]}) {
                 <Card bg="light" border="dark" className="error-message" >
                     <Card.Header> <h4>APPLICATION ERROR</h4> </Card.Header>
                     <Card.Body>
-                        <p>Please try reloading the page. If the problem persists, contact an administrator.</p>
-                        
+                        {onReload || onGoHome ? (
+                            <p>Something went wrong on this page. You can reload it, return home, or use the navigation above. If the problem persists, contact an administrator.</p>
+                        ) : (
+                            <p>Please try reloading the page. If the problem persists, contact an administrator.</p>
+                        )}
+
+                        {/* recovery actions are only passed in by the ErrorBoundary */}
+                        {onReload && (
+                            <Button variant="primary" size="sm" className="me-2" onClick={onReload}>
+                                Reload Page
+                            </Button>
+                        )}
+
+                        {onGoHome && (
+                            <Button variant="primary" size="sm" className="me-2" onClick={onGoHome}>
+                                Go to Home Page
+                            </Button>
+                        )}
+
                         <Button
                             variant="secondary"
                             size="sm"

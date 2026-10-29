@@ -72,6 +72,7 @@ export function ReviewTextBasedPage() {
         if (configName.includes('Urban')) return 'Urban';
         
         if (config.scenario_id) return config.scenario_id;
+        //if (config.scenario_id) return config.error.scenario_id;
         
         return configName.replace('-1', '').charAt(0).toUpperCase() + 
                configName.replace('-1', '').slice(1);

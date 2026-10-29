@@ -1,5 +1,5 @@
 import React from 'react';
-import { Router, Switch, Route, Redirect } from 'react-router-dom';
+import { Router, Switch, Route, Redirect, useLocation } from 'react-router-dom';
 import { accountsClient, accountsGraphQL } from '../../services/accountsService';
 import history from './history';
 import gql from "graphql-tag";
@@ -123,6 +123,12 @@ export function hasAccess(currentUser, allowedRoles) {
     if (!currentUser) return false;
 
     return allowedRoles.some(role => currentUser[role] === true); // true if user has any required role flag enabled
+}
+
+// error boundary for page content that resets on navigation, so an error on one page doesn't block the others
+function RouteErrorBoundary({ children }) {
+    const location = useLocation();
+    return <ErrorBoundary resetKeys={[location.pathname]}>{children}</ErrorBoundary>;
 }
 
 export function App() {
@@ -495,7 +501,7 @@ export function App() {
                     <Header currentUser={currentUser} logout={logout} />
                 }
                 <div className="main-content">
-                    <ErrorBoundary>
+                    <RouteErrorBoundary>
                     <React.Suspense fallback={<div>Loading...</div>}>
                     <Switch>
                         <Route exact path="/" component={Home} />
@@ -554,7 +560,7 @@ export function App() {
 
                     </Switch>
                     </React.Suspense>
-                    </ErrorBoundary>
+                    </RouteErrorBoundary>
                 </div>
                 <AlreadyCompleteModal
                     open={alreadyComplete.open}
