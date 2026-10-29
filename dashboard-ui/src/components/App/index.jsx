@@ -125,10 +125,11 @@ export function hasAccess(currentUser, allowedRoles) {
     return allowedRoles.some(role => currentUser[role] === true); // true if user has any required role flag enabled
 }
 
-// error boundary for page content that resets on navigation, so an error on one page doesn't block the others
+// error boundary for page content that resets on navigation, so an error on one page doesn't block the others.
+// it is the only boundary that catches uncaught event handler/async errors, so the header stays usable when they occur
 function RouteErrorBoundary({ children }) {
     const location = useLocation();
-    return <ErrorBoundary resetKeys={[location.pathname]}>{children}</ErrorBoundary>;
+    return <ErrorBoundary resetKeys={[location.pathname]} catchUncaughtErrors>{children}</ErrorBoundary>;
 }
 
 export function App() {
