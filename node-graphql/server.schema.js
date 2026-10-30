@@ -1159,27 +1159,20 @@ const resolvers = {
         const highPid = pidBounds?.highPid
 
         const timestamp = generateServerTimestamp();
-        let generatedPid;
-        if (!Number.isFinite(args.participantData.ParticipantID)) {
-          console.log(`[${timestamp}] Invalid PID detected, querying for highest PID`);
-
-          const highestPidDoc = await context.db.collection('participantLog')
-            .find({
-              ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
-            })
-            .sort({ ParticipantID: -1 })
-            .limit(1)
-            .toArray();
-          
-          let generatedPid = lowPid
-          if (highestPidDoc.length > 0) {
-            generatedPid = Number(highestPidDoc[0].ParticipantID) + 1
-          }
-
-          args.participantData.ParticipantID = generatedPid;
-        } else {
-          generatedPid = args.participantData.ParticipantID
+        const highestPidDoc = await context.db.collection('participantLog')
+          .find({
+            ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
+          })
+          .sort({ ParticipantID: -1 })
+          .limit(1)
+          .toArray();
+        
+        let generatedPid = lowPid
+        if (highestPidDoc.length > 0) {
+          generatedPid = Number(highestPidDoc[0].ParticipantID) + 1
         }
+
+        args.participantData.ParticipantID = generatedPid;
 
         // try to insert with our validated PID
         try {
