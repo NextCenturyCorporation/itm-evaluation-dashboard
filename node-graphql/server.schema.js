@@ -197,7 +197,7 @@ function requireUser(context, roles) {
 
 function isStaff(context, roles = STAFF_ROLES) {
   const user = context.currentUser
-  if (!user) return False
+  if (!user) return false
   return user.approved && !user.rejected && roles.some(role => user[role] === true)
 }
 
@@ -625,7 +625,7 @@ const resolvers = {
           conditions.push({
             $or: [
               { "results.pid": pid },
-              { "results.evalNumber.Participant ID Page.questions.Participant ID.response": pid}
+              { "results.Participant ID Page.questions.Participant ID.response": pid}
             ]
           })
         }
@@ -1170,8 +1170,11 @@ const resolvers = {
             .sort({ ParticipantID: -1 })
             .limit(1)
             .toArray();
-
-          generatedPid = highestPidDoc.length > 0 ? Number(highestPidDoc[0].ParticipantID) + 1 : lowPid;
+          
+          let generatedPid = lowPid
+          if (highestPidDoc.length > 0) {
+            generatedPid = Number(highestPidDoc[0].ParticipantID) + 1
+          }
 
           args.participantData.ParticipantID = generatedPid;
         } else {

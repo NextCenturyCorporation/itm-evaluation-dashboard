@@ -5,7 +5,7 @@ const STORAGE_KEY = 'participantToken'
 
 export function getParticipantToken() {
     try {
-        return sessionStorage.getItems(STORAGE_KEY)
+        return sessionStorage.getItem(STORAGE_KEY)
     }
     catch (err) {
         return null
@@ -17,7 +17,7 @@ export function setParticipantToken(token) {
         return
     }
     try {
-        sessionStorage.setItems(STORAGE_KEY, token)
+        sessionStorage.setItem(STORAGE_KEY, token)
     }
     catch (err) {
         console.warn('Could not store participant token')
