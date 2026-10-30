@@ -829,7 +829,7 @@ const resolvers = {
       return await context.db.collection('surveyResults').countDocuments({ "results.aiGroupFirst": true });
     },
     getParticipantLog: async (obj, args, context, info) => {
-      requireUser(context, STAFF_ROLES)
+      requireUser(context, [...STAFF_ROLES, 'externalSimResearcher'])
       return await context.db.collection('participantLog').find().toArray().then(result => { return result });
     },
     getParticipantByPid: (obj, args, context) => {
