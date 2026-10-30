@@ -1154,24 +1154,9 @@ const resolvers = {
     },
     addNewParticipantToLog: async (obj, args, context, inflow) => {
       try {
-        const pidBounds = await context.db.collection('surveyVersion').findOne();
-        const lowPid = pidBounds?.lowPid;
-        const highPid = pidBounds?.highPid
-
         const timestamp = generateServerTimestamp();
-        const highestPidDoc = await context.db.collection('participantLog')
-          .find({
-            ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
-          })
-          .sort({ ParticipantID: -1 })
-          .limit(1)
-          .toArray();
         
-        let generatedPid = lowPid
-        if (highestPidDoc.length > 0) {
-          generatedPid = Number(highestPidDoc[0].ParticipantID) + 1
-        }
-
+        const generatedPid = await getNextParticipantId(context.db)
         args.participantData.ParticipantID = generatedPid;
 
         // try to insert with our validated PID
@@ -1186,16 +1171,8 @@ const resolvers = {
             console.log(`[${timestamp}] DUPLICATE KEY ERROR for PID: ${args.participantData.ParticipantID}`);
             console.log(`[${timestamp}] Retrying with new PID generation`);
 
-            // get absolute latest highest PID
-            const highestPidDoc = await context.db.collection('participantLog')
-              .find({
-                ParticipantID: { $type: "number", $lt: highPid, $gte: lowPid }
-              })
-              .sort({ ParticipantID: -1 })
-              .limit(1)
-              .toArray();
-
-            const retryPid = Number(highestPidDoc[0].ParticipantID) + 1;
+            // get absolute latest highest PID 
+            const retryPid = await getNextParticipantId(context.db);
             console.log(`[${timestamp}] New retry PID generated: ${retryPid}`);
 
             args.participantData.ParticipantID = retryPid;
