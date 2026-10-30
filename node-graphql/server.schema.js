@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { participantIdFilter, getParticipantByEmail, getNextParticipantId, getParticipantProgressDetails } = require('./participantQueries');
 const { getParticipantProgress } = require('./participantProgress');
 const { TOKEN_SECRET } = require('./account-configs');
+const { signParticipantToken, RESUME_LINK_TTL } = require('./participantAuth')
 
 const typeDefs = gql`
   scalar JSON
@@ -169,7 +170,7 @@ async function requireAdmin(context, caller) {
     const user = await context.db.collection('users')
         .findOne({ username }, { projection: { _id: 1, username: 1, admin: 1, approved: 1, rejected: 1 } });
 
-    if (!(session?.valid && String(session.userId) === String(user?._id) && user?.admin && user?.approved && user?.rejected)) {
+    if (!(session?.valid && String(session.userId) === String(user?._id) && user?.admin && user?.approved && !user?.rejected)) {
         throw new GraphQLError('Users outside of the admin group cannot perform this action.', {
             extensions: { code: '403' }
         });
@@ -194,12 +195,25 @@ function requireUser(context, roles) {
   return user
 }
 
-const ALLOWED_ADM_QUERY_FIELDS = ['adm_name', 'history.paramters.adm_name', 'history.parameters.ADM Name']
+function isStaff(context, roles = STAFF_ROLES) {
+  const user = context.currentUser
+  if (!user) return False
+  return user.approved && !user.rejected && roles.some(role => user[role] === true)
+}
+
+function requireParticipantOrStaff(context, pid) {
+  if (pid != null && context.participant?.pid === String(pid)) {
+    return
+  }
+  requireUser(context, STAFF_ROLES)
+}
+
+const ALLOWED_ADM_QUERY_FIELDS = ['adm_name', 'history.parameters.adm_name', 'history.parameters.ADM Name']
 const ADM_QUERY_MAX_TIME = 5000
 
 function admFieldOrThrow(field) {
   if (!ALLOWED_ADM_QUERY_FIELDS.includes(field)) {
-    throw new GraphQLError('Invalid admQuertyStr', { extensions: { code: '400' } })
+    throw new GraphQLError('Invalid admQueryStr', { extensions: { code: '400' } })
   }
   return field
 }
@@ -599,11 +613,25 @@ const resolvers = {
         ]
       };
 
-      return await context.db.collection('surveyResults').find({
-        $and: [excludeTestID, surveyVersionFilter, {
-          $or: [{ "evalNumber": args["evalNumber"] }, { "results.evalNumber": args["evalNumber"] }]
+      const conditions = [excludeTestID, surveyVersionFilter, {
+        $or: [{ "evalNumber": args["evalNumber"] }, { "results.evalNumber": args["evalNumber"] }]
         }]
-      }).project({
+
+        if (!isStaff(context, [...STAFF_ROLES, 'externalSimResearcher'])) {
+          if (!context.participant) {
+            throw new GraphQLError('Login required', { extensions: { code: '401' } })
+          }
+          const pid = context.participant.pid
+          conditions.push({
+            $or: [
+              { "results.pid": pid },
+              { "results.evalNumber.Participant ID Page.questions.Participant ID.response": pid}
+            ]
+          })
+        }
+
+      return await context.db.collection('surveyResults').find({
+        $and: conditions}).project({
         // dont return user field
         "results.user": 0,
         "user": 0
@@ -668,16 +696,25 @@ const resolvers = {
     },
     getCompletedTextScenarios: async (obj, args, context, inflow) => {
       if (!args.pid) return [];
+      requireParticipantOrStaff(context, args.pid)
       const docs = await context.db.collection('userScenarioResults')
         .find({ participantID: args.pid }, { projection: { scenario_id: 1 } })
         .toArray();
       return docs.map(d => d.scenario_id).filter(Boolean);
     },
     getAllScenarioResultsByEval: async (obj, args, context, inflow) => {
-      return await context.db.collection('userScenarioResults').find({
+      const filter = {
         "participantID": { $not: /test/i },
         "evalNumber": args["evalNumber"]
-      }).toArray().then(result => { return result; });
+      }
+
+      if (!isStaff(context)) {
+        if (!context.participant) {
+          throw new GraphQLError('Login required', { extensions: { code: '401' } })
+        }
+        filter.participantID = context.participant.pid
+      }
+      return await context.db.collection('userScenarioResults').find(filter).toArray().then(result => { return result; });
     },
     getScenarioResultsByEvalArray: async (obj, args, context, inflow) => {
       requireUser(context, STAFF_ROLES)
@@ -792,13 +829,35 @@ const resolvers = {
       return await context.db.collection('surveyResults').countDocuments({ "results.aiGroupFirst": true });
     },
     getParticipantLog: async (obj, args, context, info) => {
+      requireUser(context, STAFF_ROLES)
       return await context.db.collection('participantLog').find().toArray().then(result => { return result });
     },
-    getParticipantByPid: (obj, args, context) => context.db.collection('participantLog').findOne(participantIdFilter(args.pid), { sort: { _id: 1 } }),
-    getParticipantByEmail: (obj, args, context) => getParticipantByEmail(context.db, args.hashedEmail, args.evalNumber),
+    getParticipantByPid: (obj, args, context) => {
+      requireParticipantOrStaff(context, args.pid)
+      return context.db.collection('participantLog').findOne(participantIdFilter(args.pid), { sort: { _id: 1 } })
+    },
+    getParticipantByEmail: async (obj, args, context) => {
+      const participant = await getParticipantByEmail(context.db, args.hashedEmail, args.evalNumber)
+      if (!participant) {
+        return null
+      }
+      participant.participantToken = signParticipantToken(participant.ParticipantID)
+      return participant
+    },
     getNextParticipantId: (obj, args, context) => getNextParticipantId(context.db),
-    getParticipantProgress: (obj, args, context) => getParticipantProgress(context.db, args),
-    getParticipantProgressDetails: (obj, args, context) => getParticipantProgressDetails(context.db, args.pid),
+    getParticipantProgress: async (obj, args, context) => {
+      requireUser(context, STAFF_ROLES)
+      const page = await getParticipantProgress(context.db, args)
+
+      for (const row of page.rows) {
+        row.resumeToken = signParticipantToken(row.pid, RESUME_LINK_TTL)
+      }
+      return page
+    },
+    getParticipantProgressDetails: (obj, args, context) => {
+      requireUser(context, STAFF_ROLES)
+      return getParticipantProgressDetails(context.db, args.pid)
+    },
     getHumanToADMComparison: async (obj, args, context, info) => {
       requireUser(context, STAFF_ROLES)
       return await context.db.collection('humanToADMComparison').find().toArray().then(result => { return result });
@@ -1030,6 +1089,8 @@ const resolvers = {
       }
     },
     uploadSurveyResults: async (obj, args, context, inflow) => {
+      const results = args.results || {}
+      requireParticipantOrStaff(context, results.pid)
       const filter = { surveyId: args.surveyId }
       const update = { $set: { results: args.results } }
       const options = { upsert: true }
@@ -1037,6 +1098,7 @@ const resolvers = {
       return await context.db.collection('surveyResults').updateOne(filter, update, options)
     },
     uploadDemographics: async (obj, args, context, inflow) => {
+      requireParticipantOrStaff(context, args.surveyId)
       const filter = { surveyId: args.surveyId }
       const update = { $set: { results: args.results } }
       const options = { upsert: true }
@@ -1046,6 +1108,7 @@ const resolvers = {
     uploadScenarioResults: async (obj, args, context, inflow) => {
       const results = args.results
       for (const result of results) {
+        requireParticipantOrStaff(context, result.participantID)
         if (result.participantID.toLowerCase().includes('test')) { continue }
         await context.db.collection('userScenarioResults').insertOne(result)
       }
@@ -1053,6 +1116,7 @@ const resolvers = {
     upsertScenarioResult: async (obj, args, context, inflow) => {
       const result = args.result;
       if (!result || !result.participantID) return null;
+      requireParticipantOrStaff(context, result.participantID)
       if (result.participantID.toLowerCase().includes('test')) { return null; }
       return await context.db.collection('userScenarioResults').updateOne(
         { participantID: result.participantID, scenario_id: result.scenario_id, evalNumber: result.evalNumber },
@@ -1119,7 +1183,8 @@ const resolvers = {
           args.participantData.timestamp = timestamp;
           const result = await context.db.collection('participantLog').insertOne(args.participantData);
           console.log(`[${timestamp}] Insert SUCCESS for PID: ${args.participantData.ParticipantID}`);
-          return { ...result, generatedPid };
+          const participantToken = signParticipantToken(generatedPid)
+          return { ...result, generatedPid, participantToken };
         } catch (error) {
           if (error.code === 11000) { // ff we hit a duplicate
             console.log(`[${timestamp}] DUPLICATE KEY ERROR for PID: ${args.participantData.ParticipantID}`);
@@ -1143,7 +1208,8 @@ const resolvers = {
             const retryResult = await context.db.collection('participantLog')
               .insertOne(args.participantData);
             console.log(`[${timestamp}] Retry insert SUCCESS for PID: ${retryPid}`);
-            return retryResult;
+            const participantToken = signParticipantToken(retryPid)
+            return { ...retryResult, participantToken };
           }
           console.error(`[${timestamp}] NON-DUPLICATE ERROR:`, error);
           throw error;
@@ -1179,6 +1245,7 @@ const resolvers = {
       return result.value.version
     },
     updateParticipantLog: async (obj, args, context, inflow) => {
+      requireParticipantOrStaff(context, args.pid)
       return await context.db.collection('participantLog').update(
         { "ParticipantID": Number(args["pid"]) },
         { $set: sanitizeParticipantLogUpdates(args["updates"]) }

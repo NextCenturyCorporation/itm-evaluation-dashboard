@@ -6,6 +6,7 @@ import { createHttpLink } from 'apollo-link-http'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import gql from 'graphql-tag';
 import { isDefined } from '../components/AggregateResults/DataFunctions';
+import { getParticipantToken } from './participantToken'
 let { API_URL } = require('./config');
 if (!isDefined(API_URL))
   API_URL = `http://localhost:${process.env.REACT_APP_TESTING === 'true' ? process.env.REACT_APP_GRAPHQL_TEST_PORT : 9100}/api`;
@@ -23,6 +24,10 @@ const httpLink = createHttpLink({
       catch (err) {
         console.warn('Could not refresh login session, sending request without a token')
       }
+    }
+    const participantToken = getParticipantToken()
+    if (participantToken) {
+      options.headers = { ...options.headers, 'X-Participant-Token': participantToken }
     }
     return fetch(uri, options)
   }

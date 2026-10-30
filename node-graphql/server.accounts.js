@@ -11,6 +11,7 @@ const {
     processQueryComplexity 
 } = require('./complexityUtil');
 const { rateLimit } = require('./rateLimiter');
+const { verifyParticipantToken } = require('./participantAuth.js')
 
 // Generate the accounts-js GraphQL module
 const accountsGraphQL = AccountsModule.forRoot({ accountsServer });
@@ -157,7 +158,7 @@ const server = new ApolloServer({
     context: async ({ req }) => {
         let currentUser = null
         const auth = req.headers.authorization || ''
-        if (auth.startsWith(' Bearer ')) {
+        if (auth.startsWith('Bearer ')) {
             try {
                 currentUser = await accountsServer.resumeSession(auth.slice('Bearer '.length))
             }
@@ -166,7 +167,8 @@ const server = new ApolloServer({
                 currentUser = null
             }
         }
-        return { db: dashboardDB.db, req: req, currentUser };
+        const participant = verifyParticipantToken(req.headers['x-participant-token'])
+        return { db: dashboardDB.db, req: req, currentUser, participant };
     },
     formatError: (error) => {
         console.log(error)

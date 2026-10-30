@@ -4,6 +4,7 @@ import gql from "graphql-tag";
 import { useHistory, useLocation } from 'react-router-dom';
 import { useSelector } from "react-redux";
 import { findParticipantByPid, getNextParticipantId } from '../../services/participantService';
+import { setParticipantToken } from "../../services/participantToken";
 import '../../css/scenario-page.css';
 import { evalNameToNumber, phase1ParticipantData, juneJulyParticipantData, septemberParticipantData, ukParticipantData, octoberParticipantData, febParticipantData, aprilParticipantData, juneParticipantData, canadaParticipantData } from "./config";
 
@@ -37,7 +38,19 @@ export default function StartOnline() {
 
         // reached using survey link from progress table
         if (existingPid) {
-            const matchedLog = await findParticipantByPid(existingPid);
+            // Survey links from the progress table carry a token for this participant
+            setParticipantToken(currentSearchParams.get('ptoken'))
+            currentSearchParams.delete('ptoken')
+
+            let matchedLog = null
+            try {
+                matchedLog = await findParticipantByPid(existingPid);
+            }
+
+            catch (err) {
+                matchedLog = null
+            }
+            
             if (matchedLog) {
                 currentSearchParams.set('class', 'Online');
                 history.push({
@@ -73,6 +86,7 @@ export default function StartOnline() {
 
         // update database
         const addRes = await addParticipant({ variables: { participantData } });
+        setParticipantToken(addRes?.data?.addNewParticipantToLog?.participantToken)
         // extra step to prevent duplicate pids
         newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
 

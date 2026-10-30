@@ -33,6 +33,7 @@ import '../../css/surveyResults.css';
 import store from '../../store/store';
 import AlreadyCompleteModal from '../TextBasedScenarios/alreadyCompleteModal';
 import { findParticipantByEmail, getNextParticipantId } from '../../services/participantService';
+import { setParticipantToken } from '../../services/participantToken';
 
 // Lazy load components that are very expensive or only reachable via admin accounts.
 // React.lazy requires a module with a default export, so named exports are remapped below.
@@ -392,7 +393,8 @@ export function App() {
                 alert("This email address is taken. Please enter a different email.");
                 return;
             }
-
+        
+            setParticipantToken(addRes?.data?.addNewParticipantToLog?.participantToken)
             newPid = addRes?.data?.addNewParticipantToLog?.ops?.[0]?.ParticipantID;
             history.push("/text-based?pid=" + newPid);
             return;
