@@ -154,8 +154,19 @@ const server = new ApolloServer({
             },
         },
     ],
-    context: ({ req }) => {
-        return { db: dashboardDB.db, req: req };
+    context: async ({ req }) => {
+        let currentUser = null
+        const auth = req.headers.authorization || ''
+        if (auth.startsWith(' Bearer ')) {
+            try {
+                currentUser = await accountsServer.resumeSession(auth.slice('Bearer '.length))
+            }
+            
+            catch (err) {
+                currentUser = null
+            }
+        }
+        return { db: dashboardDB.db, req: req, currentUser };
     },
     formatError: (error) => {
         console.log(error)

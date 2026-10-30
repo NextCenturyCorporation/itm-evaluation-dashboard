@@ -11,7 +11,21 @@ if (!isDefined(API_URL))
   API_URL = `http://localhost:${process.env.REACT_APP_TESTING === 'true' ? process.env.REACT_APP_GRAPHQL_TEST_PORT : 9100}/api`;
 
 const httpLink = createHttpLink({
-  uri: API_URL
+  uri: API_URL,
+  fetch: async (uri, options) => {
+    if (!options.headers?.Authorization) {
+      try {
+        const tokens = await accountsClient.refreshSession()
+        if (tokens?.accessToken) {
+          options.headers = { ...options.headers, Authorization: `Bearer ${tokens.accessToken}` }
+        }
+      }
+      catch (err) {
+        console.warn('Could not refresh login session, sending request without a token')
+      }
+    }
+    return fetch(uri, options)
+  }
 });
 
 const apolloClient = new ApolloClient({
