@@ -15,8 +15,9 @@ const ADD = 'mutation($d: JSON) { addNewParticipantToLog(participantData: $d) }'
 const READ = 'query($pid: String!) { getParticipantByPid(pid: $pid) }'
 const UPDATE = 'mutation($pid: String) { updateParticipantLog(pid: $pid, updates: { claimed: true }) }'
 const SAVE = 'mutation($r: JSON) { upsertScenarioResult(result: $r) }'
-const BULK = '{ getAllScenarioResultsByEvalNumber(evalNumber: 17) }'
+const BULK = '{ getAllScenarioResultsByEval(evalNumber: 17) }'
 
+// Build the same context server.account.js odes from X-Participant-Token Header
 const asParticipant = token => ({ participant: verifyParticipantToken(token)})
 const run = (source, variableValues, context = {}) => graphql({ schema, source, variableValues, contextValue: {db, ...context}})
 const refused = result => result.errors?.[0]?.message.startsWith('Login required')
@@ -44,7 +45,7 @@ test('a participant token only reaches its own PID', async () => {
     const b = await addParticipant()
     const asA = asParticipant(a.token)
     await run(SAVE, { r: {participantID: a.pid, scenario_id: 'check-A', evalNumber: 17 } }, asA)
-    await run(SAVE, { r: {participantID: a.pid, scenario_id: 'check-B', evalNumber: 17 } }, asParticipant(b.token))
+    await run(SAVE, { r: {participantID: b.pid, scenario_id: 'check-B', evalNumber: 17 } }, asParticipant(b.token))
     
     expect((await run(READ, { pid: a.pid }, asA)).errors).toBeUndefined()
     expect(pidsIn(await run(BULK, {}, staff))).toEqual(expect.arrayContaining([a.pid, b.pid]))
