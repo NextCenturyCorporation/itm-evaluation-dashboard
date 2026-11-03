@@ -32,7 +32,7 @@ const GET_PARTICIPANT_LOG = gql`
 
 // This is for referencing the proper variable defs
 // Update the variable name and eval numbers as necessary
-const FEB26_EVALS = [15, 18];
+const FEB26_EVALS = [15, 18, 19];
 
 // Legacy PH2 behavior grouped these together
 const LEGACY_COMBINED_EVALS = [8, 9, 10];
@@ -61,7 +61,7 @@ export function PH2RQ8({ evalNum }) {
     }, [evalNum]);
 
     const definitionFile = React.useMemo(() => {
-        if (evalNum === 18) return ph2Canada26DefinitionXLFile;
+        if ([18, 19].includes(evalNum)) return ph2Canada26DefinitionXLFile;
         return mode === "feb26" ? ph2Feb26DefinitionXLFile : ph2LegacyDefinitionXLFile;
     }, [evalNum, mode]);
 
