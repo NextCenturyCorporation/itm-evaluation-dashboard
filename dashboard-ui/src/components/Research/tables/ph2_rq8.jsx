@@ -94,6 +94,18 @@ export function PH2RQ8({ evalNum }) {
         return k?.parameters?.find((p) => p?.name === paramName)?.value;
     }, []);
 
+    const getMidpointValue = React.useCallback((entry, modality, kdmaName) => {
+        const measurement = entry?.midpoint_values?.[modality]?.[kdmaName];
+        const value = measurement?.value;
+        if (!measurement?.sid || typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+            return undefined;
+        }
+        if (modality === "open_world" && measurement.sid !== entry?.data?.alignment?.sid) {
+            return undefined;
+        }
+        return value;
+    }, []);
+
     const getTextKdmaScalar = React.useCallback((kdmas, shortName) => {
         const kdmaMap = {
             AF: "affiliation",
@@ -353,6 +365,21 @@ export function PH2RQ8({ evalNum }) {
                     valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
                 }
 
+                if ([18, 19].includes(currentEvalNum)) {
+                    for (const [shortName, kdmaName] of [
+                        ["AF", "affiliation"], ["MF", "merit"],
+                        ["PS", "personal_safety"], ["SS", "search"]
+                    ]) {
+                        valueMap[`${shortName}_midpoint_Text`] =
+                            getMidpointValue(desertEntry, "text", kdmaName) ??
+                            getMidpointValue(urbanEntry, "text", kdmaName);
+                        if (shortName === "AF" || shortName === "MF") {
+                            valueMap[`${shortName}_midpoint_Desert`] = getMidpointValue(desertEntry, "open_world", kdmaName);
+                            valueMap[`${shortName}_midpoint_Urban`] = getMidpointValue(urbanEntry, "open_world", kdmaName);
+                        }
+                    }
+                }
+
                 for (const field of definitionFields) {
                     if (field === "Participant_ID" || field === "Probe Set Assessment") continue;
                     if (valueMap[field] !== undefined) continue;
@@ -411,6 +438,7 @@ export function PH2RQ8({ evalNum }) {
         buildProbeFieldsFromEntry,
         getKdmaParam,
         getKdmaValue,
+        getMidpointValue,
         getTextKdmaParam,
         getTextKdmaScalar,
         normalizeBlank,
