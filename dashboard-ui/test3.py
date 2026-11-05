@@ -1,10 +1,9 @@
-
-
-import json, os, urllib.request
+import json, os, urllib.request, sys
 url = "http://localhost:9100/api/"
+token = sys.argv[1] if len(sys.argv) > 1 else ""
 query = "query($f:String,$s:ID,$v:ID,$n:Int) {getTestByADMandScenario(admQueryStr:$f,scenarioID:$s,admName:$v,alignmentTarget:null,evalNumber:$n)}"
 cases = (
-    ("normal-miss", "history.parameters.adm_name", "definitely-not-anadm"),
+    ("normal-miss", "history.parameters.adm_name", "definitely-not-an-adm"),
     ("where-false", "$where", "return false"),
     ("where-true", "$where", "return true"),
     ("where-error", "$where", 'throw new Error("ITM_WHERE_CANARY_20261021")'),
@@ -14,7 +13,7 @@ for label, field, value in cases:
     request = urllib.request.Request(
     url,
     data=json.dumps(payload).encode(),
-    headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRva2VuIjoiZDYyYzVjOTRjYThlZTdjYTQwM2Q5YTY2NDNiMmVlYjM4YmQxYTIwODkzYjdmZThmZDkwZDljNWY1YWUxZWJmMzkzYWNlYTBmNWRjZTE1ZTNlOTc4ZGEiLCJpc0ltcGVyc29uYXRlZCI6ZmFsc2UsInVzZXJJZCI6IjY5M2FkYTcwNjQ5NTJiNGVhY2Q0MGEzZSJ9LCJpYXQiOjE3OTMzOTIwMTgsImV4cCI6MTc5MzM5NzQxOH0.hwFQWmTd0Nybmb-2IDvzGcSYHCVLz979b2uyhHcK25I"},
+    headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0", "Authorization": "Bearer " + token},
  )
     with urllib.request.urlopen(request, timeout=30) as response:
         result = json.loads(response.read())

@@ -53,7 +53,7 @@ export default function StartOnline() {
             
             if (matchedLog) {
                 currentSearchParams.set('class', 'Online');
-                history.push({
+                history.replace({
                     pathname: '/text-based',
                     search: `?${currentSearchParams.toString()}`,
                 });
@@ -93,7 +93,7 @@ export default function StartOnline() {
         currentSearchParams.set('pid', newPid);
         currentSearchParams.set('class', 'Online');
         
-        history.push({
+        history.replace({
             pathname: '/text-based',
             search: `?${currentSearchParams.toString()}`,
         });
