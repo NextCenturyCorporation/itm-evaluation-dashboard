@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
 import { apolloClient } from './accountsService';
+import { setParticipantToken } from './participantToken';
 
 export const GET_PARTICIPANT_BY_PID = gql`
     query GetParticipantByPid($pid: String!) {
@@ -23,7 +24,11 @@ export async function findParticipantByEmail(hashedEmail, evalNumber) {
         variables: { hashedEmail, evalNumber },
         fetchPolicy: 'no-cache'
     });
-    return data.getParticipantByEmail;
+    const participant = data.getParticipantByEmail
+    if (participant) {
+        setParticipantToken(participant.participantToken)
+    }
+    return participant;
 }
 
 export async function findParticipantByPid(pid) {
