@@ -4,7 +4,7 @@ import VisibilityOffIcon from '@material-ui/icons/VisibilityOff';
 import './login.css';
 import bcrypt from 'bcryptjs';
 import { findParticipantByEmail } from '../../services/participantService';
-import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 
 export function PidLookup() {
 
@@ -46,15 +46,10 @@ export function PidLookup() {
         setEmail(target.value);
     };
 
-    // show error message if an participantLog Error occurs
+    // lookup errors come from an async handler, so show them inline rather than via the error boundary
     if (errorParticipantLog) {
-        console.log(errorParticipantLog);
-        return(
-            <QueryErrorMessage error={errorParticipantLog}></QueryErrorMessage>
-        );
+        return <AppErrorMessage error={errorParticipantLog} />;
     }
-
-
 
 
 

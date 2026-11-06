@@ -80,7 +80,7 @@ class ScoreChart extends React.Component {
             {
                 ({ loading, error, data }) => {
                     if (loading) return <div>No stats yet</div> 
-                    if (error) return <div>Error</div>
+                    if (error) throw error;
                     const chartData = data[GET_HISTORIES_BY_ID]?.filter((x) => x.evalNumber === this.props.evalNumber);
                     let admNameParameter = "ADM Name";
                     if(this.props.evalNumber > 2) {
