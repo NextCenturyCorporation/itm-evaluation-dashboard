@@ -18,6 +18,10 @@ export function TcccAnalysis() {
             setSelectedEval(target.value);
         }
 
+    if (errorTcccResults) {
+        throw errorTcccResults;
+    }
+
     return (
         <div>
             <div className="rq-selection-section">

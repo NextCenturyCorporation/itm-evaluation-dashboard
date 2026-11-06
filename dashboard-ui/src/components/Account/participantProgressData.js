@@ -62,7 +62,7 @@ export function formatProgressRows(rows, canViewProlific, origin) {
             row['Survey Link'] = null;
             if (record.prolificId && record.textCount >= (record.evalNumber >= 8 ? 4 : 5)) {
                 const entry = record.evalNumber >= 8 || record.pid.startsWith('202506') ? 'caciProlific' : 'adeptQualtrix';
-                row['Survey Link'] = `${origin}/remote-text-survey?${entry}=true&PROLIFIC_PID=${record.prolificId}&ContactID=${record.contactId}&pid=${record.pid}&class=Online&startSurvey=true`;
+                row['Survey Link'] = `${origin}/remote-text-survey?${entry}=true&PROLIFIC_PID=${record.prolificId}&ContactID=${record.contactId}&pid=${record.pid}&class=Online&startSurvey=true&ptoken=${record.resumeToken}`;
             }
         }
         return row;

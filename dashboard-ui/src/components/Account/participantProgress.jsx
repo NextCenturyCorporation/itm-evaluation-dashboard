@@ -8,7 +8,7 @@ import { useMutation, useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { exportToExcel } from "../Research/utils";
 import { isDefined } from "../AggregateResults/DataFunctions";
-import { QueryErrorMessage } from "../ErrorHandling/QueryErrorMessage";
+import { AppErrorMessage } from "../ErrorHandling/AppErrorMessage";
 import { Spinner } from 'react-bootstrap';
 import { SCENARIO_HEADERS } from "./progressUtils";
 import { accountsClient, apolloClient } from "../../services/accountsService";
@@ -570,7 +570,7 @@ export function ParticipantProgressTable({ canViewProlific = false, isAdmin = fa
             closePopup(); setRepairModal({ open: false, pid: null, status: null });
         }}>
             <Box className="adm-popup-body">
-                {detailError ? <QueryErrorMessage error={detailError} /> : <p>Loading participant details...</p>}
+                {detailError ? <AppErrorMessage error={detailError} /> : <p>Loading participant details...</p>}
                 <button onClick={() => { closePopup(); setRepairModal({ open: false, pid: null, status: null }); }}>Close</button>
             </Box>
         </Modal>

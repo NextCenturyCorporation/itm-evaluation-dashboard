@@ -123,7 +123,7 @@ export function HumanVariability({ evalNum }) {
     }, [data]);
 
     if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error.message}</p>;
+    if (error) throw error;
 
     return (
         <>
