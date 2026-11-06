@@ -18,6 +18,7 @@ module.exports = {
     },
     preset: 'jest-puppeteer',
     maxWorkers: 1,
+    cacheDirectory: '<rootDir>/node_modules/.cache/jest',
     globals: {
         "process.env": {
             "REACT_APP_TESTING": "true"

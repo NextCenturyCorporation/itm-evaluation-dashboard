@@ -8,7 +8,6 @@ import ph2Feb26DefinitionXLFile from "../variables/Variable Definitions RQ8_PH2_
 import ph2Canada26DefinitionXLFile from "../variables/Variable Definitions RQ8_PH2_CANADA26.xlsx";
 import * as XLSX from "xlsx-js-style";
 import { useQuery } from "react-apollo";
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import gql from "graphql-tag";
 import { DownloadButtons } from "./download-buttons";
 
@@ -32,7 +31,7 @@ const GET_PARTICIPANT_LOG = gql`
 
 // This is for referencing the proper variable defs
 // Update the variable name and eval numbers as necessary
-const FEB26_EVALS = [15, 18];
+const FEB26_EVALS = [15, 18, 19];
 
 // Legacy PH2 behavior grouped these together
 const LEGACY_COMBINED_EVALS = [8, 9, 10];
@@ -61,7 +60,7 @@ export function PH2RQ8({ evalNum }) {
     }, [evalNum]);
 
     const definitionFile = React.useMemo(() => {
-        if (evalNum === 18) return ph2Canada26DefinitionXLFile;
+        if ([18, 19].includes(evalNum)) return ph2Canada26DefinitionXLFile;
         return mode === "feb26" ? ph2Feb26DefinitionXLFile : ph2LegacyDefinitionXLFile;
     }, [evalNum, mode]);
 
@@ -92,6 +91,42 @@ export function PH2RQ8({ evalNum }) {
     const getKdmaParam = React.useCallback((kdmas, kdmaName, paramName) => {
         const k = kdmas?.find((x) => x?.kdma === kdmaName);
         return k?.parameters?.find((p) => p?.name === paramName)?.value;
+    }, []);
+
+    const getMidpointValue = React.useCallback((entry, modality, kdmaName) => {
+        const measurement = entry?.midpoint_values?.[modality]?.[kdmaName];
+        const value = measurement?.value;
+        if (!measurement?.sid || typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+            return undefined;
+        }
+        if (modality === "open_world" && measurement.sid !== entry?.data?.alignment?.sid) {
+            return undefined;
+        }
+        return value;
+    }, []);
+
+    const getMidpointAlignmentScore = React.useCallback((entry, kdmaName, textResults) => {
+        const measurement = entry?.midpoint_alignment_scores?.[kdmaName];
+        const score = measurement?.score;
+        if (!measurement?.open_world_sid || !measurement?.text_sid ||
+            measurement.open_world_sid !== entry?.data?.alignment?.sid ||
+            typeof score !== "number" || !Number.isFinite(score) || score < 0 || score > 1) {
+            return undefined;
+        }
+        const shortName = kdmaName === "affiliation" ? "AF" : "MF";
+        const scenarioIds = ["June2026", "Jun2026"].flatMap((prefix) => [
+            `${prefix}-${shortName}-assess`, `${prefix}_${shortName}_assess`
+        ]);
+        const textSession = textResults.filter((result) =>
+            result?.evalNumber === entry?.evalNumber &&
+            String(result?.participantID) === String(entry?.pid) &&
+            scenarioIds.includes(result?.scenario_id)
+        ).sort((a, b) => {
+            if (a.timeComplete > b.timeComplete) return -1;
+            if (a.timeComplete < b.timeComplete) return 1;
+            return 0;
+        })[0]?.combinedSessionId;
+        return measurement.text_sid === textSession ? score : undefined;
     }, []);
 
     const getTextKdmaScalar = React.useCallback((kdmas, shortName) => {
@@ -353,6 +388,23 @@ export function PH2RQ8({ evalNum }) {
                     valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
                 }
 
+                if ([18, 19].includes(currentEvalNum)) {
+                    for (const [shortName, kdmaName] of [
+                        ["AF", "affiliation"], ["MF", "merit"],
+                        ["PS", "personal_safety"], ["SS", "search"]
+                    ]) {
+                        valueMap[`${shortName}_midpoint_Text`] =
+                            getMidpointValue(desertEntry, "text", kdmaName) ??
+                            getMidpointValue(urbanEntry, "text", kdmaName);
+                        if (shortName === "AF" || shortName === "MF") {
+                            valueMap[`${shortName}_midpoint_Desert`] = getMidpointValue(desertEntry, "open_world", kdmaName);
+                            valueMap[`${shortName}_midpoint_Urban`] = getMidpointValue(urbanEntry, "open_world", kdmaName);
+                            valueMap[`${shortName} Midpoint Alignment_Desert`] = getMidpointAlignmentScore(desertEntry, kdmaName, textResults);
+                            valueMap[`${shortName} Midpoint Alignment_Urban`] = getMidpointAlignmentScore(urbanEntry, kdmaName, textResults);
+                        }
+                    }
+                }
+
                 for (const field of definitionFields) {
                     if (field === "Participant_ID" || field === "Probe Set Assessment") continue;
                     if (valueMap[field] !== undefined) continue;
@@ -411,6 +463,8 @@ export function PH2RQ8({ evalNum }) {
         buildProbeFieldsFromEntry,
         getKdmaParam,
         getKdmaValue,
+        getMidpointValue,
+        getMidpointAlignmentScore,
         getTextKdmaParam,
         getTextKdmaScalar,
         normalizeBlank,
@@ -429,7 +483,7 @@ export function PH2RQ8({ evalNum }) {
         setShowDefinitions(false);
     };
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorParticipantLog,
         errorTextResults,
@@ -437,8 +491,7 @@ export function PH2RQ8({ evalNum }) {
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;

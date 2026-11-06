@@ -6,6 +6,18 @@ import { TEST_WAIT_TIMEOUT, LONG_TEST_TIMEOUT, HOME_TEXT, WAITING_TEXT, clickEle
 
 jest.setTimeout(LONG_TEST_TIMEOUT);
 
+const acceptBeforeUnload = async dialog => {
+    if (dialog.type() === 'beforeunload') {
+        await dialog.accept();
+    }
+};
+
+beforeEach(() => {
+    // Confirm leaving unfinished surveys before the next permission check.
+    page.off('dialog', acceptBeforeUnload);
+    page.on('dialog', acceptBeforeUnload);
+});
+
 function runRoutePermissionTests(allowApprovalPage = false) {
     let routes = [
         '/results',
@@ -76,6 +88,7 @@ describe('Login tests', () => {
 
     beforeEach(async () => {
         await jestPuppeteer.resetPage();
+        page.on('dialog', acceptBeforeUnload);
         await logout(page);
     });
 

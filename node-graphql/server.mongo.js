@@ -40,10 +40,11 @@ const dashboardDB = new Mongo(mongoose.connection);
 
 const accountsPassword = new AccountsPassword({
   validateNewUser: (user) => {
-    if (!user.email || !user.email.trim()) {
-      throw new Error('Email is required');
+    return {
+      username: user.username,
+      email: user.email,
+      password: user.password
     }
-    return user;
   }
 });
 
@@ -51,6 +52,7 @@ const accountsServer = new AccountsServer(
   {
     db: dashboardDB,
     tokenSecret: TOKEN_SECRET,
+    impersonationAuthorize: async () => false,
     sendMail: ({ from, subject, to, text, html }) => {
       from = "phi.le@caci.com";
       transporter.sendMail({

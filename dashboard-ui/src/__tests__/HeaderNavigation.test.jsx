@@ -12,8 +12,8 @@ describe('Ensure navigation dropdowns lead to the correct route', () => {
 
     it('[Data Collection -> Take Delegation Survey] dropdown should navigate to /survey', async () => {
         await useMenuNavigation(page, 'Data Collection', 'Take Delegation Survey', '/survey');
-        page = await browser.newPage();
-        page.goto(`${process.env.REACT_APP_TEST_URL}/`);
+        await jestPuppeteer.resetPage();
+        await page.goto(`${process.env.REACT_APP_TEST_URL}/`);
         await page.waitForSelector(FOOTER_TEXT);
     });
     it('[Data Collection -> Review Text Scenarios] dropdown should navigate to /review-text-based', async () => {

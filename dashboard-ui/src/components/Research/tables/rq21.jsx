@@ -5,7 +5,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import { Modal, Autocomplete, TextField } from "@mui/material";
 import dreDefinitionXLFile from '../variables/Variable Definitions RQ2.1_DRE.xlsx';
 import ph1DefinitionXLFile from '../variables/Variable Definitions RQ2.1_PH1.xlsx';
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import { useQuery } from 'react-apollo'
 import gql from "graphql-tag";
 import { ADM_NAME_MAP, getAlignments } from "../utils";
@@ -117,7 +116,7 @@ export function RQ21({ evalNum }) {
                 const { textResultsForPID, } = getAlignments(evalNum, textResults, pid);
                 for (const entry of textResultsForPID) {
                     // ignore training scenarios
-                    if (entry['scenario_id'].includes('MJ1') || entry['scenario_id'].includes('IO1')) {
+                    if (entry['scenario_id']?.includes('MJ1') || entry['scenario_id']?.includes('IO1')) {
                         continue;
                     }
                     // don't include duplicate entries
@@ -187,15 +186,14 @@ export function RQ21({ evalNum }) {
         }
     }, [formattedData, ta1Filters, ta2Filters, scenarioFilters, attributeFilters, groupTargetFilters, decisionMakerFilters]);
 
-    // catch any errors that return true and save in an array to display in the QueryErrorMessage component
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
     const errors = [
         errorTextResults,
         errorAdms,
     ].filter(Boolean);
 
     if (errors.length > 0) {
-        console.log(errors);
-        return <QueryErrorMessage errors={errors} />;
+        throw errors;
     }
 
     if (loadingAdms || loadingTextResults || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;

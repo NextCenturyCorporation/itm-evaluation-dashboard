@@ -149,10 +149,12 @@ const getKdmaParameter = (data, kdmaName, parameterName) => {
 const kdmaHasParam = (kdma, paramName) => kdma.parameters?.some(p => p.name === paramName);
 
 export const ADMProbeResponses = (props) => {
-    const evalOptions = getAllEvals()
+    const evals = useSelector(state => state.configs.evals);
+    const evalOptions = getAllEvals(evals);
     const dispatch = useDispatch();
     const storedEval = useSelector(state => state.configs.selectedResearchEval);
-    const [currentEval, setCurrentEval] = useState(storedEval ?? evalOptions[0].value);
+    const [selectedEval, setCurrentEval] = useState(storedEval);
+    const currentEval = selectedEval ?? evalOptions[0]?.value;
 
     const [currentScenario, setCurrentScenario] = useState("");
     const [queryString, setQueryString] = useState("adm_name");
@@ -471,6 +473,8 @@ export const ADMProbeResponses = (props) => {
     const allTablesLoaded = Object.keys(loadingStates).length > 0 && 
         Object.values(loadingStates).every(loading => !loading);
 
+    if (!evalOptions.length) return <div>Loading evaluations...</div>;
+
     return (
         <div className="layout">
             <div className="layout-board">
@@ -624,7 +628,7 @@ export const ADMProbeResponses = (props) => {
                                     >
                                         {({ loading, error, data }) => {
                                             if (loading) return <div>Loading...</div>;
-                                            if (error) return <div>Error loading test data</div>;
+                                            if (error) throw error;
 
                                             const testDataArray = data?.getAllTestDataForADM || [];
 

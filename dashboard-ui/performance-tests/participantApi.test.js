@@ -151,7 +151,7 @@ test('GraphQL exposes the targeted reads and paginated response with real resolv
     const schema = makeExecutableSchema({ typeDefs: [typeDefs, 'type User { id: ID } input CreateUserInput { username: String }'], resolvers });
     await db.collection('participantLog').insertOne(log(100, { hashedEmail: 'hash' }));
     await db.collection('surveyVersion').insertOne({ lowPid: 100, highPid: 200 });
-    const result = await graphql({ schema, contextValue: { db }, source: `
+    const result = await graphql({ schema, contextValue: { db, currentUser: { admin: true, approved: true } }, source: `
         query Reads($filter: ParticipantProgressFilter!, $pid: String!) {
             getParticipantByPid(pid: $pid)
             getParticipantByEmail(hashedEmail: "hash", evalNumber: 17)

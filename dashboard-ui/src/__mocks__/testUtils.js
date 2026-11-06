@@ -4,9 +4,9 @@ export const FOOTER_TEXT = 'text/This research was developed';
 export const WAITING_TEXT = 'Thank you for your interest in the DARPA In the Moment Program.';
 export const HOME_TEXT = 'text/Program Questions';
 
-export const SURVEY_STEP_TIMEOUT = 60000;
-export const TEST_WAIT_TIMEOUT = 120000;
-export const LONG_TEST_TIMEOUT = 180000;
+export const SURVEY_STEP_TIMEOUT = 30000;
+export const TEST_WAIT_TIMEOUT = 15000;
+export const LONG_TEST_TIMEOUT = 90000;
 
 export async function logPageDebug(page, label) {
     try {
@@ -147,20 +147,18 @@ export async function logout(page) {
     await page.waitForSelector(FOOTER_TEXT, { timeout: TEST_WAIT_TIMEOUT });
 
     await page.waitForFunction(
-        waitingText => {
-            const bodyText = document.body?.innerText || '';
+        () => {
             return document.querySelector('#basic-nav-dropdown') !== null ||
                 document.querySelector('input[placeholder="Email / Username"]') !== null ||
-                bodyText.includes(waitingText);
+                document.querySelector('.return-btn') !== null;
         },
-        { timeout: TEST_WAIT_TIMEOUT },
-        WAITING_TEXT
+        { timeout: TEST_WAIT_TIMEOUT }
     );
 
-    const bodyText = await page.evaluate(() => document.body?.innerText || '');
+    const returnToLogin = await page.$('.return-btn');
     const menu = await page.$('#basic-nav-dropdown');
 
-    if (bodyText.includes(WAITING_TEXT)) {
+    if (returnToLogin) {
         await clickElementByText(page, 'button', 'Return to Login');
     }
     else if (menu) {
@@ -218,7 +216,7 @@ export async function loginEvaluator(page) {
 export async function loginExperimenter(page) {
     await logout(page);
     await login(page, 'exp', 'secretExperimenterPassword123', true);
-    await page.waitForSelector(HOME_TEXT, { timeout: TEST_WAIT_TIMEOUT });
+    await page.waitForSelector('text/Welcome to the ITM Program!', { timeout: TEST_WAIT_TIMEOUT });
 }
 
 export async function loginAdeptUser(page) {
@@ -301,11 +299,7 @@ export async function startAdeptQualtrixSurvey(page) {
         timeout: TEST_WAIT_TIMEOUT,
         waitUntil: 'domcontentloaded'
     });
-    await page.waitForSelector('text/Consent Form', { timeout: SURVEY_STEP_TIMEOUT });
-    await page.$$eval('button', btns => {
-        const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
-        b?.click();
-    });
+    await agreeToProlificConsent(page);
     await page.waitForSelector('text/Instructions', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
@@ -324,11 +318,7 @@ export async function startCaciProlificSurvey(page) {
         timeout: TEST_WAIT_TIMEOUT,
         waitUntil: 'domcontentloaded'
     });
-    await page.waitForSelector('text/Consent Form', { timeout: SURVEY_STEP_TIMEOUT });
-    await page.$$eval('button', btns => {
-        const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
-        b?.click();
-    });
+    await agreeToProlificConsent(page);
     await page.waitForSelector('text/Instructions', { timeout: SURVEY_STEP_TIMEOUT });
     await page.$$eval('button', btns => {
         const b = Array.from(btns).find(x => x.innerText?.trim() === 'Start');
@@ -344,14 +334,18 @@ export async function startCaciProlificSurvey(page) {
     }
 }
 
+export async function waitForProlificEntry(page) {
+    await page.waitForFunction(() => {
+        const text = document.body?.innerText || '';
+        return ['Consent Form', 'Instructions', 'In the final part of the study,']
+            .some(screen => text.includes(screen));
+    }, { timeout: TEST_WAIT_TIMEOUT });
+    return (await page.$('text/Consent Form')) !== null;
+}
+
 export async function agreeToProlificConsent(page) {
-    try {
-        await page.waitForSelector('text/Consent Form', { timeout: 1000 });
-        await page.$$eval('button', btns => {
-            const b = Array.from(btns).find(x => x.innerText?.trim() === 'I Agree');
-            b?.click();
-        });
-    } catch (_) {
+    if (await waitForProlificEntry(page)) {
+        await clickElementByText(page, 'button', 'I Agree');
     }
 }
 

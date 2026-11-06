@@ -5,7 +5,6 @@ import { useQuery } from "react-apollo";
 import '../../../css/resultsTable.css';
 import tcccDefinitionXLFile from '../variables/Variable Definitions TCCC.xlsx';
 import { RQDefinitionTable } from "../variables/rq-variables";
-import { QueryErrorMessage } from "../../ErrorHandling/QueryErrorMessage";
 import { Modal } from "@mui/material";
 import CloseIcon from '@material-ui/icons/Close';
 
@@ -129,12 +128,14 @@ export function TCCC({ evalDate }) {
         }
     }, [filteredTcccData, allTcccData]);
 
-    // show error message if an error occurs
-    if (errorallTcccData) {
-        console.log(errorallTcccData);
-        return(
-            <QueryErrorMessage error={errorallTcccData}></QueryErrorMessage>
-        );
+    // catch any errors that return true and save in an array to display in the AppErrorMessage component
+    const errors = [
+        errorfilteredTcccData,
+        errorallTcccData,
+    ].filter(Boolean);
+
+    if (errors.length > 0) {
+        throw errors;
     }
 
     if (loadingallTcccData) return <p>Loading...</p>;

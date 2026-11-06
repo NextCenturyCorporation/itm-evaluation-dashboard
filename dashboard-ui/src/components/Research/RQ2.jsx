@@ -16,13 +16,14 @@ import { useSelector, useDispatch } from 'react-redux'
 import { setSelectedResearchEval } from '../../store/slices/configSlice';
 
 export function RQ2() {
-    const evalOptions = getAllEvals();
+    const evals = useSelector(state => state.configs.evals);
+    const evalOptions = getAllEvals(evals);
     const dispatch = useDispatch()
     const storedEval = useSelector(state => state.configs.selectedResearchEval)
 
     const [rq21CodeShowing, setRQ21CodeShowing] = React.useState(false);
     const [rq2CodeShowing, setRQ2CodeShowing] = React.useState(false);
-    const selectedEval = storedEval ?? evalOptions[0].value
+    const selectedEval = storedEval ?? evalOptions[0]?.value
 
     function selectEvaluation(target) {
         dispatch(setSelectedResearchEval(target.value))
@@ -41,6 +42,8 @@ export function RQ2() {
     const showRQ21Section = () => selectedEval !== 7 && selectedEval !== 11 && selectedEval < 8;
     const showRCodeButtons = () => selectedEval !== 7 && selectedEval !== 11 && selectedEval < 8;
     const shouldUsePH2Component = () => selectedEval >= 8 && selectedEval !== 11;
+
+    if (!evalOptions.length) return <div>Loading evaluations...</div>;
 
     return (
         <div className="researchQuestion">

@@ -6,3 +6,5 @@ docker_setup/nginxpwd
 dashboard-ui/coverage
 node_modules
 package-lock.json
+/.dashboard-tests.lock
+/dashboard-test-*.log

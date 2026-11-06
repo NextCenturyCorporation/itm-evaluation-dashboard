@@ -6,6 +6,7 @@ module.exports = {
 
         // Required for Chromium inside the Docker test container
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+        dumpio: process.env.JEST_BROWSER_LOGS === 'true',
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox'
@@ -24,7 +25,5 @@ module.exports = {
 
         // Startup can be substantially slower on the dev server than locally.
         launchTimeout: 180000
-    },
-
-    globalTeardown: './testTeardown.js'
+    }
 };
