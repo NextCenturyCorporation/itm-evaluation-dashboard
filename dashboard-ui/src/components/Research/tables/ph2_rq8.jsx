@@ -105,6 +105,30 @@ export function PH2RQ8({ evalNum }) {
         return value;
     }, []);
 
+    const getMidpointAlignmentScore = React.useCallback((entry, kdmaName, textResults) => {
+        const measurement = entry?.midpoint_alignment_scores?.[kdmaName];
+        const score = measurement?.score;
+        if (!measurement?.open_world_sid || !measurement?.text_sid ||
+            measurement.open_world_sid !== entry?.data?.alignment?.sid ||
+            typeof score !== "number" || !Number.isFinite(score) || score < 0 || score > 1) {
+            return undefined;
+        }
+        const shortName = kdmaName === "affiliation" ? "AF" : "MF";
+        const scenarioIds = ["June2026", "Jun2026"].flatMap((prefix) => [
+            `${prefix}-${shortName}-assess`, `${prefix}_${shortName}_assess`
+        ]);
+        const textSession = textResults.filter((result) =>
+            result?.evalNumber === entry?.evalNumber &&
+            String(result?.participantID) === String(entry?.pid) &&
+            scenarioIds.includes(result?.scenario_id)
+        ).sort((a, b) => {
+            if (a.timeComplete > b.timeComplete) return -1;
+            if (a.timeComplete < b.timeComplete) return 1;
+            return 0;
+        })[0]?.combinedSessionId;
+        return measurement.text_sid === textSession ? score : undefined;
+    }, []);
+
     const getTextKdmaScalar = React.useCallback((kdmas, shortName) => {
         const kdmaMap = {
             AF: "affiliation",
@@ -375,6 +399,8 @@ export function PH2RQ8({ evalNum }) {
                         if (shortName === "AF" || shortName === "MF") {
                             valueMap[`${shortName}_midpoint_Desert`] = getMidpointValue(desertEntry, "open_world", kdmaName);
                             valueMap[`${shortName}_midpoint_Urban`] = getMidpointValue(urbanEntry, "open_world", kdmaName);
+                            valueMap[`${shortName} Midpoint Alignment_Desert`] = getMidpointAlignmentScore(desertEntry, kdmaName, textResults);
+                            valueMap[`${shortName} Midpoint Alignment_Urban`] = getMidpointAlignmentScore(urbanEntry, kdmaName, textResults);
                         }
                     }
                 }
@@ -438,6 +464,7 @@ export function PH2RQ8({ evalNum }) {
         getKdmaParam,
         getKdmaValue,
         getMidpointValue,
+        getMidpointAlignmentScore,
         getTextKdmaParam,
         getTextKdmaScalar,
         normalizeBlank,
