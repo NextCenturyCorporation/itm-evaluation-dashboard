@@ -289,9 +289,14 @@ export function PH2RQ8({ evalNum }) {
             );
 
             const pids = [];
+            const participantResults = currentEvalNum === 15
+                ? [...textResults, ...simData.filter((entry) =>
+                    entry?.evalNumber === currentEvalNum && entry?.openWorld === true
+                )]
+                : textResults;
 
-            for (const res of textResults) {
-                const pid = res?.participantID;
+            for (const res of participantResults) {
+                const pid = res?.participantID ?? res?.pid;
 
                 if (!pid) continue;
                 if (pids.includes(pid)) continue;
