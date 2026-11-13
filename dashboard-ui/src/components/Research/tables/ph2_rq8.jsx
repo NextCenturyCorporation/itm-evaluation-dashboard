@@ -114,9 +114,13 @@ export function PH2RQ8({ evalNum }) {
             return undefined;
         }
         const shortName = kdmaName === "affiliation" ? "AF" : "MF";
-        const scenarioIds = ["June2026", "Jun2026"].flatMap((prefix) => [
-            `${prefix}-${shortName}-assess`, `${prefix}_${shortName}_assess`
-        ]);
+        const scenarioIds = entry?.evalNumber === 15
+            ? [1, 2].flatMap((set) => [
+                `Feb2026-${shortName}${set}-assess`, `Feb2026_${shortName}${set}_assess`
+            ])
+            : ["June2026", "Jun2026"].flatMap((prefix) => [
+                `${prefix}-${shortName}-assess`, `${prefix}_${shortName}_assess`
+            ]);
         const textSession = textResults.filter((result) =>
             result?.evalNumber === entry?.evalNumber &&
             String(result?.participantID) === String(entry?.pid) &&
@@ -285,9 +289,14 @@ export function PH2RQ8({ evalNum }) {
             );
 
             const pids = [];
+            const participantResults = currentEvalNum === 15
+                ? [...textResults, ...simData.filter((entry) =>
+                    entry?.evalNumber === currentEvalNum && entry?.openWorld === true
+                )]
+                : textResults;
 
-            for (const res of textResults) {
-                const pid = res?.participantID;
+            for (const res of participantResults) {
+                const pid = res?.participantID ?? res?.pid;
 
                 if (!pid) continue;
                 if (pids.includes(pid)) continue;
@@ -388,7 +397,7 @@ export function PH2RQ8({ evalNum }) {
                     valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
                 }
 
-                if ([18, 19].includes(currentEvalNum)) {
+                if (FEB26_EVALS.includes(currentEvalNum)) {
                     for (const [shortName, kdmaName] of [
                         ["AF", "affiliation"], ["MF", "merit"],
                         ["PS", "personal_safety"], ["SS", "search"]
