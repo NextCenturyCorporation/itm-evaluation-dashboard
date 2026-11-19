@@ -8,7 +8,7 @@ import { DownloadButtons } from "./download-buttons";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import owPart2Defs from '../variables/Variable Definitions RQ8_OW_Part2.xlsx';
-import { EVAL_LABEL, valueColLabel } from "./ph2_rq8_ow_part1";
+import { EVAL_LABEL, valueColLabel, roundIfNumber } from "./ph2_rq8_ow_part1";
 
 const getAdmData = gql`
     query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
@@ -19,10 +19,6 @@ const OW_EVALS = [8, 15, 16]
 
 const KDMA_SHORT = { affiliation: 'AF', merit: 'MF', personal_safety: 'PS', search: 'SS' };
 
-function roundIfNumber(value) {
-    if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 1000) / 1000;
-    return value;
-}
 function getKdmaParam(parameters, paramName) {
     return parameters?.find(p => p?.name === paramName)?.value;
 }
@@ -70,6 +66,7 @@ export function PH2RQ8OWPart2() {
                 const scenario = adm.evaluation.scenario_id;
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results?.alignment_score;
+                const new_alignment = adm.new_results?.alignment_score;
 
                 if (!isDefined(alignment)) continue;
 
@@ -83,7 +80,20 @@ export function PH2RQ8OWPart2() {
                     'ADM Name': admName.split('__')[0],
                     'Server Session ID': adm.results?.ta1_session_id ?? '-',
                     'Alignment score (ADM|target)': roundIfNumber(alignment),
+                    'New alignment score (ADM|target)': roundIfNumber(new_alignment),
+                    'New Server Session ID': adm.new_results?.ta1_session_id ?? '-'
                 };
+
+                for (const k of (adm.new_results?.kdmas || [])) {
+                    const short = KDMA_SHORT[k.kdma];
+                    if (!short) continue;
+
+                    // scalar kdma handling
+                    if (!k.parameters) {
+                        row[`${valueColLabel(k.kdma)}_new`] = roundIfNumber(k.value)
+                        row['__scoringType'] = 'scalar'
+                    }
+                }
 
                 for (const k of (adm.results?.kdmas || [])) {
                     const short = KDMA_SHORT[k.kdma];

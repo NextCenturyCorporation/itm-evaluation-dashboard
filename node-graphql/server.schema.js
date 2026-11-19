@@ -972,6 +972,7 @@ const resolvers = {
         projection: {
           "evaluation": 1,
           "results": 1,
+          "new_results": 1,
           "ceiling_alignment": 1,
           "actionAnalysis": 1
         }

@@ -24,8 +24,10 @@ const isBaselineAdm = (admName) => admName.includes('OutlinesBaseline');
 const isAlignedAdm = (admName) => admName.includes('Regression');
 
 const HEADERS = [
-    'Trial_ID', 'OW Scenario', 'Target', 'ADM Name', 'Aligned Server Session ID', 'Aligned ADM Alignment score (ADM|target)',
-    'Ceiling Alignment', 'Baseline ADM Alignment score (ADM|target)', 'Baseline Server Session ID'
+    'Trial_ID', 'OW Scenario', 'Target', 'ADM Name', 'New Aligned Server Session ID', 'Aligned Server Session ID',
+    'New Aligned ADM Alignment score (ADM|target)', 'Aligned ADM Alignment score (ADM|target)',
+    'Ceiling Alignment', 'New Baseline ADM Alignment score (ADM|target)', 'Baseline ADM Alignment score (ADM|target)',
+    'New Baseline Server Session ID', 'Baseline Server Session ID'
 ];
 const KDMA_ORDER = ['affiliation', 'merit', 'personal_safety', 'search'];
 const KDMA_LABELS = {
@@ -50,6 +52,11 @@ const getOWScenario = (scenarioId, evalNum) => {
     const env = scenarioId.split('OW_')[1] || scenarioId;
     return `${EVAL_LABEL[evalNum]} ${env}`;
 };
+
+export function roundIfNumber(value) {
+    if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 10000) / 10000;
+    return value;
+}
 
 export function PH2RQ8OWPart1() {
     const { loading: loading8, error: error8, data: data8 } = useQuery(getAdmData, { variables: { evalNumber: 8, scenarioIDs: ["June2025-OW_desert", "June2025-OW_urban"] } });
@@ -85,23 +92,28 @@ export function PH2RQ8OWPart1() {
                 const admName = adm.evaluation.adm_name;
                 const scenario = adm.evaluation.scenario_id;
                 const target = adm.evaluation.alignment_target_id;
-                const alignment = adm.results.alignment_score;
+                const alignment = roundIfNumber(adm.results?.alignment_score);
+                const new_alignment = roundIfNumber(adm.new_results?.alignment_score);
 
                 if (!isDefined(alignment)) continue;
                 if (!OW_SCENARIOS.includes(scenario)) continue;
 
                 const stKey = `${scenario}__${target}`;
                 if (isBaselineAdm(admName)) {
-                    baselineByST[stKey] = { alignment, sessionId: adm.results?.ta1_session_id, admName };
+                    baselineByST[stKey] = { alignment, new_alignment, sessionId: adm.results?.ta1_session_id,
+                        new_sessionId: adm.new_results?.ta1_session_id, admName };
                 } else if (isAlignedAdm(admName)) {
                     alignedByKey[`${stKey}__${admName}`] = {
                         scenario,
                         target,
                         admName,
                         alignment,
+                        new_alignment,
                         sessionId: adm.results?.ta1_session_id,
+                        new_sessionId: adm.new_results?.ta1_session_id,
                         ceiling_alignment: adm.ceiling_alignment,
-                        kdmas: adm.results?.kdmas ?? []
+                        kdmas: adm.results?.kdmas ?? [],
+                        new_kdmas: adm.new_results?.kdmas ?? []
                     };
                 }
             }
@@ -120,10 +132,14 @@ export function PH2RQ8OWPart1() {
                     'Target': cleanTarget,
                     'ADM Name': aligned.admName.split('__')[0],
                     'Aligned Server Session ID': aligned.sessionId ?? '-',
+                    'New Aligned Server Session ID': aligned.new_sessionId ?? '-',
                     'Aligned ADM Alignment score (ADM|target)': aligned.alignment,
+                    'New Aligned ADM Alignment score (ADM|target)': aligned.new_alignment,
                     'Ceiling Alignment' : aligned.ceiling_alignment,
                     'Baseline ADM Alignment score (ADM|target)': baseline?.alignment ?? '-',
-                    'Baseline Server Session ID': baseline?.sessionId ?? '-'
+                    'New Baseline ADM Alignment score (ADM|target)': baseline?.new_alignment ?? '-',
+                    'Baseline Server Session ID': baseline?.sessionId ?? '-',
+                    'New Baseline Server Session ID': baseline?.new_sessionId ?? '-'
                 };
 
                 // handles regression style and scalar scoring
@@ -135,12 +151,26 @@ export function PH2RQ8OWPart1() {
                         hasParams = true;
                         for (const p of kdma.parameters) {
                             if (PARAM_LABELS[p.name]) {
-                                rowObj[kdmaColLabel(kdma.kdma, p.name)] = p.value;
+                                rowObj[kdmaColLabel(kdma.kdma, p.name)] = roundIfNumber(p.value);
                             }
                         }
                     } else if (isDefined(kdma.value)) {
                         hasValue = true;
-                        rowObj[valueColLabel(kdma.kdma)] = kdma.value;
+                        rowObj[valueColLabel(kdma.kdma)] = roundIfNumber(kdma.value);
+                    }
+                }
+                for (const kdma of aligned.new_kdmas ?? []) {
+                    if (!KDMA_LABELS[kdma.kdma]) continue;
+                    if (kdma.parameters?.length) {
+                        hasParams = true;
+                        for (const p of kdma.parameters) {
+                            if (PARAM_LABELS[p.name]) {
+                                rowObj[`${kdmaColLabel(kdma.kdma, p.name)}_new`] = roundIfNumber(p.value);
+                            }
+                        }
+                    } else if (isDefined(kdma.value)) {
+                        hasValue = true;
+                        rowObj[`${valueColLabel(kdma.kdma)}_new`] = roundIfNumber(kdma.value)
                     }
                 }
                 rowObj.__scoringType = hasParams ? 'regression' : (hasValue ? 'scalar' : 'none');
@@ -191,12 +221,14 @@ export function PH2RQ8OWPart1() {
         for (const row of filteredData) {
             for (const k of KDMA_ORDER) {
                 if (row[valueColLabel(k)] !== undefined) valueKdmas.add(k);
+                if (row[`${valueColLabel(k)}_new`] !== undefined) valueKdmas.add(k);
                 if (PARAM_ORDER.some(p => row[kdmaColLabel(k, p)] !== undefined)) paramKdmas.add(k);
             }
         }
         const kdmaHeaders = [];
         for (const k of KDMA_ORDER) {
             if (valueKdmas.has(k)) kdmaHeaders.push(valueColLabel(k));
+            if (valueKdmas.has(k)) kdmaHeaders.push(`${valueColLabel(k)}_new`);
             if (paramKdmas.has(k)) {
                 for (const param of PARAM_ORDER) kdmaHeaders.push(kdmaColLabel(k, param));
             }
