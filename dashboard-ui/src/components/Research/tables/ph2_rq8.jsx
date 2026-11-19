@@ -41,7 +41,10 @@ const BACKUP_FIELDS = new Set([
         `${shortName} Alignment_${environment}`,
         `${shortName} Midpoint Alignment_${environment}`
     ])),
-    ...["AF", "MF", "PS", "SS"].map((shortName) => `${shortName}_midpoint_Text`)
+    ...["AF", "MF", "PS", "SS"].flatMap((shortName) => [
+        `${shortName}_intercept_Text`, `${shortName}_medical_Text`,
+        `${shortName}_attribute_Text`, `${shortName}_midpoint_Text`
+    ])
 ]);
 
 // Legacy PH2 behavior grouped these together
@@ -105,7 +108,10 @@ export function PH2RQ8({ evalNum }) {
     }, []);
 
     const getMidpointValue = React.useCallback((entry, modality, kdmaName, old = false) => {
-        const measurement = entry?.midpoint_values?.[modality]?.[old ? `${kdmaName}_old` : kdmaName];
+        const sourceField = modality === "text"
+            ? (old ? kdmaName : `${kdmaName}_new`)
+            : (old ? `${kdmaName}_old` : kdmaName);
+        const measurement = entry?.midpoint_values?.[modality]?.[sourceField];
         const value = measurement?.value;
         if (!measurement?.sid || typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
             return undefined;
@@ -373,33 +379,16 @@ export function PH2RQ8({ evalNum }) {
                 }
 
                 if (mode === "feb26") {
-                    valueMap["AF_intercept_Text"] =
-                        textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
-                    valueMap["AF_medical_Text"] =
-                        textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
-                    valueMap["AF_attribute_Text"] =
-                        textKdmaFields["Participant Text AF attr_weight KDMA"] ?? "";
-
-                    valueMap["MF_intercept_Text"] =
-                        textKdmaFields["Participant Text MF intercept KDMA"] ?? "";
-                    valueMap["MF_medical_Text"] =
-                        textKdmaFields["Participant Text MF medical_weight KDMA"] ?? "";
-                    valueMap["MF_attribute_Text"] =
-                        textKdmaFields["Participant Text MF attr_weight KDMA"] ?? "";
-
-                    valueMap["PS_intercept_Text"] =
-                        textKdmaFields["Participant Text PS intercept KDMA"] ?? "";
-                    valueMap["PS_medical_Text"] =
-                        textKdmaFields["Participant Text PS medical_weight KDMA"] ?? "";
-                    valueMap["PS_attribute_Text"] =
-                        textKdmaFields["Participant Text PS attr_weight KDMA"] ?? "";
-
-                    valueMap["SS_intercept_Text"] =
-                        textKdmaFields["Participant Text SS intercept KDMA"] ?? "";
-                    valueMap["SS_medical_Text"] =
-                        textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
-                    valueMap["SS_attribute_Text"] =
-                        textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
+                    // Text rescoring is isolated to RQ8; existing Mongo fields retain the originals.
+                    for (const shortName of ["AF", "MF", "PS", "SS"]) {
+                        for (const [column, parameter] of [
+                            ["intercept", "intercept"], ["medical", "medical_weight"], ["attribute", "attr_weight"]
+                        ]) {
+                            const sourceField = `Participant Text ${shortName} ${parameter} KDMA`;
+                            valueMap[`${shortName}_${column}_Text`] = textKdmaFields[`${sourceField}_new`] ?? "";
+                            valueMap[`${shortName}_${column}_Text_old`] = textKdmaFields[sourceField] ?? "";
+                        }
+                    }
 
                     valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
                     valueMap["AF_medical_Desert"] = getKdmaParam(desertKdmas, "affiliation", "medical_weight");
@@ -445,7 +434,7 @@ export function PH2RQ8({ evalNum }) {
                     ]) {
                         valueMap[`${shortName}_midpoint_Text`] =
                             getMidpointValue(desertEntry, "text", kdmaName) ??
-                            getMidpointValue(urbanEntry, "text", kdmaName);
+                            getMidpointValue(urbanEntry, "text", kdmaName) ?? "";
                         valueMap[`${shortName}_midpoint_Text_old`] =
                             getMidpointValue(desertEntry, "text", kdmaName, true) ??
                             getMidpointValue(urbanEntry, "text", kdmaName, true) ?? "";
