@@ -27,6 +27,29 @@ const GET_PARTICIPANT_LOG = gql`
     }
 `;
 
+// KDMA/alignment columns that also get an "_old" column holding the values from before the rescoring.
+const BACKUP_FIELDS = new Set([
+    ...["AF", "MF", "PS", "SS"].flatMap((shortName) =>
+        ["intercept", "medical", "attribute"].map((column) => `${shortName}_${column}_Text`)
+    ),
+    ...["AF", "MF"].flatMap((shortName) => ["Desert", "Urban"].flatMap((environment) => [
+        ...["intercept", "medical", "attribute"].map((column) => `${shortName}_${column}_${environment}`),
+        `${shortName} Alignment_${environment}`
+    ]))
+]);
+
+// New columns from the rescoring that have no "_old" values. Each one is shown after
+// the listed column's "_old" column (same names as the Feb/Canada RQ8 tables).
+const MIDPOINT_FIELDS_AFTER = {
+    ...Object.fromEntries(["AF", "MF", "PS", "SS"].map((shortName) =>
+        [`${shortName}_attribute_Text`, `${shortName}_midpoint_Text`]
+    )),
+    ...Object.fromEntries(["AF", "MF"].flatMap((shortName) => ["Desert", "Urban"].flatMap((environment) => [
+        [`${shortName}_attribute_${environment}`, `${shortName}_midpoint_${environment}`],
+        [`${shortName} Alignment_${environment}`, `${shortName} Midpoint Alignment_${environment}`]
+    ])))
+};
+
 export function PH2RQ8Apr26({ evalNum }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_HUMAN_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(
@@ -159,7 +182,13 @@ export function PH2RQ8Apr26({ evalNum }) {
                 }
             }
 
-            setDefinitionFields(ensureBaseFields(expandedFields));
+            // Each backed-up column is followed by its _old column, then any midpoint column.
+            const fields = [...new Set(expandedFields.flatMap((field) => {
+                if (!BACKUP_FIELDS.has(field)) return [field];
+                const midpointField = MIDPOINT_FIELDS_AFTER[field];
+                return [field, `${field}_old`, ...(midpointField ? [midpointField] : [])];
+            }))];
+            setDefinitionFields(ensureBaseFields(fields));
         }
 
         fetchDefinitionFields();
@@ -214,11 +243,16 @@ export function PH2RQ8Apr26({ evalNum }) {
                 buildProbeFieldsFromEntry(urbanEntry, "Urban");
 
                 const valueMap = {};
-                const textKdmas =
-                    res?.combinedKdmasNoSubpop ??
+                // Text KDMAs for this eval: combinedKdmasNew is the current rescoring,
+                // combinedKdmasNoSubpop is the previous one and is shown in the _old columns.
+                const getTextKdmas = (field) =>
+                    (Array.isArray(res?.[field]) ? res[field] : undefined) ??
                     textResults.find(
-                        (x) => x?.participantID === pid && Array.isArray(x?.combinedKdmasNoSubpop)
-                    )?.combinedKdmasNoSubpop;
+                        (x) => x?.participantID === pid && Array.isArray(x?.[field])
+                    )?.[field];
+                const textKdmas = getTextKdmas("combinedKdmasNew");
+                const oldTextKdmas = getTextKdmas("combinedKdmasNoSubpop");
+                const textMidpoints = getTextKdmas("combinedMidpoint");
 
                 valueMap["Participant_ID"] = pid;
                 valueMap["Probe Set Assessment"] = openWorld?.evalName?.includes("June")
@@ -241,7 +275,11 @@ export function PH2RQ8Apr26({ evalNum }) {
                     for (const [suffix, paramName] of Object.entries(TEXT_PARAM_MAP)) {
                         valueMap[`${prefix}_${suffix}_Text`] =
                             getKdmaParam(textKdmas, kdmaName, paramName) ?? "";
+                        valueMap[`${prefix}_${suffix}_Text_old`] =
+                            getKdmaParam(oldTextKdmas, kdmaName, paramName) ?? "";
                     }
+                    valueMap[`${prefix}_midpoint_Text`] =
+                        textMidpoints?.find((x) => x?.kdma === kdmaName)?.value ?? "";
                 }
 
                 valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
@@ -261,6 +299,26 @@ export function PH2RQ8Apr26({ evalNum }) {
                 valueMap["MF Alignment_Desert"] = desertEntry?.alignment_scores?.["MF Alignment_Desert"];
                 valueMap["AF Alignment_Urban"] = urbanEntry?.alignment_scores?.["AF Alignment_Urban"];
                 valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
+
+                // Open-world _old values (saved by the probe matcher as kdmas_old / alignment_scores_old)
+                // and the new midpoint KDMAs / midpoint alignment scores, which have no _old values.
+                for (const [environment, entry] of [["Desert", desertEntry], ["Urban", urbanEntry]]) {
+                    const oldKdmas = entry?.kdmas_old ?? entry?.data?.alignment?.kdmas_old;
+                    const midpointKdmas = entry?.data?.alignment?.midpoint_kdma;
+                    for (const [shortName, kdmaName] of [["AF", "affiliation"], ["MF", "merit"]]) {
+                        for (const [column, paramName] of Object.entries(TEXT_PARAM_MAP)) {
+                            valueMap[`${shortName}_${column}_${environment}_old`] =
+                                getKdmaParam(Array.isArray(oldKdmas) ? oldKdmas : undefined, kdmaName, paramName) ?? "";
+                        }
+                        valueMap[`${shortName}_midpoint_${environment}`] =
+                            (Array.isArray(midpointKdmas) ? midpointKdmas : undefined)
+                                ?.find((x) => x?.kdma === kdmaName)?.value ?? "";
+                        valueMap[`${shortName} Alignment_${environment}_old`] =
+                            entry?.alignment_scores_old?.[`${shortName} Alignment_${environment}`] ?? "";
+                        valueMap[`${shortName} Midpoint Alignment_${environment}`] =
+                            entry?.alignment_scores?.[`${shortName} Midpoint Alignment_${environment}`] ?? "";
+                    }
+                }
 
 
 
