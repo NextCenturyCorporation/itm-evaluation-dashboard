@@ -49,8 +49,8 @@ export function PH2RQ8Apr26({ evalNum }) {
     const definitionFile = ph2Apr26DefinitionXLFile
 
     const evalsToUse = React.useMemo(() => {
-            return  [evalNum]
-        }, [evalNum]);
+        return [evalNum]
+    }, [evalNum]);
 
     const roundIfNumber = React.useCallback((value) => {
         if (typeof value === "number" && !isNaN(value)) {
@@ -187,7 +187,7 @@ export function PH2RQ8Apr26({ evalNum }) {
 
                 if (!pid) continue;
                 if (pids.includes(pid)) continue;
-                if (res?.scenario_id?.includes("PS-AF")) continue;
+                if (!res?.scenario_id?.includes("PS")) continue;
 
                 const simEntries = simData.filter((x) => x?.pid === pid);
                 const openWorld = simEntries.find(
@@ -214,41 +214,35 @@ export function PH2RQ8Apr26({ evalNum }) {
                 buildProbeFieldsFromEntry(urbanEntry, "Urban");
 
                 const valueMap = {};
-                const textKdmaFields = openWorld?.text_kdmas || {};
+                const textKdmas =
+                    res?.combinedKdmasNoSubpop ??
+                    textResults.find(
+                        (x) => x?.participantID === pid && Array.isArray(x?.combinedKdmasNoSubpop)
+                    )?.combinedKdmasNoSubpop;
 
                 valueMap["Participant_ID"] = pid;
                 valueMap["Probe Set Assessment"] = openWorld?.evalName?.includes("June")
                     ? "Various"
                     : logData["AF-text-scenario"];
 
+                const TEXT_KDMA_MAP = {
+                    AF: "affiliation",
+                    MF: "merit",
+                    PS: "personal_safety",
+                    SS: "search",
+                };
+                const TEXT_PARAM_MAP = {
+                    intercept: "intercept",
+                    medical: "medical_weight",
+                    attribute: "attr_weight",
+                };
 
-                valueMap["AF_intercept_Text"] =
-                    textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
-                valueMap["AF_medical_Text"] =
-                    textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
-                valueMap["AF_attribute_Text"] =
-                    textKdmaFields["Participant Text AF attr_weight KDMA"] ?? "";
-
-                valueMap["MF_intercept_Text"] =
-                    textKdmaFields["Participant Text MF intercept KDMA"] ?? "";
-                valueMap["MF_medical_Text"] =
-                    textKdmaFields["Participant Text MF medical_weight KDMA"] ?? "";
-                valueMap["MF_attribute_Text"] =
-                    textKdmaFields["Participant Text MF attr_weight KDMA"] ?? "";
-
-                valueMap["PS_intercept_Text"] =
-                    textKdmaFields["Participant Text PS intercept KDMA"] ?? "";
-                valueMap["PS_medical_Text"] =
-                    textKdmaFields["Participant Text PS medical_weight KDMA"] ?? "";
-                valueMap["PS_attribute_Text"] =
-                    textKdmaFields["Participant Text PS attr_weight KDMA"] ?? "";
-
-                valueMap["SS_intercept_Text"] =
-                    textKdmaFields["Participant Text SS intercept KDMA"] ?? "";
-                valueMap["SS_medical_Text"] =
-                    textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
-                valueMap["SS_attribute_Text"] =
-                    textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
+                for (const [prefix, kdmaName] of Object.entries(TEXT_KDMA_MAP)) {
+                    for (const [suffix, paramName] of Object.entries(TEXT_PARAM_MAP)) {
+                        valueMap[`${prefix}_${suffix}_Text`] =
+                            getKdmaParam(textKdmas, kdmaName, paramName) ?? "";
+                    }
+                }
 
                 valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
                 valueMap["AF_medical_Desert"] = getKdmaParam(desertKdmas, "affiliation", "medical_weight");
@@ -352,7 +346,7 @@ export function PH2RQ8Apr26({ evalNum }) {
     }
 
     if (loadingSim || loadingTextResults || loadingParticipantLog || (formattedData.length === 0 && processedForEval !== evalNum)) return <p>Loading...</p>;
-    
+
     return (
         <>
             <h2 className="rq134-header">RQ8 Data</h2>
@@ -363,43 +357,43 @@ export function PH2RQ8Apr26({ evalNum }) {
                 </p>
             )}
 
-            {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p>: formattedData.length > 0 ? 
-            <>
-            <section className="tableHeader">
-                <div className="filters"></div>
-                <DownloadButtons
-                    formattedData={formattedData}
-                    filteredData={filteredData}
-                    HEADERS={HEADERS}
-                    fileName={"Ph2 RQ-8 data"}
-                    extraAction={openModal}
-                />
-            </section>
+            {formattedData.length === 0 && processedForEval === evalNum ? <p>This table is not available for the selected evaluation.</p> : formattedData.length > 0 ?
+                <>
+                    <section className="tableHeader">
+                        <div className="filters"></div>
+                        <DownloadButtons
+                            formattedData={formattedData}
+                            filteredData={filteredData}
+                            HEADERS={HEADERS}
+                            fileName={"Ph2 RQ-8 data"}
+                            extraAction={openModal}
+                        />
+                    </section>
 
-            <div className="resultTableSection">
-                <table className="itm-table">
-                    <thead>
-                        <tr>
-                            {HEADERS.map((val, index) => (
-                                <th key={`header-${index}`}>{val}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredData.map((dataSet, index) => (
-                            <tr key={`${dataSet["Participant_ID"]}-${index}`}>
-                                {HEADERS.map((val) => (
-                                    <td key={`${dataSet["Participant_ID"]}-${val}-${index}`}>
-                                        {dataSet[val] ?? "-"}
-                                    </td>
+                    <div className="resultTableSection">
+                        <table className="itm-table">
+                            <thead>
+                                <tr>
+                                    {HEADERS.map((val, index) => (
+                                        <th key={`header-${index}`}>{val}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredData.map((dataSet, index) => (
+                                    <tr key={`${dataSet["Participant_ID"]}-${index}`}>
+                                        {HEADERS.map((val) => (
+                                            <td key={`${dataSet["Participant_ID"]}-${val}-${index}`}>
+                                                {dataSet[val] ?? "-"}
+                                            </td>
+                                        ))}
+                                    </tr>
                                 ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            </>
-            : null
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+                : null
             }
 
             <Modal className="table-modal" open={showDefinitions} onClose={closeModal}>
