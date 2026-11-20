@@ -8,7 +8,7 @@ import { DownloadButtons } from "./download-buttons";
 import { RQDefinitionTable } from "../variables/rq-variables";
 import CloseIcon from '@material-ui/icons/Close';
 import owPart3Defs from '../variables/Variable Definitions RQ8_OW_Part3.xlsx';
-import { EVAL_LABEL, valueColLabel } from "./ph2_rq8_ow_part1";
+import { EVAL_LABEL, valueColLabel, roundIfNumber } from "./ph2_rq8_ow_part1";
 
 const getAdmData = gql`
     query getAllOWData($evalNumber: Float!, $scenarioIDs: [ID]){
@@ -18,11 +18,6 @@ const getAdmData = gql`
 const OW_EVALS = [8, 15, 16]
 
 const KDMA_SHORT = { affiliation: 'AF', merit: 'MF', personal_safety: 'PS', search: 'SS' };
-
-function roundIfNumber(value) {
-    if (typeof value === 'number' && !isNaN(value)) return Math.round(value * 1000) / 1000;
-    return value;
-}
 
 function rank(key) {
     return key.startsWith('Desert') ? 1 : key.startsWith('Urban') ? 2 : 0
@@ -98,7 +93,7 @@ export function PH2RQ8OWPart3() {
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results?.alignment_score;
 
-                if (!isDefined(alignment)) continue;
+                if (!isDefined(alignment) || adm.hidden) continue;
 
                 const owScenario = getOWScenario(scenario, currentEvalNum);
                 const cleanTarget = (target || '')
@@ -108,9 +103,21 @@ export function PH2RQ8OWPart3() {
                     'OW Scenario': owScenario,
                     'Target': cleanTarget,
                     'ADM Name': admName.split('__')[0],
-                    'Server Session ID': adm.results?.ta1_session_id ?? '-',
-                    'Alignment score (ADM|target)': roundIfNumber(alignment),
+                    'Old Server Session ID': adm.results?.ta1_session_id ?? '-',
+                    'Old Alignment score (ADM|target)': roundIfNumber(alignment),
+                    'Alignment score (ADM|target)': roundIfNumber(adm.new_results?.alignment_score),
+                    'Server Session ID': adm.new_results?.ta1_session_id ?? '-'
                 };
+
+                for (const k of (adm.new_results?.kdmas || [])) {
+                    const short = KDMA_SHORT[k.kdma];
+                    if (!short) continue;
+
+                    // scalar kdma handling
+                    if (!k.parameters) {
+                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
+                    }
+                }
 
                 for (const k of (adm.results?.kdmas || [])) {
                     const short = KDMA_SHORT[k.kdma];
@@ -118,8 +125,7 @@ export function PH2RQ8OWPart3() {
 
                     // scalar kdma handling
                     if (!k.parameters) {
-                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
-                        row['__scoringType'] = 'scalar'
+                        row[`Old ${valueColLabel(k.kdma)}`] = roundIfNumber(k.value)
                         continue
                     }
                 }
