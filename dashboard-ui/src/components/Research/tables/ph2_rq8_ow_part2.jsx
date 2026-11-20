@@ -67,7 +67,7 @@ export function PH2RQ8OWPart2() {
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results?.alignment_score;
 
-                if (!isDefined(alignment)) continue;
+                if (!isDefined(alignment) || adm.hidden) continue;
 
                 const owScenario = getOWScenario(scenario, currentEvalNum);
                 const cleanTarget = (target || '')

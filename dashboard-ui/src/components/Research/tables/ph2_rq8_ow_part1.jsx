@@ -96,7 +96,7 @@ export function PH2RQ8OWPart1() {
                 const new_alignment = roundIfNumber(adm.new_results?.alignment_score);
 
                 if (!isDefined(alignment)) continue;
-                if (!OW_SCENARIOS.includes(scenario)) continue;
+                if (!OW_SCENARIOS.includes(scenario) || adm.hidden) continue;
 
                 const stKey = `${scenario}__${target}`;
                 if (isBaselineAdm(admName)) {
