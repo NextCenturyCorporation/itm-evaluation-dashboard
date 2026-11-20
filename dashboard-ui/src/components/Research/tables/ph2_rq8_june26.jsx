@@ -27,6 +27,33 @@ const GET_PARTICIPANT_LOG = gql`
     }
 `;
 
+// KDMA/alignment columns that also get an "_old" column holding the values from before the rescoring.
+const BACKUP_FIELDS = new Set([
+    ...["AF", "MF", "PS", "SS"].flatMap((shortName) =>
+        ["intercept", "medical", "attribute"].map((column) => `${shortName}_${column}_Text`)
+    ),
+    ...["AF", "MF"].flatMap((shortName) => ["Desert", "Urban"].flatMap((environment) => [
+        ...["intercept", "medical", "attribute"].map((column) => `${shortName}_${column}_${environment}`),
+        `${shortName} Alignment_${environment}`
+    ]))
+]);
+
+// New columns from the rescoring that have no "_old" values. Each one is shown after
+// the listed column's "_old" column (same names as the Feb/Canada RQ8 tables).
+const MIDPOINT_FIELDS_AFTER = {
+    ...Object.fromEntries(["AF", "MF", "PS", "SS"].map((shortName) =>
+        [`${shortName}_attribute_Text`, `${shortName}_midpoint_Text`]
+    )),
+    ...Object.fromEntries(["AF", "MF"].flatMap((shortName) => ["Desert", "Urban"].flatMap((environment) => [
+        [`${shortName}_attribute_${environment}`, `${shortName}_midpoint_${environment}`],
+        [`${shortName} Alignment_${environment}`, `${shortName} Midpoint Alignment_${environment}`]
+    ])))
+};
+
+// June 2026 binomial text scenarios. The "-trinary" documents also carry combinedKdmas
+// fields, but those belong to the trinary session and are not shown here.
+const BINOMIAL_TEXT_SCENARIOS = ["AF", "MF", "PS", "SS"].map((shortName) => `June2026-${shortName}-assess`);
+
 export function PH2RQ8June26({ evalNum }) {
     const { loading: loadingSim, error: errorSim, data: dataSim } = useQuery(GET_HUMAN_RESULTS);
     const { loading: loadingTextResults, error: errorTextResults, data: dataTextResults } = useQuery(
@@ -159,7 +186,13 @@ export function PH2RQ8June26({ evalNum }) {
                 }
             }
 
-            setDefinitionFields(ensureBaseFields(expandedFields));
+            // Each backed-up column is followed by its _old column, then any midpoint column.
+            const fields = [...new Set(expandedFields.flatMap((field) => {
+                if (!BACKUP_FIELDS.has(field)) return [field];
+                const midpointField = MIDPOINT_FIELDS_AFTER[field];
+                return [field, `${field}_old`, ...(midpointField ? [midpointField] : [])];
+            }))];
+            setDefinitionFields(ensureBaseFields(fields));
         }
 
         fetchDefinitionFields();
@@ -214,41 +247,50 @@ export function PH2RQ8June26({ evalNum }) {
                 buildProbeFieldsFromEntry(urbanEntry, "Urban");
 
                 const valueMap = {};
-                const textKdmaFields = openWorld?.text_kdmas || {};
+                // Text KDMAs from the participant's binomial text documents (all four share one
+                // combined session): combinedKdmasNew is the current rescoring, combinedKdmas
+                // is the original and is shown in the _old columns.
+                const binomialTextDocs = textResults.filter((x) =>
+                    String(x?.participantID) === String(pid) &&
+                    BINOMIAL_TEXT_SCENARIOS.includes(x?.scenario_id)
+                ).sort((a, b) => {
+                    if (a.timeComplete > b.timeComplete) return -1;
+                    if (a.timeComplete < b.timeComplete) return 1;
+                    return 0;
+                });
+                const getTextKdmas = (field) =>
+                    binomialTextDocs.find((x) => Array.isArray(x?.[field]))?.[field];
+                const textKdmas = getTextKdmas("combinedKdmasNew");
+                const oldTextKdmas = getTextKdmas("combinedKdmas");
+                const textMidpoints = getTextKdmas("combinedMidpoint");
 
                 valueMap["Participant_ID"] = pid;
                 valueMap["Probe Set Assessment"] = openWorld?.evalName?.includes("June")
                     ? "Various"
                     : logData["AF-text-scenario"];
 
+                const TEXT_KDMA_MAP = {
+                    AF: "affiliation",
+                    MF: "merit",
+                    PS: "personal_safety",
+                    SS: "search",
+                };
+                const TEXT_PARAM_MAP = {
+                    intercept: "intercept",
+                    medical: "medical_weight",
+                    attribute: "attr_weight",
+                };
 
-                valueMap["AF_intercept_Text"] =
-                    textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
-                valueMap["AF_medical_Text"] =
-                    textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
-                valueMap["AF_attribute_Text"] =
-                    textKdmaFields["Participant Text AF attr_weight KDMA"] ?? "";
-
-                valueMap["MF_intercept_Text"] =
-                    textKdmaFields["Participant Text MF intercept KDMA"] ?? "";
-                valueMap["MF_medical_Text"] =
-                    textKdmaFields["Participant Text MF medical_weight KDMA"] ?? "";
-                valueMap["MF_attribute_Text"] =
-                    textKdmaFields["Participant Text MF attr_weight KDMA"] ?? "";
-
-                valueMap["PS_intercept_Text"] =
-                    textKdmaFields["Participant Text PS intercept KDMA"] ?? "";
-                valueMap["PS_medical_Text"] =
-                    textKdmaFields["Participant Text PS medical_weight KDMA"] ?? "";
-                valueMap["PS_attribute_Text"] =
-                    textKdmaFields["Participant Text PS attr_weight KDMA"] ?? "";
-
-                valueMap["SS_intercept_Text"] =
-                    textKdmaFields["Participant Text SS intercept KDMA"] ?? "";
-                valueMap["SS_medical_Text"] =
-                    textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
-                valueMap["SS_attribute_Text"] =
-                    textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
+                for (const [prefix, kdmaName] of Object.entries(TEXT_KDMA_MAP)) {
+                    for (const [suffix, paramName] of Object.entries(TEXT_PARAM_MAP)) {
+                        valueMap[`${prefix}_${suffix}_Text`] =
+                            getKdmaParam(textKdmas, kdmaName, paramName) ?? "";
+                        valueMap[`${prefix}_${suffix}_Text_old`] =
+                            getKdmaParam(oldTextKdmas, kdmaName, paramName) ?? "";
+                    }
+                    valueMap[`${prefix}_midpoint_Text`] =
+                        textMidpoints?.find((x) => x?.kdma === kdmaName)?.value ?? "";
+                }
 
                 valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
                 valueMap["AF_medical_Desert"] = getKdmaParam(desertKdmas, "affiliation", "medical_weight");
@@ -263,10 +305,41 @@ export function PH2RQ8June26({ evalNum }) {
                 valueMap["MF_medical_Urban"] = getKdmaParam(urbanKdmas, "merit", "medical_weight");
                 valueMap["MF_attribute_Urban"] = getKdmaParam(urbanKdmas, "merit", "attr_weight");
 
-                valueMap["AF Alignment_Desert"] = desertEntry?.alignment_scores?.["AF Alignment_Desert"];
-                valueMap["MF Alignment_Desert"] = desertEntry?.alignment_scores?.["MF Alignment_Desert"];
-                valueMap["AF Alignment_Urban"] = urbanEntry?.alignment_scores?.["AF Alignment_Urban"];
-                valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
+                // Alignment scores, regular / _old / midpoint. The June probe matcher may store
+                // "X Alignment_Env" as a [score, midpoint] pair and the midpoint as
+                // "X Alignment Midpoint_Env"; the April layout ("X Midpoint Alignment_Env") is also accepted.
+                const alignmentScore = (scores, field) => {
+                    const value = scores?.[field];
+                    return Array.isArray(value) ? value[0] : value;
+                };
+                const midpointAlignmentScore = (scores, shortName, environment) => {
+                    const pair = scores?.[`${shortName} Alignment_${environment}`];
+                    return scores?.[`${shortName} Midpoint Alignment_${environment}`] ??
+                        scores?.[`${shortName} Alignment Midpoint_${environment}`] ??
+                        (Array.isArray(pair) ? pair[1] : undefined);
+                };
+
+                // Open-world _old values (saved by the probe matcher as kdmas_old / alignment_scores_old)
+                // and the new midpoint KDMAs / midpoint alignment scores, which have no _old values.
+                for (const [environment, entry] of [["Desert", desertEntry], ["Urban", urbanEntry]]) {
+                    const oldKdmas = entry?.kdmas_old ?? entry?.data?.alignment?.kdmas_old;
+                    const midpointKdmas = entry?.data?.alignment?.midpoint_kdma;
+                    for (const [shortName, kdmaName] of [["AF", "affiliation"], ["MF", "merit"]]) {
+                        for (const [column, paramName] of Object.entries(TEXT_PARAM_MAP)) {
+                            valueMap[`${shortName}_${column}_${environment}_old`] =
+                                getKdmaParam(Array.isArray(oldKdmas) ? oldKdmas : undefined, kdmaName, paramName) ?? "";
+                        }
+                        valueMap[`${shortName}_midpoint_${environment}`] =
+                            (Array.isArray(midpointKdmas) ? midpointKdmas : undefined)
+                                ?.find((x) => x?.kdma === kdmaName)?.value ?? "";
+                        valueMap[`${shortName} Alignment_${environment}`] =
+                            alignmentScore(entry?.alignment_scores, `${shortName} Alignment_${environment}`);
+                        valueMap[`${shortName} Alignment_${environment}_old`] =
+                            alignmentScore(entry?.alignment_scores_old, `${shortName} Alignment_${environment}`) ?? "";
+                        valueMap[`${shortName} Midpoint Alignment_${environment}`] =
+                            midpointAlignmentScore(entry?.alignment_scores, shortName, environment) ?? "";
+                    }
+                }
 
                 valueMap["Patient_map_shown"] = desertEntry?.patientMapShown ?? urbanEntry?.patientMapShown ?? openWorld?.patientMapShown ?? "";
 
