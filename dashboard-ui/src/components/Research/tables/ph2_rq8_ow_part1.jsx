@@ -24,10 +24,10 @@ const isBaselineAdm = (admName) => admName.includes('OutlinesBaseline');
 const isAlignedAdm = (admName) => admName.includes('Regression');
 
 const HEADERS = [
-    'Trial_ID', 'OW Scenario', 'Target', 'ADM Name', 'New Aligned Server Session ID', 'Aligned Server Session ID',
-    'New Aligned ADM Alignment score (ADM|target)', 'Aligned ADM Alignment score (ADM|target)',
-    'Ceiling Alignment', 'New Baseline ADM Alignment score (ADM|target)', 'Baseline ADM Alignment score (ADM|target)',
-    'New Baseline Server Session ID', 'Baseline Server Session ID'
+    'Trial_ID', 'OW Scenario', 'Target', 'ADM Name', 'Aligned Server Session ID', 'Old Aligned Server Session ID',
+    'Aligned ADM Alignment score (ADM|target)', 'Old Aligned ADM Alignment score (ADM|target)',
+    'Ceiling Alignment', 'Baseline ADM Alignment score (ADM|target)', 'Old Baseline ADM Alignment score (ADM|target)',
+    'Baseline Server Session ID', 'Old Baseline Server Session ID'
 ];
 const KDMA_ORDER = ['affiliation', 'merit', 'personal_safety', 'search'];
 const KDMA_LABELS = {
@@ -131,15 +131,15 @@ export function PH2RQ8OWPart1() {
                     'OW Scenario': owScenario,
                     'Target': cleanTarget,
                     'ADM Name': aligned.admName.split('__')[0],
-                    'Aligned Server Session ID': aligned.sessionId ?? '-',
-                    'New Aligned Server Session ID': aligned.new_sessionId ?? '-',
-                    'Aligned ADM Alignment score (ADM|target)': aligned.alignment,
-                    'New Aligned ADM Alignment score (ADM|target)': aligned.new_alignment,
+                    'Old Aligned Server Session ID': aligned.sessionId ?? '-',
+                    'Aligned Server Session ID': aligned.new_sessionId ?? '-',
+                    'Old Aligned ADM Alignment score (ADM|target)': aligned.alignment,
+                    'Aligned ADM Alignment score (ADM|target)': aligned.new_alignment,
                     'Ceiling Alignment' : aligned.ceiling_alignment,
-                    'Baseline ADM Alignment score (ADM|target)': baseline?.alignment ?? '-',
-                    'New Baseline ADM Alignment score (ADM|target)': baseline?.new_alignment ?? '-',
-                    'Baseline Server Session ID': baseline?.sessionId ?? '-',
-                    'New Baseline Server Session ID': baseline?.new_sessionId ?? '-'
+                    'Old Baseline ADM Alignment score (ADM|target)': baseline?.alignment ?? '-',
+                    'Baseline ADM Alignment score (ADM|target)': baseline?.new_alignment ?? '-',
+                    'Old Baseline Server Session ID': baseline?.sessionId ?? '-',
+                    'Baseline Server Session ID': baseline?.new_sessionId ?? '-'
                 };
 
                 // handles regression style and scalar scoring
@@ -151,12 +151,12 @@ export function PH2RQ8OWPart1() {
                         hasParams = true;
                         for (const p of kdma.parameters) {
                             if (PARAM_LABELS[p.name]) {
-                                rowObj[kdmaColLabel(kdma.kdma, p.name)] = roundIfNumber(p.value);
+                                rowObj[`Old ${kdmaColLabel(kdma.kdma, p.name)}`] = roundIfNumber(p.value);
                             }
                         }
                     } else if (isDefined(kdma.value)) {
                         hasValue = true;
-                        rowObj[valueColLabel(kdma.kdma)] = roundIfNumber(kdma.value);
+                        rowObj[`Old ${valueColLabel(kdma.kdma)}`] = roundIfNumber(kdma.value)
                     }
                 }
                 for (const kdma of aligned.new_kdmas ?? []) {
@@ -165,12 +165,12 @@ export function PH2RQ8OWPart1() {
                         hasParams = true;
                         for (const p of kdma.parameters) {
                             if (PARAM_LABELS[p.name]) {
-                                rowObj[`${kdmaColLabel(kdma.kdma, p.name)}_new`] = roundIfNumber(p.value);
+                                rowObj[kdmaColLabel(kdma.kdma, p.name)] = roundIfNumber(p.value);
                             }
                         }
                     } else if (isDefined(kdma.value)) {
                         hasValue = true;
-                        rowObj[`${valueColLabel(kdma.kdma)}_new`] = roundIfNumber(kdma.value)
+                        rowObj[valueColLabel(kdma.kdma)] = roundIfNumber(kdma.value);
                     }
                 }
                 rowObj.__scoringType = hasParams ? 'regression' : (hasValue ? 'scalar' : 'none');
@@ -221,14 +221,14 @@ export function PH2RQ8OWPart1() {
         for (const row of filteredData) {
             for (const k of KDMA_ORDER) {
                 if (row[valueColLabel(k)] !== undefined) valueKdmas.add(k);
-                if (row[`${valueColLabel(k)}_new`] !== undefined) valueKdmas.add(k);
+                if (row[`Old ${valueColLabel(k)}`] !== undefined) valueKdmas.add(k);
                 if (PARAM_ORDER.some(p => row[kdmaColLabel(k, p)] !== undefined)) paramKdmas.add(k);
             }
         }
         const kdmaHeaders = [];
         for (const k of KDMA_ORDER) {
             if (valueKdmas.has(k)) kdmaHeaders.push(valueColLabel(k));
-            if (valueKdmas.has(k)) kdmaHeaders.push(`${valueColLabel(k)}_new`);
+            if (valueKdmas.has(k)) kdmaHeaders.push(`Old ${valueColLabel(k)}`);
             if (paramKdmas.has(k)) {
                 for (const param of PARAM_ORDER) kdmaHeaders.push(kdmaColLabel(k, param));
             }

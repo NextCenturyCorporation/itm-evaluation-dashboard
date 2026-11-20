@@ -66,7 +66,6 @@ export function PH2RQ8OWPart2() {
                 const scenario = adm.evaluation.scenario_id;
                 const target = adm.evaluation.alignment_target_id;
                 const alignment = adm.results?.alignment_score;
-                const new_alignment = adm.new_results?.alignment_score;
 
                 if (!isDefined(alignment)) continue;
 
@@ -78,10 +77,10 @@ export function PH2RQ8OWPart2() {
                     'OW Scenario': owScenario,
                     'Target': cleanTarget,
                     'ADM Name': admName.split('__')[0],
-                    'Server Session ID': adm.results?.ta1_session_id ?? '-',
-                    'Alignment score (ADM|target)': roundIfNumber(alignment),
-                    'New alignment score (ADM|target)': roundIfNumber(new_alignment),
-                    'New Server Session ID': adm.new_results?.ta1_session_id ?? '-'
+                    'Old Server Session ID': adm.results?.ta1_session_id ?? '-',
+                    'Old Alignment score (ADM|target)': roundIfNumber(alignment),
+                    'Alignment score (ADM|target)': roundIfNumber(adm.new_results?.alignment_score),
+                    'Server Session ID': adm.new_results?.ta1_session_id ?? '-'
                 };
 
                 for (const k of (adm.new_results?.kdmas || [])) {
@@ -90,7 +89,7 @@ export function PH2RQ8OWPart2() {
 
                     // scalar kdma handling
                     if (!k.parameters) {
-                        row[`${valueColLabel(k.kdma)}_new`] = roundIfNumber(k.value)
+                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
                         row['__scoringType'] = 'scalar'
                     }
                 }
@@ -101,7 +100,7 @@ export function PH2RQ8OWPart2() {
 
                     // scalar kdma handling
                     if (!k.parameters) {
-                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
+                        row[`Old ${valueColLabel(k.kdma)}`] = roundIfNumber(k.value)
                         row['__scoringType'] = 'scalar'
                         continue
                     }

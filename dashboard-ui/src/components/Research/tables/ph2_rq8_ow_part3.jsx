@@ -103,10 +103,10 @@ export function PH2RQ8OWPart3() {
                     'OW Scenario': owScenario,
                     'Target': cleanTarget,
                     'ADM Name': admName.split('__')[0],
-                    'Server Session ID': adm.results?.ta1_session_id ?? '-',
-                    'Alignment score (ADM|target)': roundIfNumber(alignment),
-                    'New alignment score (ADM|target)': roundIfNumber(adm.new_results?.alignment_score),
-                    'New Server Session ID': adm.new_results?.ta1_session_id ?? '-'
+                    'Old Server Session ID': adm.results?.ta1_session_id ?? '-',
+                    'Old Alignment score (ADM|target)': roundIfNumber(alignment),
+                    'Alignment score (ADM|target)': roundIfNumber(adm.new_results?.alignment_score),
+                    'Server Session ID': adm.new_results?.ta1_session_id ?? '-'
                 };
 
                 for (const k of (adm.new_results?.kdmas || [])) {
@@ -115,7 +115,7 @@ export function PH2RQ8OWPart3() {
 
                     // scalar kdma handling
                     if (!k.parameters) {
-                        row[`${valueColLabel(k.kdma)}_new`] = roundIfNumber(k.value)
+                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
                     }
                 }
 
@@ -125,7 +125,7 @@ export function PH2RQ8OWPart3() {
 
                     // scalar kdma handling
                     if (!k.parameters) {
-                        row[valueColLabel(k.kdma)] = roundIfNumber(k.value)
+                        row[`Old ${valueColLabel(k.kdma)}`] = roundIfNumber(k.value)
                         continue
                     }
                 }
