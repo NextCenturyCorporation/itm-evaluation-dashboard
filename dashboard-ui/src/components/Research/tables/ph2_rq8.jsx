@@ -32,6 +32,20 @@ const GET_PARTICIPANT_LOG = gql`
 // This is for referencing the proper variable defs
 // Update the variable name and eval numbers as necessary
 const FEB26_EVALS = [15, 18, 19];
+const BACKUP_FIELDS = new Set([
+    ...["AF", "MF"].flatMap((shortName) => ["Desert", "Urban"].flatMap((environment) => [
+        `${shortName}_intercept_${environment}`,
+        `${shortName}_medical_${environment}`,
+        `${shortName}_attribute_${environment}`,
+        `${shortName}_midpoint_${environment}`,
+        `${shortName} Alignment_${environment}`,
+        `${shortName} Midpoint Alignment_${environment}`
+    ])),
+    ...["AF", "MF", "PS", "SS"].flatMap((shortName) => [
+        `${shortName}_intercept_Text`, `${shortName}_medical_Text`,
+        `${shortName}_attribute_Text`, `${shortName}_midpoint_Text`
+    ])
+]);
 
 // Legacy PH2 behavior grouped these together
 const LEGACY_COMBINED_EVALS = [8, 9, 10];
@@ -93,23 +107,30 @@ export function PH2RQ8({ evalNum }) {
         return k?.parameters?.find((p) => p?.name === paramName)?.value;
     }, []);
 
-    const getMidpointValue = React.useCallback((entry, modality, kdmaName) => {
-        const measurement = entry?.midpoint_values?.[modality]?.[kdmaName];
+    const getMidpointValue = React.useCallback((entry, modality, kdmaName, old = false) => {
+        const sourceField = modality === "text"
+            ? (old ? kdmaName : `${kdmaName}_new`)
+            : (old ? `${kdmaName}_old` : kdmaName);
+        const measurement = entry?.midpoint_values?.[modality]?.[sourceField];
         const value = measurement?.value;
         if (!measurement?.sid || typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
             return undefined;
         }
-        if (modality === "open_world" && measurement.sid !== entry?.data?.alignment?.sid) {
+        const alignment = entry?.data?.alignment;
+        const sessionId = old ? alignment?.sid_old ?? alignment?.sid : alignment?.sid;
+        if (modality === "open_world" && measurement.sid !== sessionId) {
             return undefined;
         }
         return value;
     }, []);
 
-    const getMidpointAlignmentScore = React.useCallback((entry, kdmaName, textResults) => {
-        const measurement = entry?.midpoint_alignment_scores?.[kdmaName];
+    const getMidpointAlignmentScore = React.useCallback((entry, kdmaName, textResults, old = false) => {
+        const measurement = entry?.midpoint_alignment_scores?.[old ? `${kdmaName}_old` : kdmaName];
         const score = measurement?.score;
+        const alignment = entry?.data?.alignment;
+        const sessionId = old ? alignment?.sid_old ?? alignment?.sid : alignment?.sid;
         if (!measurement?.open_world_sid || !measurement?.text_sid ||
-            measurement.open_world_sid !== entry?.data?.alignment?.sid ||
+            measurement.open_world_sid !== sessionId ||
             typeof score !== "number" || !Number.isFinite(score) || score < 0 || score > 1) {
             return undefined;
         }
@@ -121,7 +142,7 @@ export function PH2RQ8({ evalNum }) {
             : ["June2026", "Jun2026"].flatMap((prefix) => [
                 `${prefix}-${shortName}-assess`, `${prefix}_${shortName}_assess`
             ]);
-        const textSession = textResults.filter((result) =>
+        const textResult = textResults.filter((result) =>
             result?.evalNumber === entry?.evalNumber &&
             String(result?.participantID) === String(entry?.pid) &&
             scenarioIds.includes(result?.scenario_id)
@@ -129,7 +150,10 @@ export function PH2RQ8({ evalNum }) {
             if (a.timeComplete > b.timeComplete) return -1;
             if (a.timeComplete < b.timeComplete) return 1;
             return 0;
-        })[0]?.combinedSessionId;
+        })[0];
+        const textSession = old
+            ? textResult?.combinedSessionId_old ?? textResult?.combinedSessionId
+            : textResult?.combinedSessionId;
         return measurement.text_sid === textSession ? score : undefined;
     }, []);
 
@@ -267,11 +291,16 @@ export function PH2RQ8({ evalNum }) {
                 }
             }
 
-            setDefinitionFields(ensureBaseFields(expandedFields));
+            const fields = FEB26_EVALS.includes(evalNum)
+                ? [...new Set(expandedFields.flatMap((field) =>
+                    BACKUP_FIELDS.has(field) ? [field, `${field}_old`] : [field]
+                ))]
+                : expandedFields;
+            setDefinitionFields(ensureBaseFields(fields));
         }
 
         fetchDefinitionFields();
-    }, [definitionFile, ensureBaseFields]);
+    }, [definitionFile, ensureBaseFields, evalNum]);
 
     React.useEffect(() => {
         if (definitionFields.length === 0) return;
@@ -350,33 +379,16 @@ export function PH2RQ8({ evalNum }) {
                 }
 
                 if (mode === "feb26") {
-                    valueMap["AF_intercept_Text"] =
-                        textKdmaFields["Participant Text AF intercept KDMA"] ?? "";
-                    valueMap["AF_medical_Text"] =
-                        textKdmaFields["Participant Text AF medical_weight KDMA"] ?? "";
-                    valueMap["AF_attribute_Text"] =
-                        textKdmaFields["Participant Text AF attr_weight KDMA"] ?? "";
-
-                    valueMap["MF_intercept_Text"] =
-                        textKdmaFields["Participant Text MF intercept KDMA"] ?? "";
-                    valueMap["MF_medical_Text"] =
-                        textKdmaFields["Participant Text MF medical_weight KDMA"] ?? "";
-                    valueMap["MF_attribute_Text"] =
-                        textKdmaFields["Participant Text MF attr_weight KDMA"] ?? "";
-
-                    valueMap["PS_intercept_Text"] =
-                        textKdmaFields["Participant Text PS intercept KDMA"] ?? "";
-                    valueMap["PS_medical_Text"] =
-                        textKdmaFields["Participant Text PS medical_weight KDMA"] ?? "";
-                    valueMap["PS_attribute_Text"] =
-                        textKdmaFields["Participant Text PS attr_weight KDMA"] ?? "";
-
-                    valueMap["SS_intercept_Text"] =
-                        textKdmaFields["Participant Text SS intercept KDMA"] ?? "";
-                    valueMap["SS_medical_Text"] =
-                        textKdmaFields["Participant Text SS medical_weight KDMA"] ?? "";
-                    valueMap["SS_attribute_Text"] =
-                        textKdmaFields["Participant Text SS attr_weight KDMA"] ?? "";
+                    // Text rescoring is isolated to RQ8; existing Mongo fields retain the originals.
+                    for (const shortName of ["AF", "MF", "PS", "SS"]) {
+                        for (const [column, parameter] of [
+                            ["intercept", "intercept"], ["medical", "medical_weight"], ["attribute", "attr_weight"]
+                        ]) {
+                            const sourceField = `Participant Text ${shortName} ${parameter} KDMA`;
+                            valueMap[`${shortName}_${column}_Text`] = textKdmaFields[`${sourceField}_new`] ?? "";
+                            valueMap[`${shortName}_${column}_Text_old`] = textKdmaFields[sourceField] ?? "";
+                        }
+                    }
 
                     valueMap["AF_intercept_Desert"] = getKdmaParam(desertKdmas, "affiliation", "intercept");
                     valueMap["AF_medical_Desert"] = getKdmaParam(desertKdmas, "affiliation", "medical_weight");
@@ -395,6 +407,24 @@ export function PH2RQ8({ evalNum }) {
                     valueMap["MF Alignment_Desert"] = desertEntry?.alignment_scores?.["MF Alignment_Desert"];
                     valueMap["AF Alignment_Urban"] = urbanEntry?.alignment_scores?.["AF Alignment_Urban"];
                     valueMap["MF Alignment_Urban"] = urbanEntry?.alignment_scores?.["MF Alignment_Urban"];
+
+                    for (const [environment, entry] of [["Desert", desertEntry], ["Urban", urbanEntry]]) {
+                        for (const [shortName, kdmaName] of [["AF", "affiliation"], ["MF", "merit"]]) {
+                            const profile = entry?.data?.alignment?.kdmas_old;
+                            for (const [column, parameter] of [
+                                ["intercept", "intercept"], ["medical", "medical_weight"], ["attribute", "attr_weight"]
+                            ]) {
+                                const value = getKdmaParam(Array.isArray(profile) ? profile : undefined, kdmaName, parameter);
+                                valueMap[`${shortName}_${column}_${environment}_old`] =
+                                    typeof value === "number" && Number.isFinite(value) ? value : "";
+                            }
+                            const field = `${shortName} Alignment_${environment}_old`;
+                            const scores = entry?.alignment_scores || {};
+                            const value = Object.prototype.hasOwnProperty.call(scores, field)
+                                ? scores[field] : entry?.actionAnalysis?.[field];
+                            valueMap[field] = typeof value === "number" && Number.isFinite(value) ? value : "";
+                        }
+                    }
                 }
 
                 if (FEB26_EVALS.includes(currentEvalNum)) {
@@ -404,12 +434,21 @@ export function PH2RQ8({ evalNum }) {
                     ]) {
                         valueMap[`${shortName}_midpoint_Text`] =
                             getMidpointValue(desertEntry, "text", kdmaName) ??
-                            getMidpointValue(urbanEntry, "text", kdmaName);
+                            getMidpointValue(urbanEntry, "text", kdmaName) ?? "";
+                        valueMap[`${shortName}_midpoint_Text_old`] =
+                            getMidpointValue(desertEntry, "text", kdmaName, true) ??
+                            getMidpointValue(urbanEntry, "text", kdmaName, true) ?? "";
                         if (shortName === "AF" || shortName === "MF") {
                             valueMap[`${shortName}_midpoint_Desert`] = getMidpointValue(desertEntry, "open_world", kdmaName);
                             valueMap[`${shortName}_midpoint_Urban`] = getMidpointValue(urbanEntry, "open_world", kdmaName);
                             valueMap[`${shortName} Midpoint Alignment_Desert`] = getMidpointAlignmentScore(desertEntry, kdmaName, textResults);
                             valueMap[`${shortName} Midpoint Alignment_Urban`] = getMidpointAlignmentScore(urbanEntry, kdmaName, textResults);
+                            for (const [environment, entry] of [["Desert", desertEntry], ["Urban", urbanEntry]]) {
+                                valueMap[`${shortName}_midpoint_${environment}_old`] =
+                                    getMidpointValue(entry, "open_world", kdmaName, true) ?? "";
+                                valueMap[`${shortName} Midpoint Alignment_${environment}_old`] =
+                                    getMidpointAlignmentScore(entry, kdmaName, textResults, true) ?? "";
+                            }
                         }
                     }
                 }
