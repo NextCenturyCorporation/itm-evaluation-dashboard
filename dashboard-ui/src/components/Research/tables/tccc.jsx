@@ -14,6 +14,9 @@ export const GET_TCCC_RESULTS = gql`
     }
 `;
 
+const sortByPid = (a, b) =>
+    String(a.pid ?? '').localeCompare(String(b.pid ?? ''), undefined, { numeric: true });
+
 export function TCCC({ evalDate }) {
     const { loading: loadingfilteredTcccData , error: errorfilteredTcccData , data: filteredTcccData } = useQuery(GET_TCCC_RESULTS, {variables: {eval: evalDate}})
     const { loading: loadingallTcccData, error: errorallTcccData, data: allTcccData } = useQuery(GET_TCCC_RESULTS)
@@ -122,6 +125,9 @@ export function TCCC({ evalDate }) {
         })
 
         if (filteredDataResults.length > 0 || allDataResults.length > 0) {
+            allDataResults.sort(sortByPid)
+            filteredDataResults.sort(sortByPid)
+            
             setFormattedData(allDataResults)
             setFilteredData(filteredDataResults)
             setHeaders(Array.from(new Set(allDataResults.map(row => Object.keys(row)).flat())))
